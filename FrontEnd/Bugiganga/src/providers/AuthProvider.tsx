@@ -1,0 +1,48 @@
+import { type PropsWithChildren, useEffect, useState } from 'react';
+import { ActivityIndicator, View } from 'react-native';
+
+import { VintageColors } from '@/constants/theme';
+import { useAuthStore } from '@/src/stores/authStore';
+
+/** Aguarda hidratação do Zustand (AsyncStorage) antes de renderizar rotas */
+export function AuthProvider({ children }: PropsWithChildren) {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const finish = () => {
+      useAuthStore.getState().setHydrated(true);
+      setReady(true);
+    };
+
+    if (useAuthStore.persist.hasHydrated()) {
+      finish();
+      return;
+    }
+
+    const unsub = useAuthStore.persist.onFinishHydration(finish);
+    void useAuthStore.persist.rehydrate();
+
+    const fallback = setTimeout(finish, 500);
+
+    return () => {
+      unsub();
+      clearTimeout(fallback);
+    };
+  }, []);
+
+  if (!ready) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: VintageColors.parchment,
+        }}>
+        <ActivityIndicator size="large" color={VintageColors.rust} />
+      </View>
+    );
+  }
+
+  return children;
+}

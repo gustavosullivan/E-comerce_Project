@@ -27,6 +27,23 @@ export const Colors = {
   },
 };
 
+export const VintageColors = {
+  parchment: '#E9DFC7',
+  parchmentDark: '#DDD0B5',
+  sepia: '#D4C4A8',
+  brown: '#3D2914',
+  brownLight: '#6B5344',
+  brownMuted: '#8B7355',
+  rust: '#7A4A2E',
+  amber: '#B8956A',
+  border: '#9A8268',
+  inputBg: '#F5F0E4',
+  cardBg: '#F0E8D6',
+  shadow: '#2C1810',
+  error: '#9B3B2E',
+  focus: '#7A4A2E',
+};
+
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */

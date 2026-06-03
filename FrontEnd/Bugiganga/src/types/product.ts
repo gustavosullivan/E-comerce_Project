@@ -1,0 +1,19 @@
+export interface Category {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+export interface Product {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  imageUrl: string;
+  stock: number;
+  categoryId: number;
+  categoryName: string;
+  isNew?: boolean;
+  isFeatured?: boolean;
+  isBestseller?: boolean;
+}

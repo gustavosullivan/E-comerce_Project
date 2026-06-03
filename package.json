@@ -1,0 +1,11 @@
+{
+  "name": "e-comerce-project",
+  "private": true,
+  "scripts": {
+    "start": "npm run start --prefix FrontEnd/Bugiganga",
+    "android": "npm run android --prefix FrontEnd/Bugiganga",
+    "ios": "npm run ios --prefix FrontEnd/Bugiganga",
+    "web": "npm run web --prefix FrontEnd/Bugiganga",
+    "install:app": "npm install --prefix FrontEnd/Bugiganga"
+  }
+}
