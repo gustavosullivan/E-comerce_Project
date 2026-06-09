@@ -1,13 +1,16 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
+import { ScalePressable } from '@/src/components/ui/ScalePressable';
 import { colors } from '@/src/theme';
+import { selectionFeedback } from '@/src/utils/haptics';
 
 type QuantitySelectorProps = {
   quantity: number;
   onDecrease: () => void;
   onIncrease: () => void;
   min?: number;
+  compact?: boolean;
 };
 
 export function QuantitySelector({
@@ -15,19 +18,30 @@ export function QuantitySelector({
   onDecrease,
   onIncrease,
   min = 1,
+  compact,
 }: QuantitySelectorProps) {
   return (
-    <View style={styles.row}>
-      <Pressable
-        style={[styles.btn, quantity <= min && styles.btnDisabled]}
-        onPress={onDecrease}
+    <View style={[styles.row, compact && styles.rowCompact]}>
+      <ScalePressable
+        style={[styles.btn, compact && styles.btnCompact, quantity <= min && styles.btnDisabled]}
+        onPress={() => {
+          if (quantity > min) {
+            selectionFeedback();
+            onDecrease();
+          }
+        }}
         disabled={quantity <= min}>
-        <MaterialIcons name="remove" size={22} color={colors.primary} />
-      </Pressable>
-      <Text style={styles.qty}>{quantity}</Text>
-      <Pressable style={styles.btn} onPress={onIncrease}>
-        <MaterialIcons name="add" size={22} color={colors.primary} />
-      </Pressable>
+        <MaterialIcons name="remove" size={compact ? 18 : 22} color={colors.primary} />
+      </ScalePressable>
+      <Text style={[styles.qty, compact && styles.qtyCompact]}>{quantity}</Text>
+      <ScalePressable
+        style={[styles.btn, compact && styles.btnCompact]}
+        onPress={() => {
+          selectionFeedback();
+          onIncrease();
+        }}>
+        <MaterialIcons name="add" size={compact ? 18 : 22} color={colors.primary} />
+      </ScalePressable>
     </View>
   );
 }
@@ -40,6 +54,10 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginVertical: 16,
   },
+  rowCompact: {
+    gap: 10,
+    marginVertical: 0,
+  },
   btn: {
     width: 40,
     height: 40,
@@ -50,6 +68,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  btnCompact: {
+    width: 32,
+    height: 32,
+  },
   btnDisabled: { opacity: 0.4 },
   qty: {
     fontSize: 20,
@@ -57,5 +79,9 @@ const styles = StyleSheet.create({
     color: colors.text,
     minWidth: 32,
     textAlign: 'center',
+  },
+  qtyCompact: {
+    fontSize: 16,
+    minWidth: 24,
   },
 });

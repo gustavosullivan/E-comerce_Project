@@ -1,48 +1,72 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text } from 'react-native';
 
-import { colors, fonts } from '@/src/theme';
+import { ScalePressable } from '@/src/components/ui/ScalePressable';
+import { colors, fonts, radii, shadow } from '@/src/theme';
+import { lightImpact } from '@/src/utils/haptics';
 
 type PrimaryButtonProps = {
   label: string;
   onPress: () => void;
   isLoading?: boolean;
   disabled?: boolean;
+  compact?: boolean;
 };
 
-export function PrimaryButton({ label, onPress, isLoading, disabled }: PrimaryButtonProps) {
+export function PrimaryButton({
+  label,
+  onPress,
+  isLoading,
+  disabled,
+  compact,
+}: PrimaryButtonProps) {
+  const handlePress = () => {
+    lightImpact();
+    onPress();
+  };
+
   return (
-    <Pressable
-      onPress={onPress}
+    <ScalePressable
+      onPress={handlePress}
       disabled={isLoading || disabled}
-      style={({ pressed }) => [
+      scaleTo={0.97}
+      style={[
         styles.button,
+        compact && styles.compact,
         (isLoading || disabled) && styles.disabled,
-        pressed && styles.pressed,
       ]}>
       {isLoading ? (
         <ActivityIndicator color={colors.white} />
       ) : (
-        <Text style={styles.label}>{label}</Text>
+        <Text style={[styles.label, compact && styles.labelCompact]}>{label}</Text>
       )}
-    </Pressable>
+    </ScalePressable>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
     backgroundColor: colors.primary,
-    borderRadius: 3,
+    borderRadius: radii.sm,
     borderWidth: 1.5,
     borderColor: colors.text,
     paddingVertical: 14,
+    paddingHorizontal: 16,
     alignItems: 'center',
+    minHeight: 48,
+    justifyContent: 'center',
+    ...shadow.lift,
   },
-  pressed: { opacity: 0.9, transform: [{ scale: 0.98 }] },
-  disabled: { opacity: 0.65 },
+  compact: {
+    paddingVertical: 10,
+    minHeight: 40,
+  },
+  disabled: { opacity: 0.6 },
   label: {
     fontFamily: fonts.serif,
     fontSize: 16,
     fontWeight: '700',
     color: colors.white,
+    letterSpacing: 0.3,
   },
+  labelCompact: { fontSize: 13 },
 });

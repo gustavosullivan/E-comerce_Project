@@ -1,18 +1,27 @@
 import { type PropsWithChildren } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { colors } from '@/src/theme';
+import { cardStyles, textStyles } from '@/src/theme';
 
-export function VintageCard({ children }: PropsWithChildren) {
-  return <View style={styles.card}>{children}</View>;
+type VintageCardProps = PropsWithChildren<{
+  title?: string;
+}>;
+
+export function VintageCard({ children, title }: VintageCardProps) {
+  return (
+    <View style={styles.card}>
+      {title ? <Text style={[textStyles.sectionTitle, styles.title]}>{title}</Text> : null}
+      {children}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card,
-    borderRadius: 3,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    padding: 20,
+    ...cardStyles.vintage,
+    marginBottom: 14,
+  },
+  title: {
+    marginBottom: 14,
   },
 });

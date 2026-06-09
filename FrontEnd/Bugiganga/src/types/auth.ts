@@ -25,3 +25,8 @@ export interface AuthResponse {
 export interface ForgotPasswordRequest {
   email: string;
 }
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}

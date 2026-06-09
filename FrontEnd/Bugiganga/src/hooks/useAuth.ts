@@ -5,6 +5,7 @@ import { authService } from '@/src/services/authService';
 import { useAuthStore } from '@/src/stores/authStore';
 import type { ApiError } from '@/src/types/api';
 import type { LoginFormData } from '@/src/validation/loginSchema';
+import type { ChangePasswordFormData } from '@/src/validation/changePasswordSchema';
 import type { RegisterFormData } from '@/src/validation/registerSchema';
 
 function toErrorMessage(error: unknown): string {
@@ -21,7 +22,8 @@ function usernameFromEmail(email: string): string {
 }
 
 export function useAuth() {
-  const { token, user, isHydrated, setSession, clearSession } = useAuthStore();
+  const { token, user, sessionPassword, isHydrated, setSession, setSessionPassword, clearSession } =
+    useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +35,7 @@ export function useAuth() {
       setError(null);
       try {
         const response = await authService.login(data);
-        setSession(response.token, response.user);
+        setSession(response.token, response.user, data.password);
         router.replace('/(tabs)');
       } catch (err) {
         setError(toErrorMessage(err));
@@ -56,7 +58,7 @@ export function useAuth() {
           password: rest.password,
           username: usernameFromEmail(rest.email),
         });
-        setSession(response.token, response.user);
+        setSession(response.token, response.user, rest.password);
         router.replace('/(tabs)');
       } catch (err) {
         setError(toErrorMessage(err));
@@ -72,9 +74,31 @@ export function useAuth() {
     router.replace('/login');
   }, [clearSession]);
 
+  const changePassword = useCallback(
+    async (data: ChangePasswordFormData) => {
+      if (!user?.email) return;
+      setIsLoading(true);
+      setError(null);
+      try {
+        await authService.changePassword(user.email, {
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword,
+        });
+        setSessionPassword(data.newPassword);
+      } catch (err) {
+        setError(toErrorMessage(err));
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user?.email, setSessionPassword],
+  );
+
   return {
     token,
     user,
+    sessionPassword,
     isAuthenticated: Boolean(token),
     isHydrated,
     isLoading,
@@ -83,5 +107,6 @@ export function useAuth() {
     login,
     register,
     logout,
+    changePassword,
   };
 }

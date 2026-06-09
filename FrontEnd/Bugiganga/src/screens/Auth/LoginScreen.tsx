@@ -1,29 +1,22 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Controller, useForm, type Control } from 'react-hook-form';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useForm } from 'react-hook-form';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 
 import { PrimaryButton } from '@/src/components/buttons/PrimaryButton';
 import { CustomInput } from '@/src/components/forms/CustomInput';
+import { PasswordField } from '@/src/components/forms/PasswordField';
 import { LogoHeader } from '@/src/components/layout/LogoHeader';
 import { VintageCard } from '@/src/components/layout/VintageCard';
+import { ScreenContainer } from '@/src/components/ui/ScreenContainer';
+import { TextLink } from '@/src/components/ui/TextLink';
 import { useAuth } from '@/src/hooks/useAuth';
-import { colors, fonts } from '@/src/theme';
+import { cardStyles, colors } from '@/src/theme';
 import { type LoginFormData, loginSchema } from '@/src/validation/loginSchema';
 
 export default function LoginScreen() {
   const { login, isLoading, error, clearError } = useAuth();
-  const [showPassword, setShowPassword] = useState(false);
   const { control, handleSubmit } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
@@ -35,104 +28,67 @@ export default function LoginScreen() {
   });
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1, padding: 28, justifyContent: 'space-between' }}
-          keyboardShouldPersistTaps="handled">
-          <View>
-            <LogoHeader />
-            <VintageCard>
-              {error ? <Text style={styles.error}>{error}</Text> : null}
-              <CustomInput
-                control={control}
-                name="email"
-                label="Email"
-                placeholder="seu@email.com"
-                keyboardType="email-address"
-              />
-              <PasswordField control={control} show={showPassword} onToggle={() => setShowPassword((p) => !p)} onSubmit={onSubmit} />
-              <PrimaryButton label="Entrar" onPress={onSubmit} isLoading={isLoading} />
-              <Text style={styles.hint}>Demo: demo@bugigangas.com · 12345678</Text>
-            </VintageCard>
-            <View style={styles.linkRow}>
-              <Text style={styles.linkLabel}>Não possui conta?</Text>
-              <Pressable onPress={() => router.push('/register')}>
-                <Text style={styles.linkAction}>Criar Conta</Text>
-              </Pressable>
-            </View>
+    <ScreenContainer scroll keyboard contentStyle={styles.content}>
+      <LogoHeader />
+      <Animated.View entering={FadeInUp.delay(180).duration(420)}>
+        <VintageCard>
+        {error ? (
+          <View style={styles.errorBox}>
+            <Text style={styles.error}>{error}</Text>
           </View>
-          <Text style={styles.footer}>Bugiganga © 2026</Text>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-  );
-}
-
-function PasswordField({
-  control,
-  show,
-  onToggle,
-  onSubmit,
-}: {
-  control: Control<LoginFormData>;
-  show: boolean;
-  onToggle: () => void;
-  onSubmit: () => void;
-}) {
-  return (
-    <View style={{ marginBottom: 16 }}>
-      <Text style={styles.label}>Senha</Text>
-      <View>
-        <Controller
+        ) : null}
+        <CustomInput
+          control={control}
+          name="email"
+          label="Email"
+          placeholder="seu@email.com"
+          keyboardType="email-address"
+        />
+        <PasswordField
           control={control}
           name="password"
-          render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-            <>
-              <TextInput
-                style={[styles.input, error && styles.inputError]}
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                placeholder="Sua senha"
-                placeholderTextColor={colors.textMuted}
-                secureTextEntry={!show}
-                onSubmitEditing={onSubmit}
-              />
-              {error ? <Text style={styles.fieldError}>{error.message}</Text> : null}
-            </>
-          )}
+          label="Senha"
+          placeholder="Sua senha"
+          onSubmitEditing={onSubmit}
         />
-        <Pressable style={styles.toggle} onPress={onToggle}>
-          <Text style={styles.linkAction}>{show ? 'Ocultar' : 'Ver'}</Text>
-        </Pressable>
-      </View>
-    </View>
+        <PrimaryButton label="Entrar" onPress={onSubmit} isLoading={isLoading} />
+        <View style={styles.hintBox}>
+          <Text style={styles.hint}>Demo: demo@bugigangas.com · 12345678</Text>
+        </View>
+        </VintageCard>
+      </Animated.View>
+      <TextLink prefix="Não possui conta?" label="Criar Conta" onPress={() => router.push('/register')} />
+      <Text style={styles.footer}>Bugiganga © 2026</Text>
+    </ScreenContainer>
   );
 }
 
-const styles = {
-  error: { color: colors.danger, marginBottom: 12, fontSize: 14 },
-  label: { fontFamily: fonts.serif, fontSize: 14, fontWeight: '600' as const, color: colors.text, marginBottom: 8 },
-  input: {
-    backgroundColor: colors.inputBg,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: 2,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: colors.text,
-    paddingRight: 72,
+const styles = StyleSheet.create({
+  content: {
+    paddingTop: 24,
+    paddingBottom: 32,
+    justifyContent: 'space-between',
+    minHeight: '100%',
   },
-  inputError: { borderColor: colors.danger },
-  fieldError: { fontSize: 12, color: colors.danger, marginTop: 4 },
-  toggle: { position: 'absolute' as const, right: 12, top: 12 },
-  hint: { fontSize: 11, color: colors.textMuted, textAlign: 'center' as const, marginTop: 12 },
-  linkRow: { flexDirection: 'row' as const, justifyContent: 'center' as const, gap: 6, marginTop: 20 },
-  linkLabel: { fontSize: 14, color: colors.textMuted },
-  linkAction: { fontSize: 14, fontWeight: '700' as const, color: colors.primary, textDecorationLine: 'underline' as const },
-  footer: { fontSize: 11, color: colors.textMuted, textAlign: 'center' as const, marginTop: 24 },
-};
+  errorBox: {
+    ...cardStyles.inset,
+    marginBottom: 14,
+    borderColor: colors.danger,
+    backgroundColor: '#F5E0DC',
+  },
+  error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
+  hintBox: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  hint: { fontSize: 11, color: colors.textMuted, textAlign: 'center', lineHeight: 16 },
+  footer: {
+    fontSize: 11,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: 28,
+    letterSpacing: 0.5,
+  },
+});

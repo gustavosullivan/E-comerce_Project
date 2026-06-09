@@ -8,6 +8,7 @@ export const routes = {
   favorites: '/(tabs)/favorites' as Href,
   cart: '/(tabs)/cart' as Href,
   profile: '/(tabs)/profile' as Href,
+  account: '/account' as Href,
   productList: '/product' as Href,
   checkout: '/checkout' as Href,
   productDetails: (id: number): Href => ({

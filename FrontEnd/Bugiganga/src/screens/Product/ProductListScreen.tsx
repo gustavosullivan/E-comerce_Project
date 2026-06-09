@@ -12,6 +12,9 @@ import { useProducts } from '@/src/hooks/useProducts';
 import { routes } from '@/src/navigation/routes';
 import { useFavoritesStore } from '@/src/store/favoritesStore';
 import { colors } from '@/src/theme';
+import { productGrid } from '@/src/utils/productGrid';
+
+const ITEM_WIDTH = productGrid.getItemWidth();
 
 export default function ProductListScreen() {
   const { products, isLoading, error, reload } = useProducts();
@@ -51,17 +54,18 @@ export default function ProductListScreen() {
         <FlatList
           data={filtered}
           keyExtractor={(item) => String(item.id)}
-          numColumns={2}
+          numColumns={productGrid.columns}
           columnWrapperStyle={styles.row}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => (
-            <View style={styles.cell}>
+            <View style={{ width: ITEM_WIDTH }}>
               <ProductCard
                 product={item}
-                compact
+                grid
+                width={ITEM_WIDTH}
                 isFavorite={isFavorite(item.id)}
                 onToggleFavorite={() => toggle(item)}
-                onPress={() => router.push(routes.productDetails(item.id))}
+                onBuyPress={() => router.push(routes.productDetails(item.id))}
               />
             </View>
           )}
@@ -91,7 +95,12 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: colors.card,
   },
-  list: { paddingHorizontal: 16, paddingBottom: 24 },
-  row: { justifyContent: 'space-between' },
-  cell: { width: '48%' },
+  list: {
+    paddingHorizontal: productGrid.paddingH,
+    paddingBottom: 24,
+  },
+  row: {
+    gap: productGrid.gap,
+    marginBottom: productGrid.gap,
+  },
 });

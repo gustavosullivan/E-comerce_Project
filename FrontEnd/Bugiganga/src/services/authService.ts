@@ -3,6 +3,7 @@ import { apiClient, mapAxiosError } from '@/src/services/api/client';
 import { authMock } from '@/src/services/mocks/authMock';
 import type {
   AuthResponse,
+  ChangePasswordRequest,
   ForgotPasswordRequest,
   LoginRequest,
   RegisterRequest,
@@ -44,6 +45,15 @@ export const authService = {
     try {
       if (USE_MOCK) return await authMock.forgotPassword(data);
       await apiClient.post(API_ENDPOINTS.auth.forgotPassword, data);
+    } catch (error) {
+      throw mapAxiosError(error);
+    }
+  },
+
+  async changePassword(email: string, data: ChangePasswordRequest): Promise<void> {
+    try {
+      if (USE_MOCK) return await authMock.changePassword(email, data);
+      await apiClient.post(API_ENDPOINTS.auth.changePassword, data);
     } catch (error) {
       throw mapAxiosError(error);
     }

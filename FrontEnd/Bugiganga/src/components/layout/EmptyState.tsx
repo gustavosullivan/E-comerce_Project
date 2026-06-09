@@ -1,29 +1,49 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 
-import { colors, fonts } from '@/src/theme';
+import { colors, textStyles } from '@/src/theme';
 
 type EmptyStateProps = {
   icon?: keyof typeof MaterialIcons.glyphMap;
   message: string;
+  title?: string;
 };
 
-export function EmptyState({ icon = 'inventory-2', message }: EmptyStateProps) {
+export function EmptyState({ icon = 'inventory-2', message, title }: EmptyStateProps) {
   return (
-    <View style={styles.wrap}>
-      <MaterialIcons name={icon} size={64} color={colors.secondary} />
+    <Animated.View entering={FadeInUp.duration(400).springify()} style={styles.wrap}>
+      <View style={styles.iconRing}>
+        <MaterialIcons name={icon} size={48} color={colors.secondary} />
+      </View>
+      {title ? <Text style={textStyles.sectionTitle}>{title}</Text> : null}
       <Text style={styles.text}>{message}</Text>
-    </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', justifyContent: 'center', padding: 40, gap: 16 },
+  wrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+    gap: 12,
+  },
+  iconRing: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 2,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
   text: {
-    fontFamily: fonts.serif,
-    fontSize: 16,
-    color: colors.textMuted,
+    ...textStyles.bodyMuted,
     textAlign: 'center',
-    lineHeight: 24,
+    maxWidth: 280,
   },
 });

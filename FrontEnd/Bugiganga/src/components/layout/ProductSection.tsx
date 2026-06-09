@@ -29,9 +29,10 @@ export function ProductSection({ title, products }: ProductSectionProps) {
         renderItem={({ item }) => (
           <ProductCard
             product={item}
+            horizontal
             isFavorite={isFavorite(item.id)}
             onToggleFavorite={() => toggle(item)}
-            onPress={() => router.push(routes.productDetails(item.id))}
+            onBuyPress={() => router.push(routes.productDetails(item.id))}
           />
         )}
       />

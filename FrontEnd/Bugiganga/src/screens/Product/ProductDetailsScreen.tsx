@@ -1,20 +1,22 @@
-import { Image } from 'expo-image';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons } from '@expo/vector-icons';
+import { StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 
 import { PrimaryButton } from '@/src/components/buttons/PrimaryButton';
 import { SecondaryButton } from '@/src/components/buttons/SecondaryButton';
 import { ErrorState } from '@/src/components/layout/ErrorState';
 import { Loading } from '@/src/components/layout/Loading';
+import { ProductModalGallery } from '@/src/components/layout/ProductModalGallery';
+import { ProductPaper } from '@/src/components/layout/ProductPaper';
 import { QuantitySelector } from '@/src/components/layout/QuantitySelector';
+import { AnimatedPrice } from '@/src/components/ui/AnimatedPrice';
 import { useProduct } from '@/src/hooks/useProducts';
 import { useCartStore } from '@/src/store/cartStore';
 import { useCheckoutStore } from '@/src/store/checkoutStore';
 import { colors, fonts } from '@/src/theme';
 import { formatCurrency } from '@/src/utils/formatCurrency';
+import { successFeedback } from '@/src/utils/haptics';
 
 export default function ProductDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -29,6 +31,7 @@ export default function ProductDetailsScreen() {
   const handleAddToCart = () => {
     if (!product) return;
     addItem(product, quantity);
+    successFeedback();
     router.replace('/(tabs)');
   };
 
@@ -40,93 +43,118 @@ export default function ProductDetailsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.screen}>
+      <ProductPaper onClose={handleClose} large>
         <Loading />
-      </SafeAreaView>
+      </ProductPaper>
     );
   }
 
   if (error || !product) {
     return (
-      <SafeAreaView style={styles.screen}>
+      <ProductPaper onClose={handleClose} large>
         <ErrorState message={error ?? 'Produto não encontrado'} />
-      </SafeAreaView>
+      </ProductPaper>
     );
   }
 
   const lineTotal = product.price * quantity;
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <Pressable style={styles.closeBtn} onPress={handleClose} hitSlop={12}>
-        <MaterialIcons name="close" size={28} color={colors.text} />
-      </Pressable>
+    <ProductPaper onClose={handleClose} large>
+      <Animated.View entering={FadeInUp.duration(350)} style={styles.content}>
+        <ProductModalGallery product={product} />
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Image source={{ uri: product.imageUrl }} style={styles.image} contentFit="cover" />
-        <Text style={styles.name}>{product.name}</Text>
-        <Text style={styles.description}>{product.description}</Text>
-        <Text style={styles.unitPrice}>Unitário: {formatCurrency(product.price)}</Text>
+        <View style={styles.info}>
+          <Text style={styles.name} numberOfLines={2}>
+            {product.name}
+          </Text>
+          <Text style={styles.description} numberOfLines={2}>
+            {product.description}
+          </Text>
+          <Text style={styles.unitPrice}>{formatCurrency(product.price)} / un.</Text>
+        </View>
 
-        <QuantitySelector
-          quantity={quantity}
-          onDecrease={() => setQuantity((q) => Math.max(1, q - 1))}
-          onIncrease={() => setQuantity((q) => q + 1)}
-        />
-
-        <Text style={styles.total}>Total: {formatCurrency(lineTotal)}</Text>
+        <View style={styles.purchaseBar}>
+          <QuantitySelector
+            compact
+            quantity={quantity}
+            onDecrease={() => setQuantity((q) => Math.max(1, q - 1))}
+            onIncrease={() => setQuantity((q) => q + 1)}
+          />
+          <View style={styles.totalWrap}>
+            <Text style={styles.totalLabel}>Total</Text>
+            <AnimatedPrice value={lineTotal} />
+          </View>
+        </View>
 
         <View style={styles.actions}>
-          <PrimaryButton label="Comprar Agora" onPress={handleBuyNow} />
-          <SecondaryButton label="Adicionar ao Carrinho" onPress={handleAddToCart} />
+          <View style={styles.actionSlot}>
+            <PrimaryButton compact label="Comprar Agora" onPress={handleBuyNow} />
+          </View>
+          <View style={styles.actionSlot}>
+            <SecondaryButton compact label="Carrinho" onPress={handleAddToCart} />
+          </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </Animated.View>
+    </ProductPaper>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  closeBtn: {
-    position: 'absolute',
-    top: 52,
-    right: 16,
-    zIndex: 10,
-    backgroundColor: colors.card,
-    borderRadius: 20,
-    padding: 6,
-    borderWidth: 1,
-    borderColor: colors.border,
+  content: {
+    paddingTop: 18,
+    gap: 10,
   },
-  scroll: { padding: 16, paddingTop: 48, paddingBottom: 32 },
-  image: {
-    width: '100%',
-    height: 260,
-    borderRadius: 4,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    marginBottom: 16,
+  info: {
+    alignItems: 'center',
+    gap: 2,
+    paddingHorizontal: 4,
   },
   name: {
     fontFamily: fonts.serif,
-    fontSize: 24,
+    fontSize: 17,
     fontWeight: '700',
     color: colors.text,
+    textAlign: 'center',
   },
   description: {
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 12,
+    lineHeight: 16,
     color: colors.textMuted,
-    marginTop: 10,
-  },
-  unitPrice: { fontSize: 14, color: colors.secondary, marginTop: 8 },
-  total: {
-    fontFamily: fonts.serif,
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.primary,
     textAlign: 'center',
-    marginBottom: 20,
   },
-  actions: { gap: 12 },
+  unitPrice: {
+    fontSize: 11,
+    color: colors.secondary,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  purchaseBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: 3,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  totalWrap: {
+    alignItems: 'flex-end',
+  },
+  totalLabel: {
+    fontSize: 9,
+    color: colors.textMuted,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionSlot: {
+    flex: 1,
+  },
 });

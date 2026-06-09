@@ -10,6 +10,7 @@ export const API_ENDPOINTS = {
     register: '/api/auth/register',
     me: '/api/auth/me',
     forgotPassword: '/api/auth/forgot-password',
+    changePassword: '/api/auth/change-password',
   },
   products: {
     list: '/api/products',
