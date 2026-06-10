@@ -38,6 +38,7 @@ export default function FavoritesScreen() {
             <PageContainer>
               <ScreenHeader
                 title="Favoritos"
+                icon="favorite"
                 subtitle={`${items.length} produto(s) salvos`}
               />
             </PageContainer>

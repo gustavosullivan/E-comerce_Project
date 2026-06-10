@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { useCartStore } from '@/src/store/cartStore';
+import { useFavoritesStore } from '@/src/store/favoritesStore';
 import { colors, fontSizes, fonts, radius, shadows } from '@/src/theme';
 import type { Product } from '@/src/types/product';
 import { formatCurrency } from '@/src/utils/formatCurrency';
@@ -15,7 +16,6 @@ type ProductCardProps = {
   product: Product;
   onPress: () => void;
   onToggleFavorite: () => void;
-  isFavorite: boolean;
   compact?: boolean;
 };
 
@@ -23,9 +23,9 @@ export function ProductCard({
   product,
   onPress,
   onToggleFavorite,
-  isFavorite,
   compact,
 }: ProductCardProps) {
+  const isFavorite = useFavoritesStore((s) => s.items.some((p) => p.id === product.id));
   const addItem = useCartStore((s) => s.addItem);
   const [justAdded, setJustAdded] = useState(false);
 
@@ -55,7 +55,7 @@ export function ProductCard({
             <MaterialIcons
               name={isFavorite ? 'favorite' : 'favorite-border'}
               size={18}
-              color={isFavorite ? colors.accent : colors.textMuted}
+              color={isFavorite ? colors.danger : colors.textMuted}
             />
           </Pressable>
         </View>

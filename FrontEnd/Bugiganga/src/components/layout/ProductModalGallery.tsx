@@ -6,6 +6,7 @@ import {
   FlatList,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -31,6 +32,7 @@ const GALLERY_HEIGHT = 220;
 
 type ProductModalGalleryProps = {
   product: Product;
+  onClose?: () => void;
 };
 
 type GallerySlideProps = {
@@ -109,7 +111,7 @@ function GallerySlide({ uri, isActive, zoomed, onToggleZoom }: GallerySlideProps
   );
 }
 
-export function ProductModalGallery({ product }: ProductModalGalleryProps) {
+export function ProductModalGallery({ product, onClose }: ProductModalGalleryProps) {
   const images = useMemo(() => getProductGalleryUrls(product), [product]);
   const listRef = useRef<FlatList<string>>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -151,6 +153,16 @@ export function ProductModalGallery({ product }: ProductModalGalleryProps) {
 
         <View style={styles.frameMat}>
           <View style={styles.frameInner}>
+            {onClose ? (
+              <Pressable
+                style={styles.closeBtn}
+                onPress={onClose}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="Fechar">
+                <MaterialIcons name="close" size={18} color={colors.text} />
+              </Pressable>
+            ) : null}
             <FlatList
               ref={listRef}
               data={images}
@@ -257,6 +269,18 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.border,
     position: 'relative',
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    zIndex: 10,
+    backgroundColor: colors.card,
+    borderRadius: radii.full,
+    padding: 6,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    ...shadow.card,
   },
   slide: {
     width: GALLERY_WIDTH,

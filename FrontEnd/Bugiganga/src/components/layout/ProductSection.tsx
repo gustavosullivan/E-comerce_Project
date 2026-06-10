@@ -14,7 +14,6 @@ type ProductSectionProps = {
 
 export function ProductSection({ title, products }: ProductSectionProps) {
   const toggle = useFavoritesStore((s) => s.toggle);
-  const isFavorite = useFavoritesStore((s) => s.isFavorite);
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
 
   if (products.length === 0) return null;
@@ -38,7 +37,6 @@ export function ProductSection({ title, products }: ProductSectionProps) {
         renderItem={({ item }) => (
           <ProductCard
             product={item}
-            isFavorite={isFavorite(item.id)}
             onToggleFavorite={() => toggle(item)}
             onPress={() => setPreviewProduct(item)}
           />

@@ -67,7 +67,7 @@ export function FavoriteGlassCard({ product, onPress, onToggleFavorite }: Favori
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Remover dos favoritos">
-              <MaterialIcons name="favorite" size={18} color={colors.accent} />
+              <MaterialIcons name="favorite" size={18} color={colors.danger} />
             </Pressable>
 
             <Pressable

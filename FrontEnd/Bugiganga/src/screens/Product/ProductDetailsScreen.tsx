@@ -67,9 +67,9 @@ export default function ProductDetailsScreen() {
   const lineTotal = product.price * quantity;
 
   return (
-    <ProductPaper onClose={handleClose} large>
+    <ProductPaper onClose={handleClose} large hideClose>
       <Animated.View entering={FadeInUp.duration(350)} style={styles.content}>
-        <ProductModalGallery product={product} />
+        <ProductModalGallery product={product} onClose={handleClose} />
 
         <View style={styles.info}>
           <Text style={styles.name} numberOfLines={2}>
@@ -109,7 +109,7 @@ export default function ProductDetailsScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    paddingTop: 18,
+    paddingTop: 4,
     gap: 10,
   },
   info: {

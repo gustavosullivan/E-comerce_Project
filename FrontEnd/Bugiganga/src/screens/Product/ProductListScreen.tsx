@@ -20,7 +20,6 @@ export default function ProductListScreen() {
   const [query, setQuery] = useState('');
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const toggle = useFavoritesStore((s) => s.toggle);
-  const isFavorite = useFavoritesStore((s) => s.isFavorite);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -65,7 +64,6 @@ export default function ProductListScreen() {
             <ProductCard
               product={item}
               compact
-              isFavorite={isFavorite(item.id)}
               onToggleFavorite={() => toggle(item)}
               onPress={() => setPreviewProduct(item)}
             />

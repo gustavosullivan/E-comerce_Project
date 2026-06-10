@@ -1,14 +1,27 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { type PropsWithChildren } from 'react';
+import { Platform, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { HeaderIconButton } from '@/src/components/layout/HeaderIconButton';
+import { HeaderCartButton, HeaderProfileChip } from '@/src/components/layout/HeaderCartButton';
 import { useCartStore } from '@/src/store/cartStore';
-import { colors, fontSizes, fonts, radius, shadows } from '@/src/theme';
+import { useAuthStore } from '@/src/stores/authStore';
+import { colors, fontSizes, fonts, motion, radius, shadows } from '@/src/theme';
 import { layout } from '@/src/theme/layout';
 
 type HomeHeaderProps = {
   userName: string;
 };
+
+type HomeHeroProps = HomeHeaderProps & {
+  productCount?: number;
+  favoriteCount?: number;
+};
+
+/** Altura reservada para a toolbar fixa no topo da Home */
+export const HOME_STICKY_TOOLBAR_HEIGHT = 64;
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -24,97 +37,182 @@ function getInitials(name: string): string {
   return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
 }
 
-export function HomeHeader({ userName }: HomeHeaderProps) {
-  const firstName = userName.split(' ')[0] ?? 'Visitante';
+function GlassPanel({ children }: PropsWithChildren) {
+  return (
+    <View style={styles.glassShell}>
+      {Platform.OS === 'web' ? (
+        <View style={styles.webGlassFill} />
+      ) : (
+        <BlurView
+          intensity={Platform.OS === 'android' ? 32 : 44}
+          tint="dark"
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+      <View style={styles.glassTint} />
+      <View style={styles.glassSheen} />
+      <View style={styles.glassContent}>{children}</View>
+    </View>
+  );
+}
+
+export function HomeToolbar({ userName }: HomeHeaderProps) {
   const initials = getInitials(userName);
-  const cartCount = useCartStore((s) => s.items.length);
+  const avatarUri = useAuthStore((s) => s.avatarUri);
+  const cartCount = useCartStore((s) => s.getItemCount());
 
   return (
-    <View style={styles.container}>
+    <GlassPanel>
       <View style={styles.toolbar}>
-        <HeaderIconButton
-          variant="primary"
-          label={initials}
+        <HeaderProfileChip
+          name={userName}
+          initials={initials}
+          imageUri={avatarUri}
           onPress={() => router.push('/(tabs)/profile')}
         />
-
-        <View style={styles.brandWrap}>
-          <Text style={styles.brand}>Bugiganga</Text>
-        </View>
-
-        <HeaderIconButton
-          icon="shopping-bag"
-          badge={cartCount}
+        <HeaderCartButton
+          count={cartCount}
           onPress={() => router.push('/(tabs)/cart')}
         />
       </View>
+    </GlassPanel>
+  );
+}
 
-      <View style={styles.hero}>
+export function HomeHero({ userName, productCount = 0, favoriteCount = 0 }: HomeHeroProps) {
+  const firstName = userName.split(' ')[0] ?? 'Visitante';
+
+  return (
+    <View style={styles.hero}>
+      <Animated.View entering={FadeInDown.duration(motion.normal).springify()}>
         <Text style={styles.greeting}>
           {getGreeting()}, <Text style={styles.greetingName}>{firstName}</Text>
         </Text>
-        <Text style={styles.title}>Descubra achados incríveis</Text>
-        <Text style={styles.subtitle}>Produtos selecionados para você</Text>
-      </View>
+      </Animated.View>
+
+      <Animated.View entering={FadeInDown.delay(60).duration(motion.normal).springify()}>
+        <Text style={styles.headline}>Encontre peças com história</Text>
+        <Text style={styles.subtitle}>
+          Um mercado vintage feito para quem gosta de descobrir tesouros escondidos.
+        </Text>
+      </Animated.View>
+
+      <Animated.View
+        entering={FadeInDown.delay(120).duration(motion.normal).springify()}
+        style={styles.statsRow}>
+        <View style={styles.statChip}>
+          <MaterialIcons name="inventory-2" size={14} color={colors.tabBarActive} />
+          <Text style={styles.statText}>{productCount} achados</Text>
+        </View>
+        <View style={styles.statChip}>
+          <MaterialIcons name="favorite" size={14} color={colors.accent} />
+          <Text style={styles.statText}>{favoriteCount} favoritos</Text>
+        </View>
+      </Animated.View>
+    </View>
+  );
+}
+
+/** @deprecated Use HomeToolbar + HomeHero separadamente */
+export function HomeHeader({ userName }: HomeHeaderProps) {
+  return (
+    <View style={styles.legacyContainer}>
+      <HomeToolbar userName={userName} />
+      <HomeHero userName={userName} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  legacyContainer: {
     paddingTop: layout.md,
     marginBottom: layout.md,
+  },
+  glassShell: {
+    borderRadius: radius.sm,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    backgroundColor: colors.tabBarGlass,
+    ...shadows.md,
+  },
+  webGlassFill: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.tabBarGlass,
+  },
+  glassTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(8, 10, 20, 0.34)',
+  },
+  glassSheen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: colors.glassHighlight,
+  },
+  glassContent: {
+    zIndex: 1,
   },
   toolbar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    paddingVertical: layout.sm,
-    paddingHorizontal: layout.sm,
-    marginBottom: layout.lg,
-    ...shadows.md,
-  },
-  brandWrap: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: layout.sm,
-  },
-  brand: {
-    fontFamily: fonts.sans,
-    fontSize: fontSizes.lg,
-    fontWeight: '800',
-    color: colors.primary,
-    letterSpacing: -0.3,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    gap: 8,
   },
   hero: {
-    alignItems: 'center',
-    paddingHorizontal: layout.sm,
-    paddingTop: layout.xs,
+    alignItems: 'flex-start',
+    paddingTop: layout.lg,
+    paddingBottom: layout.sm,
+    gap: 10,
   },
   greeting: {
     fontSize: fontSizes.sm,
     color: colors.textMuted,
-    textAlign: 'center',
-    marginBottom: 6,
+    fontWeight: '500',
   },
   greetingName: {
     color: colors.primary,
     fontWeight: '700',
   },
-  title: {
-    fontFamily: fonts.sans,
-    fontSize: fontSizes.xl,
-    fontWeight: '800',
+  headline: {
+    fontFamily: fonts.gothic,
+    fontSize: fontSizes.xl + 2,
     color: colors.text,
-    letterSpacing: -0.3,
-    textAlign: 'center',
+    lineHeight: 30,
+    maxWidth: 320,
   },
   subtitle: {
-    fontSize: fontSizes.md,
+    fontSize: fontSizes.sm,
     color: colors.textMuted,
+    lineHeight: 20,
     marginTop: 6,
-    textAlign: 'center',
+    maxWidth: 340,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 4,
+  },
+  statChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: radius.full,
+    backgroundColor: colors.primaryLight,
+    borderWidth: 1,
+    borderColor: 'rgba(91, 95, 239, 0.18)',
+  },
+  statText: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    fontWeight: '700',
+    color: colors.primaryDark,
   },
 });

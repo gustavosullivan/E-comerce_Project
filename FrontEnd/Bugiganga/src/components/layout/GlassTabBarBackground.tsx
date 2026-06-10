@@ -6,11 +6,15 @@ import { colors } from '@/src/theme';
 export function GlassTabBarBackground() {
   return (
     <View style={styles.wrap}>
-      <BlurView
-        intensity={Platform.OS === 'web' ? 28 : Platform.OS === 'android' ? 42 : 56}
-        tint="dark"
-        style={StyleSheet.absoluteFill}
-      />
+      {Platform.OS === 'web' ? (
+        <View style={styles.webFill} />
+      ) : (
+        <BlurView
+          intensity={Platform.OS === 'android' ? 42 : 56}
+          tint="dark"
+          style={StyleSheet.absoluteFill}
+        />
+      )}
       <View style={styles.tint} />
       <View style={styles.topBorder} />
     </View>
@@ -21,6 +25,10 @@ const styles = StyleSheet.create({
   wrap: {
     ...StyleSheet.absoluteFillObject,
     overflow: 'hidden',
+    backgroundColor: colors.tabBarGlass,
+  },
+  webFill: {
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: colors.tabBarGlass,
   },
   tint: {

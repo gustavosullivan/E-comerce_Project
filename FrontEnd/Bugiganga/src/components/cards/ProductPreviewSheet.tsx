@@ -50,21 +50,22 @@ export function ProductPreviewSheet({ product, visible, onClose }: ProductPrevie
 
         <View style={styles.paperWrap}>
           <View style={styles.paper}>
-            <Pressable
-              style={styles.closeBtn}
-              onPress={onClose}
-              hitSlop={10}
-              accessibilityRole="button"
-              accessibilityLabel="Fechar">
-              <MaterialIcons name="close" size={20} color={colors.white} />
-            </Pressable>
-
-            <Image
-              source={{ uri: product.imageUrl }}
-              style={styles.image}
-              contentFit="cover"
-              transition={200}
-            />
+            <View style={styles.imageWrap}>
+              <Pressable
+                style={styles.closeBtn}
+                onPress={onClose}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="Fechar">
+                <MaterialIcons name="close" size={20} color={colors.white} />
+              </Pressable>
+              <Image
+                source={{ uri: product.imageUrl }}
+                style={styles.image}
+                contentFit="cover"
+                transition={200}
+              />
+            </View>
 
             <Text style={styles.name}>{product.name}</Text>
             <Text style={styles.price}>{formatCurrency(product.price)}</Text>
@@ -110,15 +111,20 @@ const styles = StyleSheet.create({
     padding: 16,
     ...shadows.lg,
   },
+  imageWrap: {
+    position: 'relative',
+    width: '100%',
+    marginBottom: 14,
+  },
   closeBtn: {
     position: 'absolute',
-    top: 12,
-    right: 12,
+    top: 10,
+    right: 10,
     zIndex: 3,
     width: 32,
     height: 32,
     borderRadius: radius.full,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     borderWidth: 1,
     borderColor: colors.glassBorder,
     alignItems: 'center',
@@ -129,7 +135,6 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: radius.lg,
     backgroundColor: colors.glassImageBg,
-    marginBottom: 14,
   },
   name: {
     fontFamily: fonts.sans,

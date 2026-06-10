@@ -2,31 +2,27 @@ import { Redirect, Tabs } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { StyleSheet } from 'react-native';
 
-import { GlassTabBarBackground } from '@/src/components/layout/GlassTabBarBackground';
-import { GlassTabButton } from '@/src/components/layout/GlassTabButton';
-import { TAB_BAR_HEIGHT, useTabBarInset } from '@/src/hooks/useTabBarInset';
+import { GlassTabBar } from '@/src/components/layout/GlassTabBar';
+import { TAB_BAR_HEIGHT } from '@/src/hooks/useTabBarInset';
 import { useCartStore } from '@/src/store/cartStore';
 import { useAuthStore } from '@/src/stores/authStore';
-import { colors, fontSizes, fonts, layout, radius } from '@/src/theme';
+import { colors, fontSizes, fonts } from '@/src/theme';
 
 export default function TabLayout() {
   const token = useAuthStore((s) => s.token);
   const cartCount = useCartStore((s) => s.getItemCount());
-  const { tabBarBottom } = useTabBarInset();
 
   if (!token) return <Redirect href="/login" />;
 
   return (
     <Tabs
+      tabBar={(props) => <GlassTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarButton: GlassTabButton,
-        tabBarBackground: () => <GlassTabBarBackground />,
-        tabBarActiveTintColor: colors.tabBarActive,
+        tabBarActiveTintColor: colors.white,
         tabBarInactiveTintColor: colors.tabBarInactive,
-        tabBarStyle: [styles.tabBar, { bottom: tabBarBottom }],
+        tabBarStyle: styles.tabBarMetrics,
         tabBarLabelStyle: styles.tabLabel,
-        tabBarItemStyle: styles.tabItem,
       }}>
       <Tabs.Screen
         name="index"
@@ -83,24 +79,11 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  tabBar: {
-    position: 'absolute',
-    left: layout.md,
-    right: layout.md,
+  tabBarMetrics: {
     height: TAB_BAR_HEIGHT,
-    paddingTop: 6,
-    paddingBottom: 6,
-    paddingHorizontal: 6,
     backgroundColor: 'transparent',
     borderTopWidth: 0,
-    borderRadius: radius.xl,
-    overflow: 'hidden',
-    zIndex: 100,
-    elevation: 24,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 20,
+    position: 'absolute',
   },
   tabLabel: {
     fontFamily: fonts.sans,
@@ -108,10 +91,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 2,
     marginBottom: 0,
-  },
-  tabItem: {
-    borderRadius: radius.lg,
-    paddingVertical: 2,
   },
   badge: {
     backgroundColor: colors.accent,

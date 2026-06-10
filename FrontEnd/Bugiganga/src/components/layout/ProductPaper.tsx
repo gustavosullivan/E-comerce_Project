@@ -11,18 +11,21 @@ type ProductPaperProps = {
   children: ReactNode;
   onClose: () => void;
   large?: boolean;
+  hideClose?: boolean;
 };
 
-export function ProductPaper({ children, onClose, large }: ProductPaperProps) {
+export function ProductPaper({ children, onClose, large, hideClose }: ProductPaperProps) {
   return (
     <Animated.View entering={FadeIn.duration(220)} style={styles.overlay}>
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Fechar" />
       <Animated.View
         entering={ZoomIn.duration(320).springify()}
         style={[styles.paper, large && styles.paperLarge]}>
-        <Pressable style={styles.closeBtn} onPress={onClose} hitSlop={12}>
-          <MaterialIcons name="close" size={20} color={colors.text} />
-        </Pressable>
+        {!hideClose ? (
+          <Pressable style={styles.closeBtn} onPress={onClose} hitSlop={12}>
+            <MaterialIcons name="close" size={20} color={colors.text} />
+          </Pressable>
+        ) : null}
         {children}
       </Animated.View>
     </Animated.View>

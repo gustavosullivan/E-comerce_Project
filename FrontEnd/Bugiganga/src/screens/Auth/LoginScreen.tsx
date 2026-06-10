@@ -17,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '@/src/components/buttons/PrimaryButton';
 import { CustomInput } from '@/src/components/forms/CustomInput';
 import { PasswordVisibilityToggle } from '@/src/components/forms/PasswordVisibilityToggle';
-import { LogoHeader } from '@/src/components/layout/LogoHeader';
+import { LoginLogo } from '@/src/components/layout/LoginLogo';
 import { VintageCard } from '@/src/components/layout/VintageCard';
 import { DEV_MOCK_LOGIN_FORM, formatDevLoginHint } from '@/src/config/devCredentials';
 import { useAuth } from '@/src/hooks/useAuth';
@@ -50,7 +50,7 @@ export default function LoginScreen() {
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled">
           <View>
-            <LogoHeader />
+            <LoginLogo />
             <VintageCard>
               {error ? (
                 <View style={styles.errorBanner}>
@@ -86,7 +86,7 @@ export default function LoginScreen() {
               </Pressable>
             </View>
           </View>
-          <Text style={styles.footer}>Bugiganga © 2026</Text>
+          <Text style={styles.footer}>Bugigangas © 2026</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

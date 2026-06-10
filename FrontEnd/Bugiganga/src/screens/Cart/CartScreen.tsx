@@ -41,6 +41,7 @@ export default function CartScreen() {
         <PageContainer>
           <ScreenHeader
             title="Carrinho"
+            icon="shopping-bag"
             subtitle={items.length === 0 ? 'Nenhum item ainda' : `${itemCount} unidade(s) · ${items.length} produto(s)`}
           />
         </PageContainer>
