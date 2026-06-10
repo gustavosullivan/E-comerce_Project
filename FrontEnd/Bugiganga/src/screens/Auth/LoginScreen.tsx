@@ -1,94 +1,197 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
-import { useForm } from 'react-hook-form';
-import { StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInUp } from 'react-native-reanimated';
+import { useState } from 'react';
+import { Controller, useForm, type Control } from 'react-hook-form';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '@/src/components/buttons/PrimaryButton';
 import { CustomInput } from '@/src/components/forms/CustomInput';
-import { PasswordField } from '@/src/components/forms/PasswordField';
+import { PasswordVisibilityToggle } from '@/src/components/forms/PasswordVisibilityToggle';
 import { LogoHeader } from '@/src/components/layout/LogoHeader';
 import { VintageCard } from '@/src/components/layout/VintageCard';
-import { ScreenContainer } from '@/src/components/ui/ScreenContainer';
-import { TextLink } from '@/src/components/ui/TextLink';
+import { DEV_MOCK_LOGIN_FORM, formatDevLoginHint } from '@/src/config/devCredentials';
 import { useAuth } from '@/src/hooks/useAuth';
-import { cardStyles, colors } from '@/src/theme';
+import { useDevLoginDefaults } from '@/src/hooks/useDevLoginDefaults';
+import { colors, fontSizes, fonts, radius } from '@/src/theme';
 import { type LoginFormData, loginSchema } from '@/src/validation/loginSchema';
 
 export default function LoginScreen() {
   const { login, isLoading, error, clearError } = useAuth();
+  const { defaults, save } = useDevLoginDefaults();
+  const [showPassword, setShowPassword] = useState(false);
   const { control, handleSubmit } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: DEV_MOCK_LOGIN_FORM,
+    values: defaults,
   });
 
   const onSubmit = handleSubmit((data) => {
     clearError();
+    save(data);
     login(data);
   });
 
   return (
-    <ScreenContainer scroll keyboard contentStyle={styles.content}>
-      <LogoHeader />
-      <Animated.View entering={FadeInUp.delay(180).duration(420)}>
-        <VintageCard>
-        {error ? (
-          <View style={styles.errorBox}>
-            <Text style={styles.error}>{error}</Text>
+    <SafeAreaView style={styles.screen}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled">
+          <View>
+            <LogoHeader />
+            <VintageCard>
+              {error ? (
+                <View style={styles.errorBanner}>
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              ) : null}
+              <CustomInput
+                control={control}
+                name="email"
+                label="Email"
+                placeholder="demo@bugigangas.com"
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+              <PasswordField
+                control={control}
+                show={showPassword}
+                onToggle={() => setShowPassword((p) => !p)}
+                onSubmit={onSubmit}
+              />
+              <Pressable
+                style={styles.forgotLink}
+                onPress={() => router.push('/forgot-password')}>
+                <Text style={styles.forgotText}>Esqueci a senha</Text>
+              </Pressable>
+              <PrimaryButton label="Entrar" onPress={onSubmit} isLoading={isLoading} />
+              <Text style={styles.hint}>{formatDevLoginHint()}</Text>
+            </VintageCard>
+            <View style={styles.linkRow}>
+              <Text style={styles.linkLabel}>Não possui conta?</Text>
+              <Pressable onPress={() => router.push('/register')}>
+                <Text style={styles.linkAction}>Criar conta</Text>
+              </Pressable>
+            </View>
           </View>
-        ) : null}
-        <CustomInput
-          control={control}
-          name="email"
-          label="Email"
-          placeholder="seu@email.com"
-          keyboardType="email-address"
-        />
-        <PasswordField
+          <Text style={styles.footer}>Bugiganga © 2026</Text>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+function PasswordField({
+  control,
+  show,
+  onToggle,
+  onSubmit,
+}: {
+  control: Control<LoginFormData>;
+  show: boolean;
+  onToggle: () => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <View style={styles.fieldGroup}>
+      <Text style={styles.label}>Senha</Text>
+      <View>
+        <Controller
           control={control}
           name="password"
-          label="Senha"
-          placeholder="Sua senha"
-          onSubmitEditing={onSubmit}
+          render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+            <>
+              <TextInput
+                style={[styles.input, error && styles.inputError]}
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                placeholder="Sua senha"
+                placeholderTextColor={colors.textMuted}
+                secureTextEntry={!show}
+                onSubmitEditing={onSubmit}
+              />
+              {error ? <Text style={styles.fieldError}>{error.message}</Text> : null}
+            </>
+          )}
         />
-        <PrimaryButton label="Entrar" onPress={onSubmit} isLoading={isLoading} />
-        <View style={styles.hintBox}>
-          <Text style={styles.hint}>Demo: demo@bugigangas.com · 12345678</Text>
-        </View>
-        </VintageCard>
-      </Animated.View>
-      <TextLink prefix="Não possui conta?" label="Criar Conta" onPress={() => router.push('/register')} />
-      <Text style={styles.footer}>Bugiganga © 2026</Text>
-    </ScreenContainer>
+        <PasswordVisibilityToggle visible={show} onToggle={onToggle} />
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    paddingTop: 24,
-    paddingBottom: 32,
-    justifyContent: 'space-between',
-    minHeight: '100%',
+  screen: { flex: 1, backgroundColor: colors.background },
+  flex: { flex: 1 },
+  scroll: { flexGrow: 1, padding: 24, justifyContent: 'space-between' },
+  errorBanner: {
+    backgroundColor: colors.dangerLight,
+    borderRadius: radius.md,
+    padding: 12,
+    marginBottom: 16,
   },
-  errorBox: {
-    ...cardStyles.inset,
-    marginBottom: 14,
-    borderColor: colors.danger,
-    backgroundColor: '#F5E0DC',
+  errorText: { color: colors.danger, fontSize: fontSizes.sm, lineHeight: 20 },
+  fieldGroup: { marginBottom: 8 },
+  label: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
   },
-  error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
-  hintBox: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+  input: {
+    backgroundColor: colors.inputBg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: fontSizes.md,
+    color: colors.text,
+    paddingRight: 48,
   },
-  hint: { fontSize: 11, color: colors.textMuted, textAlign: 'center', lineHeight: 16 },
-  footer: {
-    fontSize: 11,
+  inputError: { borderColor: colors.danger },
+  fieldError: { fontSize: fontSizes.xs, color: colors.danger, marginTop: 6 },
+  forgotLink: { alignSelf: 'flex-end', marginBottom: 16, marginTop: 4 },
+  forgotText: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    color: colors.primary,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  hint: {
+    fontSize: fontSizes.xs,
     color: colors.textMuted,
     textAlign: 'center',
-    marginTop: 28,
-    letterSpacing: 0.5,
+    marginTop: 14,
+    backgroundColor: colors.primaryLight,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: radius.sm,
+    overflow: 'hidden',
+  },
+  linkRow: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 24 },
+  linkLabel: { fontSize: fontSizes.md, color: colors.textMuted },
+  linkAction: { fontSize: fontSizes.md, fontWeight: '700', color: colors.primary },
+  footer: {
+    fontFamily: fonts.gothic,
+    fontSize: fontSizes.sm,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: 24,
   },
 });

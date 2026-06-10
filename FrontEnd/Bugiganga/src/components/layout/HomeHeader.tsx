@@ -1,115 +1,120 @@
-import { Image } from 'expo-image';
 import { StyleSheet, Text, View } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import Animated, { FadeInRight } from 'react-native-reanimated';
 
-import { Badge } from '@/src/components/ui/Badge';
-import { ScalePressable } from '@/src/components/ui/ScalePressable';
-import { useAuthStore } from '@/src/stores/authStore';
+import { HeaderIconButton } from '@/src/components/layout/HeaderIconButton';
 import { useCartStore } from '@/src/store/cartStore';
-import { fonts, radii, textStyles, colors, shadow } from '@/src/theme';
+import { colors, fontSizes, fonts, radius, shadows } from '@/src/theme';
+import { layout } from '@/src/theme/layout';
 
 type HomeHeaderProps = {
   userName: string;
 };
 
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Bom dia';
+  if (hour < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+}
+
 export function HomeHeader({ userName }: HomeHeaderProps) {
-  const avatarUri = useAuthStore((s) => s.avatarUri);
-  const cartCount = useCartStore((s) => s.getItemCount());
+  const firstName = userName.split(' ')[0] ?? 'Visitante';
+  const initials = getInitials(userName);
+  const cartCount = useCartStore((s) => s.items.length);
 
   return (
-    <Animated.View entering={FadeInRight.duration(400)} style={styles.wrap}>
-      <ScalePressable
-        style={styles.avatarWrap}
-        onPress={() => router.push('/(tabs)/profile')}
-        accessibilityRole="button">
-        <View style={styles.avatar}>
-          {avatarUri ? (
-            <Image source={{ uri: avatarUri }} style={styles.avatarImg} contentFit="cover" />
-          ) : (
-            <MaterialIcons name="person" size={20} color={colors.white} />
-          )}
-        </View>
-        <View>
-          <Text style={styles.greeting}>Olá,</Text>
-          <Text style={styles.userName} numberOfLines={1}>
-            {userName.split(' ')[0]}
-          </Text>
-        </View>
-      </ScalePressable>
+    <View style={styles.container}>
+      <View style={styles.toolbar}>
+        <HeaderIconButton
+          variant="primary"
+          label={initials}
+          onPress={() => router.push('/(tabs)/profile')}
+        />
 
-      <View style={styles.logoBlock}>
-        <Text style={textStyles.brandSm}>BUGIGANGA</Text>
-        <View style={styles.logoLine} />
+        <View style={styles.brandWrap}>
+          <Text style={styles.brand}>Bugiganga</Text>
+        </View>
+
+        <HeaderIconButton
+          icon="shopping-bag"
+          badge={cartCount}
+          onPress={() => router.push('/(tabs)/cart')}
+        />
       </View>
 
-      <ScalePressable
-        style={styles.cartBtn}
-        onPress={() => router.push('/(tabs)/cart')}
-        accessibilityRole="button">
-        <MaterialIcons name="shopping-cart" size={22} color={colors.primary} />
-        <Badge count={cartCount} size="md" />
-      </ScalePressable>
-    </Animated.View>
+      <View style={styles.hero}>
+        <Text style={styles.greeting}>
+          {getGreeting()}, <Text style={styles.greetingName}>{firstName}</Text>
+        </Text>
+        <Text style={styles.title}>Descubra achados incríveis</Text>
+        <Text style={styles.subtitle}>Produtos selecionados para você</Text>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: {
+  container: {
+    paddingTop: layout.md,
+    marginBottom: layout.md,
+  },
+  toolbar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    paddingBottom: 14,
-  },
-  avatarWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    maxWidth: '34%',
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: colors.border,
-    overflow: 'hidden',
-  },
-  avatarImg: { width: '100%', height: '100%' },
-  greeting: {
-    fontSize: 10,
-    color: colors.textMuted,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  userName: { fontSize: 13, fontWeight: '800', color: colors.text, flexShrink: 1 },
-  logoBlock: { alignItems: 'center', flex: 1 },
-  logoLine: {
-    width: 52,
-    height: 2,
-    backgroundColor: colors.primary,
-    marginTop: 5,
-    borderRadius: radii.full,
-    opacity: 0.55,
-  },
-  cartBtn: {
-    width: 46,
-    height: 46,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: radii.full,
     backgroundColor: colors.card,
-    ...shadow.card,
+    borderRadius: radius.lg,
+    paddingVertical: layout.sm,
+    paddingHorizontal: layout.sm,
+    marginBottom: layout.lg,
+    ...shadows.md,
+  },
+  brandWrap: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: layout.sm,
+  },
+  brand: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.lg,
+    fontWeight: '800',
+    color: colors.primary,
+    letterSpacing: -0.3,
+  },
+  hero: {
+    alignItems: 'center',
+    paddingHorizontal: layout.sm,
+    paddingTop: layout.xs,
+  },
+  greeting: {
+    fontSize: fontSizes.sm,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  greetingName: {
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  title: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xl,
+    fontWeight: '800',
+    color: colors.text,
+    letterSpacing: -0.3,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: fontSizes.md,
+    color: colors.textMuted,
+    marginTop: 6,
+    textAlign: 'center',
   },
 });

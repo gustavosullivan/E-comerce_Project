@@ -8,6 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ScalePressable } from '@/src/components/ui/ScalePressable';
+import { snackbar } from '@/src/store/snackbarStore';
 import { useAuthStore } from '@/src/stores/authStore';
 import { colors, fonts, motion, radii, shadow } from '@/src/theme';
 import { pickAvatarImage } from '@/src/utils/pickAvatarImage';
@@ -39,6 +40,7 @@ export function ProfileAvatarPicker({ size = 'md', layout = 'column' }: ProfileA
     if (result?.uri) {
       setAvatarUri(result.uri);
       successFeedback();
+      snackbar.success('Foto de perfil atualizada');
       ringScale.value = withSpring(1.06, motion.spring);
       ringScale.value = withSpring(1, motion.spring);
     }
@@ -50,7 +52,10 @@ export function ProfileAvatarPicker({ size = 'md', layout = 'column' }: ProfileA
       {
         text: 'Remover',
         style: 'destructive',
-        onPress: () => setAvatarUri(null),
+        onPress: () => {
+          setAvatarUri(null);
+          snackbar.info('Foto de perfil removida');
+        },
       },
     ]);
   };

@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { useForm } from 'react-hook-form';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { PrimaryButton } from '@/src/components/buttons/PrimaryButton';
@@ -12,6 +12,7 @@ import { ProfileFieldRow } from '@/src/components/profile/ProfileFieldRow';
 import { PageHeader } from '@/src/components/ui/PageHeader';
 import { ScreenContainer } from '@/src/components/ui/ScreenContainer';
 import { useAuth } from '@/src/hooks/useAuth';
+import { snackbar } from '@/src/store/snackbarStore';
 import { cardStyles, colors } from '@/src/theme';
 import {
   type ChangePasswordFormData,
@@ -34,7 +35,7 @@ export default function MyAccountScreen() {
     try {
       await changePassword(data);
       reset();
-      Alert.alert('Senha alterada', 'Sua nova senha foi salva com sucesso.');
+      snackbar.success('Senha alterada com sucesso');
     } catch {
       // erro exibido no paper
     }

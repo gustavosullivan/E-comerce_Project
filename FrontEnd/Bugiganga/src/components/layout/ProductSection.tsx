@@ -1,8 +1,8 @@
+import { useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
 
 import { ProductCard } from '@/src/components/cards/ProductCard';
-import { routes } from '@/src/navigation/routes';
+import { ProductPreviewSheet } from '@/src/components/cards/ProductPreviewSheet';
 import { colors, fonts } from '@/src/theme';
 import type { Product } from '@/src/types/product';
 import { useFavoritesStore } from '@/src/store/favoritesStore';
@@ -15,11 +15,20 @@ type ProductSectionProps = {
 export function ProductSection({ title, products }: ProductSectionProps) {
   const toggle = useFavoritesStore((s) => s.toggle);
   const isFavorite = useFavoritesStore((s) => s.isFavorite);
+  const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
 
   if (products.length === 0) return null;
 
   return (
     <View style={styles.section}>
+      {previewProduct ? (
+        <ProductPreviewSheet
+          product={previewProduct}
+          visible
+          onClose={() => setPreviewProduct(null)}
+        />
+      ) : null}
+
       <Text style={styles.title}>{title}</Text>
       <FlatList
         horizontal
@@ -29,10 +38,9 @@ export function ProductSection({ title, products }: ProductSectionProps) {
         renderItem={({ item }) => (
           <ProductCard
             product={item}
-            horizontal
             isFavorite={isFavorite(item.id)}
             onToggleFavorite={() => toggle(item)}
-            onBuyPress={() => router.push(routes.productDetails(item.id))}
+            onPress={() => setPreviewProduct(item)}
           />
         )}
       />

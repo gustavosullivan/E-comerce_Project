@@ -1,53 +1,39 @@
 import { StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
-import { colors, textStyles } from '@/src/theme';
+import { BrandLogoMark } from '@/src/components/layout/BrandLogoMark';
+import { colors, fontSizes, fonts } from '@/src/theme';
 
 type LogoHeaderProps = {
   tagline?: string;
 };
 
 export function LogoHeader({
-  tagline = 'Encontre tesouros escondidos',
+  tagline = 'Seu marketplace de achados únicos',
 }: LogoHeaderProps) {
   return (
-    <Animated.View entering={FadeIn.duration(500)} style={styles.wrap}>
-      <View style={styles.ornament}>
-        <View style={styles.line} />
-        <Text style={styles.diamond}>◆</Text>
-        <View style={styles.line} />
-      </View>
-      <Animated.Text entering={FadeInDown.delay(120).duration(400)} style={textStyles.brand}>
-        BUGIGANGA
-      </Animated.Text>
+    <View style={styles.wrap}>
+      <BrandLogoMark />
+      <Text style={styles.brand}>Bugiganga</Text>
       <Text style={styles.tagline}>{tagline}</Text>
-      <View style={styles.ornament}>
-        <View style={styles.line} />
-        <Text style={styles.diamond}>◆</Text>
-        <View style={styles.line} />
-      </View>
-    </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', marginBottom: 28, marginTop: 8 },
-  ornament: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginVertical: 10,
+  wrap: { alignItems: 'center', marginBottom: 28 },
+  brand: {
+    fontFamily: fonts.gothic,
+    fontSize: fontSizes.xxl + 6,
+    color: colors.text,
+    letterSpacing: 1,
+    textTransform: 'none',
   },
-  line: { width: 56, height: 1, backgroundColor: colors.border },
-  diamond: { fontSize: 8, color: colors.secondary },
   tagline: {
-    fontSize: 14,
-    fontStyle: 'italic',
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.md,
     color: colors.textMuted,
     textAlign: 'center',
     marginTop: 8,
-    marginBottom: 4,
     paddingHorizontal: 16,
-    lineHeight: 20,
   },
 });

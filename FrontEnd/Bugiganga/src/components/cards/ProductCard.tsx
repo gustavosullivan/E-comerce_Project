@@ -1,219 +1,197 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { ProductImageFrame } from '@/src/components/layout/ProductImageFrame';
-import { ScalePressable } from '@/src/components/ui/ScalePressable';
-import { colors, fonts, shadow } from '@/src/theme';
+import { useCartStore } from '@/src/store/cartStore';
+import { colors, fontSizes, fonts, radius, shadows } from '@/src/theme';
 import type { Product } from '@/src/types/product';
 import { formatCurrency } from '@/src/utils/formatCurrency';
-import { lightImpact, selectionFeedback } from '@/src/utils/haptics';
+
+export const PRODUCT_CARD_HEIGHT = 268;
+const IMAGE_HEIGHT = 130;
 
 type ProductCardProps = {
   product: Product;
-  onBuyPress: () => void;
+  onPress: () => void;
   onToggleFavorite: () => void;
   isFavorite: boolean;
-  grid?: boolean;
-  horizontal?: boolean;
-  width?: number;
+  compact?: boolean;
 };
 
 export function ProductCard({
   product,
-  onBuyPress,
+  onPress,
   onToggleFavorite,
   isFavorite,
-  grid,
-  horizontal,
-  width,
+  compact,
 }: ProductCardProps) {
-  const isCompact = grid || horizontal;
+  const addItem = useCartStore((s) => s.addItem);
+  const [justAdded, setJustAdded] = useState(false);
 
-  const handleFavorite = () => {
-    selectionFeedback();
-    onToggleFavorite();
-  };
-
-  const handleBuy = () => {
-    lightImpact();
-    onBuyPress();
+  const handleAddToCart = () => {
+    addItem(product, 1);
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 1400);
   };
 
   return (
-    <View
-      style={[
-        styles.card,
-        grid && styles.gridCard,
-        horizontal && styles.horizontal,
-        width != null && { width },
-      ]}>
-      <ScalePressable
-        onPress={handleBuy}
-        accessibilityRole="button"
-        accessibilityLabel={product.name}
-        style={styles.pressArea}>
-        <View style={[styles.imageSection, grid && styles.imageSectionGrid]}>
-          <ProductImageFrame
-            uri={product.imageUrl}
-            aspectRatio={1}
-            framed
-            compact={isCompact}
-          />
-          {product.isNew ? (
-            <View style={styles.tagNew}>
-              <Text style={styles.tagText}>Novo</Text>
-            </View>
-          ) : null}
-          <ScalePressable
-            style={[styles.favBtn, grid && styles.favBtnGrid, isFavorite && styles.favBtnActive]}
-            onPress={handleFavorite}
-            hitSlop={6}>
+    <View style={[styles.shell, compact && styles.shellCompact]}>
+      <Pressable
+        onPress={onPress}
+        style={styles.card}
+        accessibilityRole="button">
+        <View style={styles.imageWrap}>
+          <Image source={{ uri: product.imageUrl }} style={styles.image} contentFit="cover" />
+          <Pressable
+            style={styles.favBtn}
+            onPress={(e) => {
+              e.stopPropagation();
+              onToggleFavorite();
+            }}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}>
             <MaterialIcons
               name={isFavorite ? 'favorite' : 'favorite-border'}
-              size={grid ? 13 : 16}
-              color={isFavorite ? colors.white : colors.primary}
+              size={18}
+              color={isFavorite ? colors.accent : colors.textMuted}
             />
-          </ScalePressable>
+          </Pressable>
         </View>
-      </ScalePressable>
 
-      <View style={[styles.legend, grid && styles.legendGrid]}>
-        <Text style={[styles.name, grid && styles.nameGrid]} numberOfLines={2}>
-          {product.name}
-        </Text>
-        <Text style={[styles.price, grid && styles.priceGrid]} numberOfLines={1}>
-          {formatCurrency(product.price)}
-        </Text>
-        <ScalePressable
-          style={styles.buyBtn}
-          onPress={handleBuy}
-          accessibilityRole="button"
-          accessibilityLabel={`Comprar ${product.name}`}>
-          <MaterialIcons name="shopping-bag" size={11} color={colors.white} />
-          <Text style={[styles.buyLabel, grid && styles.buyLabelGrid]}>Comprar</Text>
-        </ScalePressable>
-      </View>
+        <View style={styles.content}>
+          <View style={styles.textBlock}>
+            <Text style={styles.name} numberOfLines={2}>
+              {product.name}
+            </Text>
+            <Text style={styles.category} numberOfLines={1}>
+              {product.categoryName}
+            </Text>
+          </View>
+
+          <View style={styles.priceRow}>
+            <Text style={styles.price} numberOfLines={1}>
+              {formatCurrency(product.price)}
+            </Text>
+            <Pressable
+              style={[styles.cartBtn, justAdded && styles.cartBtnAdded]}
+              onPress={(e) => {
+                e.stopPropagation();
+                handleAddToCart();
+              }}
+              hitSlop={6}
+              accessibilityRole="button"
+              accessibilityLabel="Adicionar ao carrinho">
+              <MaterialIcons
+                name={justAdded ? 'check' : 'add-shopping-cart'}
+                size={18}
+                color={colors.white}
+              />
+            </Pressable>
+          </View>
+        </View>
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.inputBg,
-    borderRadius: 4,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    overflow: 'hidden',
-    ...shadow.card,
+  shell: {
+    width: 160,
+    height: PRODUCT_CARD_HEIGHT,
+    marginRight: 12,
   },
-  gridCard: {
-    borderWidth: 1,
-  },
-  horizontal: {
-    width: 120,
-    marginRight: 10,
-  },
-  pressArea: {
+  shellCompact: {
     width: '100%',
+    height: PRODUCT_CARD_HEIGHT,
+    marginRight: 0,
   },
-  imageSection: {
-    position: 'relative',
-    padding: 6,
-    paddingBottom: 4,
-    backgroundColor: colors.card,
-  },
-  imageSectionGrid: {
-    padding: 4,
-    paddingBottom: 2,
-  },
-  tagNew: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
-    backgroundColor: colors.success,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 2,
+  card: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    backgroundColor: colors.glass,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.text,
+    borderColor: colors.glassBorder,
+    padding: 10,
+    overflow: 'hidden',
+    ...shadows.lg,
   },
-  tagText: {
-    fontSize: 8,
-    fontWeight: '800',
-    color: colors.white,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
+  imageWrap: {
+    position: 'relative',
+    height: IMAGE_HEIGHT,
+  },
+  image: {
+    width: '100%',
+    height: IMAGE_HEIGHT,
+    borderRadius: radius.md,
+    backgroundColor: colors.inputBg,
   },
   favBtn: {
     position: 'absolute',
     top: 8,
     right: 8,
     backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 4,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: radius.full,
+    padding: 6,
+    ...shadows.sm,
   },
-  favBtnGrid: {
-    top: 5,
-    right: 5,
-    padding: 3,
-    borderRadius: 10,
+  content: {
+    flex: 1,
+    marginTop: 10,
+    justifyContent: 'space-between',
+    minHeight: 0,
   },
-  favBtnActive: {
-    backgroundColor: colors.danger,
-    borderColor: colors.danger,
-  },
-  legend: {
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    gap: 3,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.card,
-  },
-  legendGrid: {
-    paddingHorizontal: 7,
-    paddingVertical: 7,
+  textBlock: {
+    flexShrink: 1,
+    minHeight: 52,
   },
   name: {
-    fontFamily: fonts.serif,
-    fontSize: 12,
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
     fontWeight: '600',
-    color: colors.text,
-    lineHeight: 15,
+    color: colors.white,
+    lineHeight: 18,
+    height: 36,
   },
-  nameGrid: {
-    fontWeight: '700',
+  category: {
+    fontSize: fontSizes.xs,
+    color: colors.white,
+    marginTop: 2,
+    height: 16,
+    lineHeight: 16,
+    opacity: 0.85,
   },
-  price: {
-    fontFamily: fonts.serif,
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.primary,
-  },
-  priceGrid: {
-    fontWeight: '800',
-  },
-  buyBtn: {
-    marginTop: 4,
-    backgroundColor: colors.primary,
-    borderRadius: 3,
-    borderWidth: 1,
-    borderColor: colors.text,
-    paddingVertical: 5,
+  priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
+    justifyContent: 'space-between',
+    height: 36,
+    gap: 8,
+    marginTop: 8,
   },
-  buyLabel: {
-    fontFamily: fonts.serif,
-    fontSize: 11,
-    fontWeight: '700',
+  price: {
+    flex: 1,
+    fontSize: fontSizes.md,
+    fontWeight: '800',
     color: colors.white,
+    minWidth: 0,
   },
-  buyLabelGrid: {
-    fontSize: 10,
+  cartBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    backgroundColor: colors.success,
+    borderWidth: 1,
+    borderColor: colors.success,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  cartBtnAdded: {
+    backgroundColor: '#0D9668',
+    borderColor: '#0D9668',
   },
 });

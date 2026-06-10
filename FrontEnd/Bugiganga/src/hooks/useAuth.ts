@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 
 import { authService } from '@/src/services/authService';
+import { snackbar } from '@/src/store/snackbarStore';
 import { useAuthStore } from '@/src/stores/authStore';
 import type { ApiError } from '@/src/types/api';
 import type { LoginFormData } from '@/src/validation/loginSchema';
@@ -36,6 +37,7 @@ export function useAuth() {
       try {
         const response = await authService.login(data);
         setSession(response.token, response.user, data.password);
+        snackbar.success(`Bem-vindo, ${response.user.name.split(' ')[0]}!`);
         router.replace('/(tabs)');
       } catch (err) {
         setError(toErrorMessage(err));
@@ -59,6 +61,7 @@ export function useAuth() {
           username: usernameFromEmail(rest.email),
         });
         setSession(response.token, response.user, rest.password);
+        snackbar.success('Conta criada com sucesso');
         router.replace('/(tabs)');
       } catch (err) {
         setError(toErrorMessage(err));
@@ -71,6 +74,7 @@ export function useAuth() {
 
   const logout = useCallback(() => {
     clearSession();
+    snackbar.info('Você saiu da conta');
     router.replace('/login');
   }, [clearSession]);
 

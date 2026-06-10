@@ -1,9 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { ScalePressable } from '@/src/components/ui/ScalePressable';
-import { colors } from '@/src/theme';
-import { selectionFeedback } from '@/src/utils/haptics';
+import { colors, fontSizes, radius } from '@/src/theme';
 
 type QuantitySelectorProps = {
   quantity: number;
@@ -22,26 +20,16 @@ export function QuantitySelector({
 }: QuantitySelectorProps) {
   return (
     <View style={[styles.row, compact && styles.rowCompact]}>
-      <ScalePressable
-        style={[styles.btn, compact && styles.btnCompact, quantity <= min && styles.btnDisabled]}
-        onPress={() => {
-          if (quantity > min) {
-            selectionFeedback();
-            onDecrease();
-          }
-        }}
+      <Pressable
+        style={[styles.btn, quantity <= min && styles.btnDisabled]}
+        onPress={onDecrease}
         disabled={quantity <= min}>
-        <MaterialIcons name="remove" size={compact ? 18 : 22} color={colors.primary} />
-      </ScalePressable>
-      <Text style={[styles.qty, compact && styles.qtyCompact]}>{quantity}</Text>
-      <ScalePressable
-        style={[styles.btn, compact && styles.btnCompact]}
-        onPress={() => {
-          selectionFeedback();
-          onIncrease();
-        }}>
-        <MaterialIcons name="add" size={compact ? 18 : 22} color={colors.primary} />
-      </ScalePressable>
+        <MaterialIcons name="remove" size={20} color={colors.primary} />
+      </Pressable>
+      <Text style={styles.qty}>{quantity}</Text>
+      <Pressable style={styles.btn} onPress={onIncrease}>
+        <MaterialIcons name="add" size={20} color={colors.primary} />
+      </Pressable>
     </View>
   );
 }
@@ -50,38 +38,34 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 20,
     alignSelf: 'center',
     marginVertical: 16,
+    backgroundColor: colors.primaryLight,
+    borderRadius: radius.xl,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   rowCompact: {
     gap: 10,
     marginVertical: 0,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   btn: {
-    width: 40,
-    height: 40,
-    borderRadius: 3,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  btnCompact: {
-    width: 32,
-    height: 32,
-  },
   btnDisabled: { opacity: 0.4 },
   qty: {
-    fontSize: 20,
+    fontSize: fontSizes.lg,
     fontWeight: '700',
     color: colors.text,
     minWidth: 32,
     textAlign: 'center',
-  },
-  qtyCompact: {
-    fontSize: 16,
-    minWidth: 24,
   },
 });

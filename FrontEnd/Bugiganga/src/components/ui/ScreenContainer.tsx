@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, layout } from '@/src/theme';
+import { colors, contentLayout } from '@/src/theme';
 
 type ScreenContainerProps = PropsWithChildren<{
   scroll?: boolean;
@@ -92,12 +92,12 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
-    paddingHorizontal: layout.screenPadding,
+    paddingHorizontal: contentLayout.screenPadding,
   },
   scroll: {
     flexGrow: 1,
-    paddingHorizontal: layout.screenPadding,
-    paddingBottom: layout.screenPadding + 8,
+    paddingHorizontal: contentLayout.screenPadding,
+    paddingBottom: contentLayout.screenPadding + 8,
   },
   centered: {
     justifyContent: 'center',

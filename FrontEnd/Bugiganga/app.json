@@ -28,12 +28,6 @@
     "plugins": [
       "expo-router",
       [
-        "expo-image-picker",
-        {
-          "photosPermission": "Permita acesso às fotos para alterar sua foto de perfil."
-        }
-      ],
-      [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",

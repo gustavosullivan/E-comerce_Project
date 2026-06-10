@@ -1,44 +1,43 @@
 import { Redirect, Tabs } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 
-import { HapticTab } from '@/components/haptic-tab';
-import { Badge } from '@/src/components/ui/Badge';
-import { useAuthStore } from '@/src/stores/authStore';
+import { GlassTabBarBackground } from '@/src/components/layout/GlassTabBarBackground';
+import { GlassTabButton } from '@/src/components/layout/GlassTabButton';
+import { TAB_BAR_HEIGHT, useTabBarInset } from '@/src/hooks/useTabBarInset';
 import { useCartStore } from '@/src/store/cartStore';
-import { colors, fonts, shadow } from '@/src/theme';
-
-function CartTabIcon({ color, size }: { color: string; size: number }) {
-  const count = useCartStore((s) => s.getItemCount());
-  return (
-    <View>
-      <MaterialIcons name="shopping-cart" size={size} color={color} />
-      <Badge count={count} />
-    </View>
-  );
-}
+import { useAuthStore } from '@/src/stores/authStore';
+import { colors, fontSizes, fonts, layout, radius } from '@/src/theme';
 
 export default function TabLayout() {
   const token = useAuthStore((s) => s.token);
+  const cartCount = useCartStore((s) => s.getItemCount());
+  const { tabBarBottom } = useTabBarInset();
+
   if (!token) return <Redirect href="/login" />;
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: styles.tabBar,
+        tabBarButton: GlassTabButton,
+        tabBarBackground: () => <GlassTabBarBackground />,
+        tabBarActiveTintColor: colors.tabBarActive,
+        tabBarInactiveTintColor: colors.tabBarInactive,
+        tabBarStyle: [styles.tabBar, { bottom: tabBarBottom }],
         tabBarLabelStyle: styles.tabLabel,
         tabBarItemStyle: styles.tabItem,
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="home" size={size} color={color} />
+          title: 'Início',
+          tabBarIcon: ({ color, size, focused }) => (
+            <MaterialIcons
+              name={focused ? 'home-filled' : 'home'}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -46,8 +45,12 @@ export default function TabLayout() {
         name="favorites"
         options={{
           title: 'Favoritos',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="favorite" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <MaterialIcons
+              name={focused ? 'favorite' : 'favorite-border'}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -55,15 +58,23 @@ export default function TabLayout() {
         name="cart"
         options={{
           title: 'Carrinho',
-          tabBarIcon: ({ color, size }) => <CartTabIcon color={color} size={size} />,
+          tabBarBadge: cartCount > 0 ? (cartCount > 9 ? '9+' : cartCount) : undefined,
+          tabBarBadgeStyle: styles.badge,
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="shopping-bag" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Conta',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="person" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <MaterialIcons
+              name={focused ? 'person' : 'person-outline'}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -73,20 +84,44 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: colors.card,
-    borderTopWidth: 1.5,
-    borderTopColor: colors.border,
-    height: Platform.OS === 'ios' ? 88 : 68,
-    paddingTop: 8,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 10,
-    ...shadow.lift,
+    position: 'absolute',
+    left: layout.md,
+    right: layout.md,
+    height: TAB_BAR_HEIGHT,
+    paddingTop: 6,
+    paddingBottom: 6,
+    paddingHorizontal: 6,
+    backgroundColor: 'transparent',
+    borderTopWidth: 0,
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    zIndex: 100,
+    elevation: 24,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
   },
   tabLabel: {
-    fontFamily: fonts.serif,
-    fontSize: 11,
-    fontWeight: '700',
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    fontWeight: '600',
+    marginTop: 2,
+    marginBottom: 0,
   },
   tabItem: {
+    borderRadius: radius.lg,
     paddingVertical: 2,
+  },
+  badge: {
+    backgroundColor: colors.accent,
+    color: colors.white,
+    fontSize: 10,
+    fontWeight: '700',
+    minWidth: 18,
+    height: 18,
+    lineHeight: 18,
+    borderWidth: 1.5,
+    borderColor: 'rgba(8, 10, 20, 0.85)',
   },
 });

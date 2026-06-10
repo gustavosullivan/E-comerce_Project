@@ -1,4 +1,4 @@
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -9,8 +9,9 @@ import { PrimaryButton } from '@/src/components/buttons/PrimaryButton';
 import { EmptyState } from '@/src/components/layout/EmptyState';
 import { orderService } from '@/src/services/orderService';
 import { useCheckoutStore } from '@/src/store/checkoutStore';
+import { snackbar } from '@/src/store/snackbarStore';
 import { useCartStore } from '@/src/store/cartStore';
-import { colors, fonts } from '@/src/theme';
+import { colors, fontSizes, fonts, radius, shadows } from '@/src/theme';
 import { formatCurrency } from '@/src/utils/formatCurrency';
 
 export default function CheckoutScreen() {
@@ -25,18 +26,12 @@ export default function CheckoutScreen() {
     setIsConfirming(true);
     try {
       await orderService.createOrder(orderService.fromCartItems(items));
-      Alert.alert('Compra realizada com sucesso.', '', [
-        {
-          text: 'OK',
-          onPress: () => {
-            if (mode === 'cart') clearCart();
-            clearCheckout();
-            router.replace('/(tabs)');
-          },
-        },
-      ]);
+      if (mode === 'cart') clearCart();
+      clearCheckout();
+      snackbar.success('Compra realizada com sucesso!');
+      router.replace('/(tabs)');
     } catch {
-      Alert.alert('Erro', 'Não foi possível confirmar a compra. Tente novamente.');
+      snackbar.error('Não foi possível confirmar a compra');
     } finally {
       setIsConfirming(false);
     }
@@ -46,7 +41,9 @@ export default function CheckoutScreen() {
     return (
       <SafeAreaView style={styles.screen}>
         <EmptyState icon="shopping-bag" message="Nenhum item para finalizar." />
-        <PrimaryButton label="Voltar à Home" onPress={() => router.replace('/(tabs)')} />
+        <View style={styles.emptyAction}>
+          <PrimaryButton label="Voltar à home" onPress={() => router.replace('/(tabs)')} />
+        </View>
       </SafeAreaView>
     );
   }
@@ -54,11 +51,12 @@ export default function CheckoutScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <Pressable style={styles.back} onPress={() => router.back()}>
-        <MaterialIcons name="arrow-back" size={24} color={colors.primary} />
+        <MaterialIcons name="arrow-back" size={22} color={colors.primary} />
         <Text style={styles.backText}>Voltar</Text>
       </Pressable>
 
       <Text style={styles.title}>Confirmar compra</Text>
+      <Text style={styles.subtitle}>Revise seus itens antes de finalizar</Text>
 
       <FlatList
         data={items}
@@ -85,7 +83,7 @@ export default function CheckoutScreen() {
           <Text style={styles.totalLabel}>Valor total</Text>
           <Text style={styles.totalValue}>{formatCurrency(total)}</Text>
         </View>
-        <PrimaryButton label="Confirmar Compra" onPress={handleConfirm} isLoading={isConfirming} />
+        <PrimaryButton label="Confirmar compra" onPress={handleConfirm} isLoading={isConfirming} />
       </View>
     </SafeAreaView>
   );
@@ -93,40 +91,48 @@ export default function CheckoutScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  back: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 16 },
-  backText: { fontSize: 16, color: colors.primary, fontWeight: '600' },
+  emptyAction: { padding: 16 },
+  back: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 16, paddingBottom: 8 },
+  backText: { fontSize: fontSizes.md, color: colors.primary, fontWeight: '600' },
   title: {
-    fontFamily: fonts.serif,
-    fontSize: 22,
-    fontWeight: '700',
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xl,
+    fontWeight: '800',
     color: colors.text,
     paddingHorizontal: 16,
-    marginBottom: 8,
+    letterSpacing: -0.3,
+  },
+  subtitle: {
+    fontSize: fontSizes.md,
+    color: colors.textMuted,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    marginTop: 4,
   },
   list: { paddingHorizontal: 16, paddingBottom: 16 },
   item: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 14,
     backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 3,
-    padding: 12,
+    borderRadius: radius.lg,
+    padding: 14,
     marginBottom: 10,
+    ...shadows.sm,
   },
-  thumb: { width: 64, height: 64, borderRadius: 2 },
+  thumb: { width: 72, height: 72, borderRadius: radius.md },
   info: { flex: 1 },
-  name: { fontFamily: fonts.serif, fontSize: 15, fontWeight: '600', color: colors.text },
-  meta: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
-  lineTotal: { fontSize: 15, fontWeight: '700', color: colors.primary, marginTop: 6 },
+  name: { fontFamily: fonts.sans, fontSize: fontSizes.md, fontWeight: '600', color: colors.text },
+  meta: { fontSize: fontSizes.sm, color: colors.textMuted, marginTop: 4 },
+  lineTotal: { fontSize: fontSizes.md, fontWeight: '700', color: colors.primary, marginTop: 6 },
   footer: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    padding: 20,
     backgroundColor: colors.card,
-    gap: 12,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    gap: 14,
+    ...shadows.lg,
   },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  totalLabel: { fontFamily: fonts.serif, fontSize: 18, color: colors.text },
-  totalValue: { fontFamily: fonts.serif, fontSize: 22, fontWeight: '700', color: colors.primary },
+  totalLabel: { fontFamily: fonts.sans, fontSize: fontSizes.lg, color: colors.text },
+  totalValue: { fontFamily: fonts.sans, fontSize: fontSizes.xl, fontWeight: '800', color: colors.primary },
 });

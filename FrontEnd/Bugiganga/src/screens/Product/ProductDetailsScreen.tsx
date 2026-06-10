@@ -16,6 +16,7 @@ import { useCartStore } from '@/src/store/cartStore';
 import { useCheckoutStore } from '@/src/store/checkoutStore';
 import { colors, fonts } from '@/src/theme';
 import { formatCurrency } from '@/src/utils/formatCurrency';
+import { snackbar } from '@/src/store/snackbarStore';
 import { successFeedback } from '@/src/utils/haptics';
 
 export default function ProductDetailsScreen() {
@@ -32,12 +33,18 @@ export default function ProductDetailsScreen() {
     if (!product) return;
     addItem(product, quantity);
     successFeedback();
+    snackbar.success(
+      quantity > 1
+        ? `${quantity}× ${product.name} no carrinho`
+        : `${product.name} adicionado ao carrinho`,
+    );
     router.replace('/(tabs)');
   };
 
   const handleBuyNow = () => {
     if (!product) return;
     setBuyNow(product, quantity);
+    snackbar.info('Indo para o checkout…');
     router.push('/checkout');
   };
 

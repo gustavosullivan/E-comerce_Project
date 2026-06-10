@@ -3,7 +3,7 @@ import { type ReactNode } from 'react';
 import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 
-import { colors, layout, radii, shadow } from '@/src/theme';
+import { colors, contentLayout, radii, shadow } from '@/src/theme';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -49,8 +49,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.border,
     paddingTop: 12,
-    paddingHorizontal: layout.screenPadding,
-    paddingBottom: layout.screenPadding,
+    paddingHorizontal: contentLayout.screenPadding,
+    paddingBottom: contentLayout.screenPadding,
     ...shadow.paper,
   },
   paperLarge: {

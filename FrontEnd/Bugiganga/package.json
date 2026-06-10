@@ -3,12 +3,13 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
+    "start": "npx expo start",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
-    "lint": "expo lint"
+    "android": "npx expo start --android",
+    "ios": "npx expo start --ios",
+    "web": "npx expo start --web",
+    "lint": "npx expo lint",
+    "postinstall": "node ./scripts/create-placeholder-assets.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -19,6 +20,7 @@
     "@react-navigation/native": "^7.1.8",
     "axios": "^1.16.1",
     "expo": "~54.0.33",
+    "expo-blur": "~15.0.8",
     "expo-constants": "~18.0.13",
     "expo-font": "~14.0.11",
     "expo-haptics": "~15.0.8",

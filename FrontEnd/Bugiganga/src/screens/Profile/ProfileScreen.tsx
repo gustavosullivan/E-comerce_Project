@@ -1,146 +1,207 @@
-import { router } from 'expo-router';
-import { Alert, StyleSheet, Text, View } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { StyleSheet, Text, View } from 'react-native';
 
+import { PrimaryButton } from '@/src/components/buttons/PrimaryButton';
+import { SecondaryButton } from '@/src/components/buttons/SecondaryButton';
+import { CustomInput } from '@/src/components/forms/CustomInput';
+import { PasswordField } from '@/src/components/forms/PasswordField';
 import { ProfilePaper, ProfilePaperDivider } from '@/src/components/layout/ProfilePaper';
 import { ProfileAvatarPicker } from '@/src/components/profile/ProfileAvatarPicker';
-import { MenuListItem } from '@/src/components/ui/MenuListItem';
 import { ScreenContainer } from '@/src/components/ui/ScreenContainer';
 import { useAuth } from '@/src/hooks/useAuth';
-import { routes } from '@/src/navigation/routes';
-import { useCartStore } from '@/src/store/cartStore';
-import { useFavoritesStore } from '@/src/store/favoritesStore';
-import { colors, fonts, textStyles } from '@/src/theme';
-
-const MENU = [
-  { label: 'Minha Conta', icon: 'person-outline' as const, action: 'account' as const },
-  { label: 'Configurações', icon: 'settings' as const, action: 'settings' as const },
-  { label: 'Histórico de Compras', icon: 'receipt-long' as const, action: 'orders' as const },
-  { label: 'Favoritos', icon: 'favorite-border' as const, route: routes.favorites },
-];
-
-function StatChip({
-  icon,
-  label,
-  value,
-}: {
-  icon: keyof typeof MaterialIcons.glyphMap;
-  label: string;
-  value: number;
-}) {
-  return (
-    <View style={styles.statChip}>
-      <MaterialIcons name={icon} size={18} color={colors.primary} />
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
+import { useTabBarInset } from '@/src/hooks/useTabBarInset';
+import { userService } from '@/src/services/userService';
+import { snackbar } from '@/src/store/snackbarStore';
+import { useAuthStore } from '@/src/stores/authStore';
+import { cardStyles, colors, textStyles } from '@/src/theme';
+import {
+  type ProfileSettingsFormData,
+  profileSettingsSchema,
+} from '@/src/validation/profileSettingsSchema';
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
-  const cartCount = useCartStore((s) => s.getItemCount());
-  const favCount = useFavoritesStore((s) => s.items.length);
+  const { user, changePassword, logout } = useAuth();
+  const { contentBottomInset } = useTabBarInset();
+  const setUser = useAuthStore((s) => s.setUser);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const { control, handleSubmit, reset } = useForm<ProfileSettingsFormData>({
+    resolver: zodResolver(profileSettingsSchema),
+    defaultValues: {
+      name: user?.name ?? '',
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    },
+  });
+
+  useEffect(() => {
+    if (user?.name) {
+      reset({
+        name: user.name,
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+    }
+  }, [user?.name, reset]);
+
+  const onSave = handleSubmit(async (data) => {
+    setError(null);
+    setIsSaving(true);
+    try {
+      const nameChanged = data.name.trim() !== (user?.name ?? '');
+      const changingPassword =
+        data.currentPassword.length > 0 ||
+        data.newPassword.length > 0 ||
+        data.confirmPassword.length > 0;
+
+      if (nameChanged) {
+        const updated = await userService.updateProfile({ name: data.name.trim() });
+        setUser({
+          id: updated.id,
+          name: updated.name,
+          email: updated.email,
+          username: updated.username,
+        });
+      }
+
+      if (changingPassword) {
+        await changePassword({
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword,
+          confirmPassword: data.confirmPassword,
+        });
+      }
+
+      if (!nameChanged && !changingPassword) {
+        snackbar.info('Nenhuma alteração para salvar');
+        return;
+      }
+
+      reset({
+        name: data.name.trim(),
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+
+      if (nameChanged && changingPassword) {
+        snackbar.success('Perfil e senha atualizados');
+      } else if (nameChanged) {
+        snackbar.success('Nome atualizado');
+      } else {
+        snackbar.success('Senha alterada com sucesso');
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Não foi possível salvar';
+      setError(message);
+      snackbar.error(message);
+    } finally {
+      setIsSaving(false);
+    }
+  });
 
   return (
-    <ScreenContainer scroll contentStyle={styles.content}>
-      <Text style={textStyles.pageTitle}>Conta</Text>
+    <ScreenContainer
+      scroll
+      keyboard
+      contentStyle={{ ...styles.content, paddingBottom: contentBottomInset + 24 }}>
+      <Text style={[textStyles.pageTitle, styles.pageTitle]}>Conta</Text>
 
       <ProfilePaper
-        title={user?.name ?? 'Visitante'}
-        subtitle={user?.email ?? ''}
+        title="Minha Conta"
+        subtitle="Foto, nome e senha"
         delay={60}>
-        <View style={styles.avatarSection}>
+        <View style={styles.avatarBlock}>
           <ProfileAvatarPicker size="lg" />
         </View>
 
-        <View style={styles.memberRow}>
-          <MaterialIcons name="verified" size={16} color={colors.success} />
-          <Text style={styles.memberText}>Membro Bugiganga</Text>
+        <ProfilePaperDivider label="Dados" />
+
+        {error ? (
+          <View style={styles.errorBox}>
+            <Text style={styles.error}>{error}</Text>
+          </View>
+        ) : null}
+
+        <CustomInput
+          control={control}
+          name="name"
+          label="Nome"
+          placeholder="Seu nome completo"
+          autoCapitalize="words"
+        />
+
+        <View style={styles.readOnlyField}>
+          <Text style={textStyles.label}>Email</Text>
+          <View style={styles.readOnlyBox}>
+            <Text style={styles.readOnlyText}>{user?.email ?? '—'}</Text>
+          </View>
         </View>
 
-        <ProfilePaperDivider label="Resumo" />
+        <ProfilePaperDivider label="Senha" />
 
-        <View style={styles.statsRow}>
-          <StatChip icon="favorite" label="Favoritos" value={favCount} />
-          <StatChip icon="shopping-cart" label="Carrinho" value={cartCount} />
+        <PasswordField
+          control={control}
+          name="currentPassword"
+          label="Senha atual"
+          placeholder="Só se for trocar a senha"
+        />
+        <PasswordField
+          control={control}
+          name="newPassword"
+          label="Nova senha"
+          placeholder="Mínimo 8 caracteres"
+        />
+        <PasswordField
+          control={control}
+          name="confirmPassword"
+          label="Confirmar nova senha"
+          placeholder="Repita a nova senha"
+        />
+
+        <View style={styles.actions}>
+          <PrimaryButton label="Salvar alterações" onPress={onSave} isLoading={isSaving} />
+          <SecondaryButton label="Sair da conta" onPress={logout} />
         </View>
       </ProfilePaper>
-
-      <Text style={[textStyles.caption, styles.menuCaption]}>Menu</Text>
-      {MENU.map((item, index) => (
-        <Animated.View key={item.label} entering={FadeInDown.delay(160 + index * 50).duration(350)}>
-          <MenuListItem
-            label={item.label}
-            icon={item.icon}
-            onPress={() => {
-              if ('route' in item && item.route) {
-                router.push(item.route);
-                return;
-              }
-              if (item.action === 'account') {
-                router.push(routes.account);
-                return;
-              }
-              Alert.alert(item.label, 'Em breve');
-            }}
-          />
-        </Animated.View>
-      ))}
-
-      <MenuListItem label="Sair" icon="logout" onPress={logout} danger />
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { paddingTop: 8 },
-  avatarSection: {
+  content: { paddingTop: 8, paddingBottom: 28 },
+  pageTitle: { marginBottom: 12 },
+  avatarBlock: {
     alignItems: 'center',
-    marginBottom: 4,
+    paddingVertical: 8,
   },
-  memberRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: 4,
+  readOnlyField: {
+    marginBottom: 14,
   },
-  memberText: {
-    fontFamily: fonts.serif,
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.success,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  statChip: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 4,
+  readOnlyBox: {
+    ...cardStyles.inset,
     paddingVertical: 12,
-    paddingHorizontal: 8,
-    backgroundColor: colors.card,
-    borderRadius: 4,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    opacity: 0.85,
   },
-  statValue: {
-    fontFamily: fonts.serif,
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.primary,
-    lineHeight: 26,
-  },
-  statLabel: {
-    fontSize: 11,
+  readOnlyText: {
+    fontSize: 15,
     fontWeight: '600',
     color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
   },
-  menuCaption: { marginBottom: 8, marginTop: 4 },
+  actions: {
+    gap: 10,
+    marginTop: 8,
+  },
+  errorBox: {
+    ...cardStyles.inset,
+    marginBottom: 14,
+    borderColor: colors.danger,
+    backgroundColor: '#F5E0DC',
+  },
+  error: { color: colors.danger, fontSize: 14 },
 });

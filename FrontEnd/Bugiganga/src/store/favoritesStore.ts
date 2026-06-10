@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+import { snackbar } from '@/src/store/snackbarStore';
 import type { Product } from '@/src/types/product';
 
 interface FavoritesState {
@@ -15,9 +16,11 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
     const exists = get().isFavorite(product.id);
     if (exists) {
       set((state) => ({ items: state.items.filter((p) => p.id !== product.id) }));
+      snackbar.info('Removido dos favoritos');
       return;
     }
     set((state) => ({ items: [...state.items, product] }));
+    snackbar.success('Salvo nos favoritos');
   },
   isFavorite: (productId) => get().items.some((p) => p.id === productId),
   remove: (productId) => {

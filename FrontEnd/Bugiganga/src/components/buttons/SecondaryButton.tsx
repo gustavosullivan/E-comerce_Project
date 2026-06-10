@@ -1,8 +1,6 @@
-import { StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 
-import { ScalePressable } from '@/src/components/ui/ScalePressable';
-import { colors, fonts, radii } from '@/src/theme';
-import { selectionFeedback } from '@/src/utils/haptics';
+import { colors, fontSizes, fonts, radius } from '@/src/theme';
 
 type SecondaryButtonProps = {
   label: string;
@@ -12,38 +10,28 @@ type SecondaryButtonProps = {
 
 export function SecondaryButton({ label, onPress, compact }: SecondaryButtonProps) {
   return (
-    <ScalePressable
-      onPress={() => {
-        selectionFeedback();
-        onPress();
-      }}
-      style={[styles.button, compact && styles.compact]}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.button, compact && styles.compact, pressed && styles.pressed]}>
       <Text style={[styles.label, compact && styles.labelCompact]}>{label}</Text>
-    </ScalePressable>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: colors.card,
-    borderRadius: radii.sm,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    backgroundColor: colors.primaryLight,
+    borderRadius: radius.md,
+    paddingVertical: 14,
     alignItems: 'center',
-    minHeight: 44,
-    justifyContent: 'center',
   },
-  compact: {
-    paddingVertical: 10,
-    minHeight: 40,
-  },
+  pressed: { opacity: 0.88 },
+  compact: { paddingVertical: 10 },
   label: {
-    fontFamily: fonts.serif,
-    fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.md,
+    fontWeight: '700',
     color: colors.primary,
   },
-  labelCompact: { fontSize: 13 },
+  labelCompact: { fontSize: fontSizes.sm },
 });

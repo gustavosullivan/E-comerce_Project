@@ -1,3 +1,4 @@
+import { DEV_MOCK_CREDENTIALS } from '@/src/config/devCredentials';
 import type {
   AuthResponse,
   ChangePasswordRequest,
@@ -12,36 +13,28 @@ import { mockDelay } from './delay';
 const MOCK_USER: User = {
   id: 1,
   name: 'Maria Antiga',
-  email: 'demo@bugigangas.com',
-  username: 'maria_vintage',
+  email: DEV_MOCK_CREDENTIALS.email,
+  username: DEV_MOCK_CREDENTIALS.login,
 };
-
-const MOCK_PASSWORD = '12345678';
-
-/** Senhas mockadas por e-mail (apenas desenvolvimento) */
-const mockPasswords = new Map<string, string>([[MOCK_USER.email, MOCK_PASSWORD]]);
-
-function getPassword(email: string): string | undefined {
-  return mockPasswords.get(email.trim().toLowerCase());
-}
 
 export const authMock = {
   async login(data: LoginRequest): Promise<AuthResponse> {
     await mockDelay();
 
-    const email = data.email.trim().toLowerCase();
-    const validEmail = email === MOCK_USER.email || email === 'demo@bugigangas.com';
-    const storedPassword = getPassword(email) ?? MOCK_PASSWORD;
+    const identifier = data.email.trim().toLowerCase();
+    const validLogin =
+      identifier === DEV_MOCK_CREDENTIALS.login ||
+      identifier === DEV_MOCK_CREDENTIALS.email;
 
-    if (!validEmail || data.password !== storedPassword) {
+    if (!validLogin || data.password !== DEV_MOCK_CREDENTIALS.password) {
       throw new Error(
-        'E-mail ou senha incorretos. Use demo@bugigangas.com / 12345678 para testar.',
+        `Login ou senha incorretos. Use ${DEV_MOCK_CREDENTIALS.login} / ${DEV_MOCK_CREDENTIALS.password} para testar.`,
       );
     }
 
     return {
       token: 'mock-jwt-token-bugigangas',
-      user: { ...MOCK_USER, email },
+      user: MOCK_USER,
     };
   },
 
@@ -52,13 +45,10 @@ export const authMock = {
       throw new Error('Este e-mail já está cadastrado.');
     }
 
-    const email = data.email.trim().toLowerCase();
-    mockPasswords.set(email, data.password);
-
     const user: User = {
       id: Date.now(),
       name: data.name,
-      email,
+      email: data.email,
       username: data.username,
     };
 
@@ -79,14 +69,14 @@ export const authMock = {
 
   async changePassword(email: string, data: ChangePasswordRequest): Promise<void> {
     await mockDelay();
-
-    const key = email.trim().toLowerCase();
-    const current = getPassword(key) ?? MOCK_PASSWORD;
-
-    if (data.currentPassword !== current) {
+    if (data.currentPassword !== DEV_MOCK_CREDENTIALS.password) {
       throw new Error('Senha atual incorreta.');
     }
-
-    mockPasswords.set(key, data.newPassword);
+    if (data.newPassword.length < 8) {
+      throw new Error('A nova senha deve ter pelo menos 8 caracteres.');
+    }
+    if (email.toLowerCase() !== MOCK_USER.email.toLowerCase()) {
+      throw new Error('Usuário não encontrado.');
+    }
   },
 };

@@ -1,7 +1,8 @@
 import { type PropsWithChildren, useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
-import { VintageColors } from '@/constants/theme';
+import { USE_MOCK } from '@/src/config/api';
+import { colors } from '@/src/theme';
 import { useAuthStore } from '@/src/stores/authStore';
 
 /** Aguarda hidratação do Zustand (AsyncStorage) antes de renderizar rotas */
@@ -10,6 +11,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     const finish = () => {
+      if (USE_MOCK) {
+        useAuthStore.getState().clearSession();
+      }
       useAuthStore.getState().setHydrated(true);
       setReady(true);
     };
@@ -37,9 +41,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
           flex: 1,
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: VintageColors.parchment,
+          backgroundColor: colors.background,
         }}>
-        <ActivityIndicator size="large" color={VintageColors.rust} />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }

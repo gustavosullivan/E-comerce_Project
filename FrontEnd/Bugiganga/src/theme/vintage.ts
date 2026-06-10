@@ -1,16 +1,18 @@
 import { StyleSheet } from 'react-native';
 
-import { Fonts, VintageColors } from '@/constants/theme';
+import { colors } from './colors';
+import { fontSizes, fonts } from './typography';
+import { radius } from './radius';
 
 export const vintageTheme = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: VintageColors.parchment,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 28,
-    paddingVertical: 36,
+    paddingHorizontal: 24,
+    paddingVertical: 32,
     justifyContent: 'space-between',
   },
   footer: {
@@ -19,9 +21,8 @@ export const vintageTheme = StyleSheet.create({
     paddingBottom: 8,
   },
   footerText: {
-    fontSize: 11,
-    color: VintageColors.brownMuted,
-    letterSpacing: 0.5,
+    fontSize: fontSizes.xs,
+    color: colors.textMuted,
   },
   linkRow: {
     flexDirection: 'row',
@@ -31,48 +32,44 @@ export const vintageTheme = StyleSheet.create({
     marginTop: 20,
   },
   linkLabel: {
-    fontSize: 14,
-    color: VintageColors.brownLight,
+    fontSize: fontSizes.md,
+    color: colors.textMuted,
   },
   linkAction: {
-    fontSize: 14,
+    fontSize: fontSizes.md,
     fontWeight: '700',
-    color: VintageColors.rust,
-    textDecorationLine: 'underline',
+    color: colors.primary,
   },
   errorBanner: {
-    backgroundColor: '#F5E0DC',
-    borderWidth: 1,
-    borderColor: VintageColors.error,
-    borderRadius: 2,
+    backgroundColor: colors.dangerLight,
+    borderRadius: radius.md,
     padding: 12,
     marginBottom: 16,
   },
   errorText: {
-    color: VintageColors.error,
-    fontSize: 14,
+    color: colors.danger,
+    fontSize: fontSizes.md,
     lineHeight: 20,
   },
   demoHint: {
-    fontSize: 11,
-    color: VintageColors.brownMuted,
+    fontSize: fontSizes.xs,
+    color: colors.textMuted,
     textAlign: 'center',
     marginTop: 12,
     lineHeight: 16,
   },
   brand: {
-    fontFamily: Fonts.serif,
-    fontSize: 36,
-    fontWeight: '700',
-    color: VintageColors.brown,
-    letterSpacing: 4,
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xxl,
+    fontWeight: '800',
+    color: colors.text,
+    letterSpacing: 1,
     textAlign: 'center',
   },
   tagline: {
-    fontFamily: Fonts.serif,
-    fontSize: 15,
-    fontStyle: 'italic',
-    color: VintageColors.brownLight,
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.md,
+    color: colors.textMuted,
     textAlign: 'center',
     marginTop: 6,
   },

@@ -2,7 +2,7 @@ import { type PropsWithChildren } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { colors, fonts, layout, radii, shadow, textStyles } from '@/src/theme';
+import { colors, contentLayout, fonts, radii, shadow, textStyles } from '@/src/theme';
 
 type ProfilePaperProps = PropsWithChildren<{
   title?: string;
@@ -72,9 +72,9 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     borderWidth: 2,
     borderColor: colors.border,
-    paddingHorizontal: layout.screenPadding,
+    paddingHorizontal: contentLayout.screenPadding,
     paddingTop: 20,
-    paddingBottom: layout.cardPadding,
+    paddingBottom: contentLayout.cardPadding,
     marginBottom: 16,
     position: 'relative',
     overflow: 'hidden',

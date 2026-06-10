@@ -1,24 +1,24 @@
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
 import { ProductCard } from '@/src/components/cards/ProductCard';
+import { ProductPreviewSheet } from '@/src/components/cards/ProductPreviewSheet';
 import { SearchBar } from '@/src/components/forms/SearchBar';
 import { ErrorState } from '@/src/components/layout/ErrorState';
 import { Loading } from '@/src/components/layout/Loading';
+import { ProductGrid } from '@/src/components/layout/ProductGrid';
 import { useProducts } from '@/src/hooks/useProducts';
-import { routes } from '@/src/navigation/routes';
 import { useFavoritesStore } from '@/src/store/favoritesStore';
 import { colors } from '@/src/theme';
-import { productGrid } from '@/src/utils/productGrid';
-
-const ITEM_WIDTH = productGrid.getItemWidth();
+import type { Product } from '@/src/types/product';
 
 export default function ProductListScreen() {
   const { products, isLoading, error, reload } = useProducts();
   const [query, setQuery] = useState('');
+  const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const toggle = useFavoritesStore((s) => s.toggle);
   const isFavorite = useFavoritesStore((s) => s.isFavorite);
 
@@ -46,28 +46,29 @@ export default function ProductListScreen() {
         </Pressable>
       </View>
 
+      {previewProduct ? (
+        <ProductPreviewSheet
+          product={previewProduct}
+          visible
+          onClose={() => setPreviewProduct(null)}
+        />
+      ) : null}
+
       {isLoading ? (
         <Loading />
       ) : error ? (
         <ErrorState message={error} onRetry={reload} />
       ) : (
-        <FlatList
-          data={filtered}
-          keyExtractor={(item) => String(item.id)}
-          numColumns={productGrid.columns}
-          columnWrapperStyle={styles.row}
-          contentContainerStyle={styles.list}
-          renderItem={({ item }) => (
-            <View style={{ width: ITEM_WIDTH }}>
-              <ProductCard
-                product={item}
-                grid
-                width={ITEM_WIDTH}
-                isFavorite={isFavorite(item.id)}
-                onToggleFavorite={() => toggle(item)}
-                onBuyPress={() => router.push(routes.productDetails(item.id))}
-              />
-            </View>
+        <ProductGrid
+          products={filtered}
+          renderCard={(item) => (
+            <ProductCard
+              product={item}
+              compact
+              isFavorite={isFavorite(item.id)}
+              onToggleFavorite={() => toggle(item)}
+              onPress={() => setPreviewProduct(item)}
+            />
           )}
         />
       )}
@@ -94,13 +95,5 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 3,
     backgroundColor: colors.card,
-  },
-  list: {
-    paddingHorizontal: productGrid.paddingH,
-    paddingBottom: 24,
-  },
-  row: {
-    gap: productGrid.gap,
-    marginBottom: productGrid.gap,
   },
 });

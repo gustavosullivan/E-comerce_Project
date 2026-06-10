@@ -11,6 +11,7 @@ interface AuthState {
   avatarUri: string | null;
   isHydrated: boolean;
   setSession: (token: string, user: User, password?: string) => void;
+  setUser: (user: User) => void;
   setSessionPassword: (password: string) => void;
   setAvatarUri: (uri: string | null) => void;
   clearSession: () => void;
@@ -31,6 +32,7 @@ export const useAuthStore = create<AuthState>()(
           user,
           sessionPassword: password ?? null,
         }),
+      setUser: (user) => set({ user }),
       setSessionPassword: (password) => set({ sessionPassword: password }),
       setAvatarUri: (uri) => set({ avatarUri: uri }),
       clearSession: () => set({ token: null, user: null, sessionPassword: null, avatarUri: null }),

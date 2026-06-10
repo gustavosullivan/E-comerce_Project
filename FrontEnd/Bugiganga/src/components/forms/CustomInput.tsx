@@ -1,9 +1,16 @@
-import { MaterialIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { type Control, Controller, type FieldPath, type FieldValues } from 'react-hook-form';
-import { Pressable, StyleSheet, Text, TextInput, type TextInputProps, View } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  type TextInputProps,
+  View,
+} from 'react-native';
 
-import { colors, inputStyles, textStyles } from '@/src/theme';
+import { colors, fontSizes, fonts, radius } from '@/src/theme';
+
+import { PasswordVisibilityToggle } from './PasswordVisibilityToggle';
 
 type CustomInputProps<T extends FieldValues> = {
   control: Control<T>;
@@ -40,14 +47,14 @@ export function CustomInput<T extends FieldValues>(props: CustomInputProps<T>) {
       name={name}
       render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
         <View style={styles.group}>
-          <Text style={textStyles.label}>{label}</Text>
+          <Text style={styles.label}>{label}</Text>
           <View>
             <TextInput
               style={[
-                inputStyles.field,
-                showToggle && styles.withToggle,
-                focused && inputStyles.fieldFocused,
-                error && inputStyles.fieldError,
+                styles.input,
+                showToggle && styles.inputToggle,
+                focused && styles.focused,
+                error && styles.errorBorder,
               ]}
               value={value}
               onChangeText={onChange}
@@ -66,17 +73,7 @@ export function CustomInput<T extends FieldValues>(props: CustomInputProps<T>) {
               onSubmitEditing={onSubmitEditing}
             />
             {showToggle && secureTextEntry ? (
-              <Pressable
-                style={inputStyles.toggle}
-                onPress={() => setVisible((v) => !v)}
-                hitSlop={8}
-                accessibilityLabel={visible ? 'Ocultar senha' : 'Mostrar senha'}>
-                <MaterialIcons
-                  name={visible ? 'visibility-off' : 'visibility'}
-                  size={22}
-                  color={colors.primary}
-                />
-              </Pressable>
+              <PasswordVisibilityToggle visible={visible} onToggle={() => setVisible((v) => !v)} />
             ) : null}
           </View>
           {error ? <Text style={styles.error}>{error.message}</Text> : null}
@@ -88,6 +85,25 @@ export function CustomInput<T extends FieldValues>(props: CustomInputProps<T>) {
 
 const styles = StyleSheet.create({
   group: { marginBottom: 16 },
-  withToggle: { paddingRight: 48 },
-  error: { fontSize: 12, color: colors.danger, marginTop: 4 },
+  label: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: colors.inputBg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: fontSizes.md,
+    color: colors.text,
+  },
+  inputToggle: { paddingRight: 72 },
+  focused: { borderColor: colors.borderFocus, backgroundColor: colors.white },
+  errorBorder: { borderColor: colors.danger },
+  error: { fontSize: fontSizes.xs, color: colors.danger, marginTop: 6 },
 });

@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 import 'react-native-reanimated';
+import { Snackbar } from '@/src/components/ui/Snackbar';
 import { AuthProvider } from '@/src/providers/AuthProvider';
 
 export default function RootLayout() {
@@ -12,18 +13,23 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen name="register" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="product" options={{ headerShown: false, presentation: 'transparentModal' }} />
-        <Stack.Screen name="checkout" options={{ headerShown: false, title: 'Checkout' }} />
-        <Stack.Screen name="account" options={{ headerShown: false, title: 'Minha Conta' }} />
-      </Stack>
-      <StatusBar style="dark" />
-    </ThemeProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack screenOptions={{ headerShown: false }} initialRouteName="login">
+          <Stack.Screen name="login" />
+          <Stack.Screen name="index" />
+          <Stack.Screen name="register" />
+          <Stack.Screen name="forgot-password" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen
+            name="product"
+            options={{ presentation: 'transparentModal' }}
+          />
+          <Stack.Screen name="checkout" />
+          <Stack.Screen name="account" />
+        </Stack>
+        <StatusBar style="dark" />
+        <Snackbar />
+      </ThemeProvider>
     </AuthProvider>
   );
 }
