@@ -67,6 +67,24 @@ export function HeaderCartButton({ count, onPress }: HeaderCartButtonProps) {
   );
 }
 
+type HeaderSettingsButtonProps = {
+  onPress: () => void;
+};
+
+export function HeaderSettingsButton({ onPress }: HeaderSettingsButtonProps) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="Configurações"
+      style={({ pressed }) => [styles.hitArea, pressed && styles.pressed]}>
+      <View style={styles.button}>
+        <MaterialIcons name="settings" size={22} color={colors.glassText} />
+      </View>
+    </Pressable>
+  );
+}
+
 type HeaderProfileChipProps = {
   name: string;
   initials: string;

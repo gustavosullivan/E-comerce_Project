@@ -54,8 +54,7 @@ export default function TabLayout() {
         name="cart"
         options={{
           title: 'Carrinho',
-          tabBarBadge: cartCount > 0 ? (cartCount > 9 ? '9+' : cartCount) : undefined,
-          tabBarBadgeStyle: styles.badge,
+          tabBarBadge: cartCount > 0 ? cartCount : undefined,
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name="shopping-bag" size={size} color={color} />
           ),
@@ -91,16 +90,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 2,
     marginBottom: 0,
-  },
-  badge: {
-    backgroundColor: colors.accent,
-    color: colors.white,
-    fontSize: 10,
-    fontWeight: '700',
-    minWidth: 18,
-    height: 18,
-    lineHeight: 18,
-    borderWidth: 1.5,
-    borderColor: 'rgba(8, 10, 20, 0.85)',
   },
 });

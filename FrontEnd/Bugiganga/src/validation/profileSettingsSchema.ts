@@ -1,7 +1,9 @@
 import { z } from 'zod';
 
-export const profileSettingsSchema = z
-  .object({
+import { addressSchema } from '@/src/validation/addressSchema';
+
+export const profileSettingsSchema = addressSchema
+  .extend({
     name: z.string().min(2, 'Informe seu nome'),
     currentPassword: z.string(),
     newPassword: z.string(),

@@ -1,3 +1,5 @@
+export type ProductInput = Omit<Product, 'id' | 'categoryName'>;
+
 export interface Category {
   id: number;
   name: string;

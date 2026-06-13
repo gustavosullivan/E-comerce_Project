@@ -1,5 +1,5 @@
 import { BlurView } from 'expo-blur';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, fontSizes, fonts, radius, shadows } from '@/src/theme';
 import { formatCurrency } from '@/src/utils/formatCurrency';
@@ -7,10 +7,27 @@ import { formatCurrency } from '@/src/utils/formatCurrency';
 type CartSummaryGlassProps = {
   subtotal: number;
   total: number;
+  balance?: number;
+  actionLabel?: string;
+  isLoading?: boolean;
+  loadingLabel?: string;
   onCheckout: () => void;
 };
 
-export function CartSummaryGlass({ subtotal, total, onCheckout }: CartSummaryGlassProps) {
+export function CartSummaryGlass({
+  subtotal,
+  total,
+  balance,
+  actionLabel = 'Finalizar compra',
+  isLoading = false,
+  loadingLabel = 'Processando...',
+  onCheckout,
+}: CartSummaryGlassProps) {
+  const showWallet = balance != null;
+  const hasEnoughBalance = !showWallet || balance >= total;
+  const balanceAfter = showWallet ? Math.max(0, balance - total) : 0;
+  const actionDisabled = isLoading || (showWallet && !hasEnoughBalance);
+
   return (
     <View style={styles.shell}>
       <View style={styles.glass}>
@@ -24,22 +41,63 @@ export function CartSummaryGlass({ subtotal, total, onCheckout }: CartSummaryGla
 
         <View style={styles.content}>
           <View style={styles.totals}>
+            {showWallet ? (
+              <>
+                <View style={styles.row}>
+                  <Text style={styles.summaryLabel}>Saldo disponível</Text>
+                  <Text style={[styles.summaryValue, styles.balanceValue]}>
+                    {formatCurrency(balance)}
+                  </Text>
+                </View>
+                <View style={styles.divider} />
+              </>
+            ) : null}
+            {!showWallet ? (
+              <View style={styles.row}>
+                <Text style={styles.summaryLabel}>Resumo de compra</Text>
+                <Text style={styles.summaryValue}>{formatCurrency(subtotal)}</Text>
+              </View>
+            ) : null}
             <View style={styles.row}>
-              <Text style={styles.summaryLabel}>Resumo de compra</Text>
-              <Text style={styles.summaryValue}>{formatCurrency(subtotal)}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.labelTotal}>Total</Text>
+              <Text style={styles.labelTotal}>Total da compra</Text>
               <Text style={styles.valueTotal}>{formatCurrency(total)}</Text>
             </View>
+            {showWallet ? (
+              <View style={styles.row}>
+                <Text style={styles.labelRemaining}>Saldo após compra</Text>
+                <Text
+                  style={[
+                    styles.valueRemaining,
+                    hasEnoughBalance ? styles.valueRemainingOk : styles.valueRemainingWarn,
+                  ]}>
+                  {formatCurrency(balanceAfter)}
+                </Text>
+              </View>
+            ) : null}
           </View>
 
+          {showWallet && !hasEnoughBalance ? (
+            <Text style={styles.walletWarning}>Sem saldo suficiente para realizar compra</Text>
+          ) : null}
+
           <Pressable
-            style={({ pressed }) => [styles.checkoutBtn, pressed && styles.checkoutBtnPressed]}
+            style={({ pressed }) => [
+              styles.checkoutBtn,
+              actionDisabled && styles.checkoutBtnDisabled,
+              pressed && !actionDisabled && styles.checkoutBtnPressed,
+            ]}
             onPress={onCheckout}
+            disabled={actionDisabled}
             accessibilityRole="button"
-            accessibilityLabel="Finalizar compra">
-            <Text style={styles.checkoutLabel}>Finalizar compra</Text>
+            accessibilityLabel={actionLabel}>
+            {isLoading ? (
+              <View style={styles.loadingRow}>
+                <ActivityIndicator size="small" color={colors.textInverse} />
+                <Text style={styles.checkoutLabel}>{loadingLabel}</Text>
+              </View>
+            ) : (
+              <Text style={styles.checkoutLabel}>{actionLabel}</Text>
+            )}
           </Pressable>
         </View>
       </View>
@@ -61,7 +119,7 @@ const styles = StyleSheet.create({
   },
   tint: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(238, 242, 255, 0.45)',
+    backgroundColor: colors.cartGlassTint,
   },
   highlight: {
     position: 'absolute',
@@ -78,6 +136,11 @@ const styles = StyleSheet.create({
   },
   totals: {
     gap: 4,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.cartGlassDivider,
+    marginVertical: 2,
   },
   row: {
     flexDirection: 'row',
@@ -96,6 +159,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textMuted,
   },
+  balanceValue: {
+    fontWeight: '800',
+    color: colors.success,
+  },
   labelTotal: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.sm,
@@ -106,7 +173,30 @@ const styles = StyleSheet.create({
     fontFamily: fonts.sans,
     fontSize: fontSizes.md,
     fontWeight: '800',
-    color: colors.primary,
+    color: colors.cartGlassAccent,
+  },
+  labelRemaining: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  valueRemaining: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    fontWeight: '800',
+  },
+  valueRemainingOk: {
+    color: colors.success,
+  },
+  valueRemainingWarn: {
+    color: colors.danger,
+  },
+  walletWarning: {
+    fontSize: fontSizes.xs,
+    fontWeight: '700',
+    color: colors.danger,
+    textAlign: 'center',
   },
   checkoutBtn: {
     backgroundColor: colors.primary,
@@ -118,6 +208,15 @@ const styles = StyleSheet.create({
   checkoutBtnPressed: {
     opacity: 0.92,
     transform: [{ scale: 0.98 }],
+  },
+  checkoutBtnDisabled: {
+    opacity: 0.45,
+  },
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   checkoutLabel: {
     fontFamily: fonts.sans,

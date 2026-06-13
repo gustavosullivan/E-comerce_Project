@@ -21,6 +21,19 @@ import { colors, fontSizes, fonts, layout, motion, radius } from '@/src/theme';
 const TAB_SLIDE_MS = motion.normal;
 const TAB_INSET = 6;
 
+function formatTabBadge(value: string | number): string {
+  const parsed = typeof value === 'number' ? value : Number.parseInt(String(value), 10);
+  if (Number.isNaN(parsed)) return String(value);
+  if (parsed > 99) return '99+';
+  return String(parsed);
+}
+
+function getBadgeWidth(label: string): number {
+  if (label.length >= 3) return 24;
+  if (label.length === 2) return 20;
+  return 16;
+}
+
 export function GlassTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const onHeightChange = useContext(BottomTabBarHeightCallbackContext);
   const { tabBarBottom } = useTabBarInset();
@@ -101,6 +114,8 @@ export function GlassTabBar({ state, descriptors, navigation }: BottomTabBarProp
           };
 
           const badge = options.tabBarBadge;
+          const badgeLabel =
+            badge != null && badge !== '' ? formatTabBadge(badge) : null;
 
           return (
             <Pressable
@@ -118,11 +133,16 @@ export function GlassTabBar({ state, descriptors, navigation }: BottomTabBarProp
               style={styles.tab}>
               <View style={styles.tabInner}>
                 <View style={styles.iconWrap}>
-                  {options.tabBarIcon?.({ focused: isFocused, color, size: 24 })}
-                  {badge != null && badge !== '' ? (
-                    <View style={styles.badge}>
-                      <Text style={[styles.badgeText, options.tabBarBadgeStyle]}>
-                        {String(badge)}
+                  {options.tabBarIcon?.({ focused: isFocused, color, size: 22 })}
+                  {badgeLabel ? (
+                    <View
+                      style={[
+                        styles.badge,
+                        { minWidth: getBadgeWidth(badgeLabel) },
+                        options.tabBarBadgeStyle,
+                      ]}>
+                      <Text style={styles.badgeText} numberOfLines={1}>
+                        {badgeLabel}
                       </Text>
                     </View>
                   ) : null}
@@ -188,52 +208,61 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     zIndex: 1,
+    paddingTop: 2,
   },
   tab: {
     flex: 1,
     zIndex: 1,
     backgroundColor: 'transparent',
     borderRadius: radius.lg,
+    overflow: 'visible',
   },
   tabInner: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
+    paddingVertical: 6,
+    overflow: 'visible',
   },
   iconWrap: {
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
-    width: 28,
-    height: 28,
+    width: 30,
+    height: 26,
+    marginBottom: 1,
+    overflow: 'visible',
   },
   label: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.xs,
     fontWeight: '600',
-    marginTop: 2,
+    marginTop: 0,
+    lineHeight: 14,
   },
   labelActive: {
     fontWeight: '700',
   },
   badge: {
     position: 'absolute',
-    top: -4,
-    right: -10,
-    minWidth: 18,
-    height: 18,
-    borderRadius: radius.full,
+    top: -3,
+    right: -7,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
     borderWidth: 1.5,
-    borderColor: 'rgba(8, 10, 20, 0.85)',
+    borderColor: 'rgba(8, 10, 20, 0.9)',
+    zIndex: 2,
   },
   badgeText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800',
     color: colors.white,
+    lineHeight: 11,
+    textAlign: 'center',
+    includeFontPadding: false,
   },
 });

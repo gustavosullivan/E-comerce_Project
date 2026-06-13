@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   },
   tint: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(238, 242, 255, 0.42)',
+    backgroundColor: colors.cartGlassTint,
   },
   highlight: {
     position: 'absolute',
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: 'rgba(91, 95, 239, 0.12)',
+    borderColor: colors.cartGlassAccentSoft,
   },
   info: {
     flex: 1,
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.sans,
     fontSize: fontSizes.md,
     fontWeight: '800',
-    color: colors.primary,
+    color: colors.cartGlassAccent,
     marginTop: 4,
   },
   actions: {
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     backgroundColor: 'rgba(255, 255, 255, 0.72)',
     borderWidth: 1,
-    borderColor: 'rgba(91, 95, 239, 0.18)',
+    borderColor: colors.cartGlassAccentBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -180,12 +180,12 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: radius.full,
-    backgroundColor: colors.success,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.sm,
   },
   cartBtnAdded: {
-    backgroundColor: '#0D9668',
+    backgroundColor: colors.primaryDark,
   },
 });

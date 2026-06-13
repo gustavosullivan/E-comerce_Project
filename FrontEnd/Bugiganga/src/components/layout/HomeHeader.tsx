@@ -5,7 +5,8 @@ import { type PropsWithChildren } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { HeaderCartButton, HeaderProfileChip } from '@/src/components/layout/HeaderCartButton';
+import { HeaderCartButton, HeaderProfileChip, HeaderSettingsButton } from '@/src/components/layout/HeaderCartButton';
+import { routes } from '@/src/navigation/routes';
 import { useCartStore } from '@/src/store/cartStore';
 import { useAuthStore } from '@/src/stores/authStore';
 import { colors, fontSizes, fonts, motion, radius, shadows } from '@/src/theme';
@@ -70,10 +71,13 @@ export function HomeToolbar({ userName }: HomeHeaderProps) {
           imageUri={avatarUri}
           onPress={() => router.push('/(tabs)/profile')}
         />
-        <HeaderCartButton
-          count={cartCount}
-          onPress={() => router.push('/(tabs)/cart')}
-        />
+        <View style={styles.toolbarActions}>
+          <HeaderSettingsButton onPress={() => router.push(routes.settings)} />
+          <HeaderCartButton
+            count={cartCount}
+            onPress={() => router.push('/(tabs)/cart')}
+          />
+        </View>
       </View>
     </GlassPanel>
   );
@@ -163,6 +167,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     gap: 8,
   },
+  toolbarActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
   hero: {
     alignItems: 'flex-start',
     paddingTop: layout.lg,
@@ -205,14 +214,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: radius.full,
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.cartGlassLight,
     borderWidth: 1,
-    borderColor: 'rgba(91, 95, 239, 0.18)',
+    borderColor: colors.cartGlassAccentBorder,
   },
   statText: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.xs,
     fontWeight: '700',
-    color: colors.primaryDark,
+    color: colors.cartGlassAccent,
   },
 });

@@ -26,7 +26,7 @@ export function ScreenHeader({
       style={[styles.wrap, centered && styles.centered, style]}>
       {icon ? (
         <View style={styles.iconBadge}>
-          <MaterialIcons name={icon} size={18} color={colors.primary} />
+          <MaterialIcons name={icon} size={18} color={colors.cartGlassAccent} />
         </View>
       ) : null}
       <Text style={[styles.title, centered && styles.textCenter]}>{title}</Text>
@@ -52,9 +52,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: radius.md,
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.cartGlassLight,
     borderWidth: 1,
-    borderColor: 'rgba(91, 95, 239, 0.2)',
+    borderColor: colors.cartGlassAccentBorder,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,

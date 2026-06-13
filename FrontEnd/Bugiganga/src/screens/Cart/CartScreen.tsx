@@ -7,13 +7,19 @@ import { CartSummaryGlass } from '@/src/components/cards/CartSummaryGlass';
 import { EmptyState } from '@/src/components/layout/EmptyState';
 import { PageContainer } from '@/src/components/layout/PageContainer';
 import { ScreenHeader } from '@/src/components/layout/ScreenHeader';
+import { useAuth } from '@/src/hooks/useAuth';
 import { useTabBarInset } from '@/src/hooks/useTabBarInset';
+import { useWallet } from '@/src/hooks/useWallet';
 import { snackbar } from '@/src/store/snackbarStore';
 import { useCartStore } from '@/src/store/cartStore';
 import { useCheckoutStore } from '@/src/store/checkoutStore';
+import { isBuyer } from '@/src/types/auth';
 import { colors, layout } from '@/src/theme';
 
 export default function CartScreen() {
+  const { user } = useAuth();
+  const buyer = isBuyer(user);
+  const { balance } = useWallet(user?.id, buyer);
   const { contentBottomInset } = useTabBarInset();
   const items = useCartStore((s) => s.items);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
@@ -23,6 +29,10 @@ export default function CartScreen() {
   const setFromCart = useCheckoutStore((s) => s.setFromCart);
 
   const handleCheckout = () => {
+    if (buyer && balance < total) {
+      snackbar.insufficientBalance();
+      return;
+    }
     setFromCart();
     snackbar.info('Indo para o checkout…');
     router.push('/checkout');
@@ -73,6 +83,7 @@ export default function CartScreen() {
                 <CartSummaryGlass
                   subtotal={subtotal}
                   total={total}
+                  balance={buyer ? balance : undefined}
                   onCheckout={handleCheckout}
                 />
               </PageContainer>

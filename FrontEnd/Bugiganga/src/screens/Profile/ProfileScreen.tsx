@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { StyleSheet, Text, View } from 'react-native';
@@ -11,19 +12,40 @@ import { ProfilePaper, ProfilePaperDivider } from '@/src/components/layout/Profi
 import { ProfileAvatarPicker } from '@/src/components/profile/ProfileAvatarPicker';
 import { ScreenContainer } from '@/src/components/ui/ScreenContainer';
 import { useAuth } from '@/src/hooks/useAuth';
+import { useAddress } from '@/src/hooks/useAddress';
 import { useTabBarInset } from '@/src/hooks/useTabBarInset';
+import { useWallet } from '@/src/hooks/useWallet';
+import { routes } from '@/src/navigation/routes';
 import { userService } from '@/src/services/userService';
+import { addressService } from '@/src/services/addressService';
 import { snackbar } from '@/src/store/snackbarStore';
 import { useAuthStore } from '@/src/stores/authStore';
 import { cardStyles, colors, textStyles } from '@/src/theme';
+import { isBuyer } from '@/src/types/auth';
+import { formatCurrency } from '@/src/utils/formatCurrency';
+import { EMPTY_ADDRESS } from '@/src/types/address';
 import {
   type ProfileSettingsFormData,
   profileSettingsSchema,
 } from '@/src/validation/profileSettingsSchema';
 
+function buildAddressValues(address = EMPTY_ADDRESS) {
+  return {
+    zipCode: address.zipCode ?? '',
+    street: address.street ?? '',
+    number: address.number ?? '',
+    complement: address.complement ?? '',
+    neighborhood: address.neighborhood ?? '',
+    city: address.city ?? '',
+    state: address.state ?? '',
+  };
+}
+
 export default function ProfileScreen() {
   const { user, changePassword, logout } = useAuth();
   const { contentBottomInset } = useTabBarInset();
+  const { balance } = useWallet(user?.id, isBuyer(user));
+  const { address } = useAddress(user?.id);
   const setUser = useAuthStore((s) => s.setUser);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,19 +57,19 @@ export default function ProfileScreen() {
       currentPassword: '',
       newPassword: '',
       confirmPassword: '',
+      ...buildAddressValues(),
     },
   });
 
   useEffect(() => {
-    if (user?.name) {
-      reset({
-        name: user.name,
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-      });
-    }
-  }, [user?.name, reset]);
+    reset({
+      name: user?.name ?? '',
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+      ...buildAddressValues(address ?? EMPTY_ADDRESS),
+    });
+  }, [user?.name, address, reset]);
 
   const onSave = handleSubmit(async (data) => {
     setError(null);
@@ -58,15 +80,35 @@ export default function ProfileScreen() {
         data.currentPassword.length > 0 ||
         data.newPassword.length > 0 ||
         data.confirmPassword.length > 0;
+      const nextAddress = {
+        zipCode: data.zipCode.trim(),
+        street: data.street.trim(),
+        number: data.number.trim(),
+        complement: data.complement?.trim() ?? '',
+        neighborhood: data.neighborhood.trim(),
+        city: data.city.trim(),
+        state: data.state.trim().toUpperCase(),
+      };
+      const addressChanged =
+        nextAddress.zipCode !== (address?.zipCode ?? '') ||
+        nextAddress.street !== (address?.street ?? '') ||
+        nextAddress.number !== (address?.number ?? '') ||
+        nextAddress.complement !== (address?.complement ?? '') ||
+        nextAddress.neighborhood !== (address?.neighborhood ?? '') ||
+        nextAddress.city !== (address?.city ?? '') ||
+        nextAddress.state !== (address?.state ?? '');
 
       if (nameChanged) {
         const updated = await userService.updateProfile({ name: data.name.trim() });
-        setUser({
-          id: updated.id,
-          name: updated.name,
-          email: updated.email,
-          username: updated.username,
-        });
+        if (user) {
+          setUser({
+            ...user,
+            id: updated.id,
+            name: updated.name,
+            email: updated.email,
+            username: updated.username,
+          });
+        }
       }
 
       if (changingPassword) {
@@ -77,7 +119,11 @@ export default function ProfileScreen() {
         });
       }
 
-      if (!nameChanged && !changingPassword) {
+      if (user?.id && addressChanged) {
+        await addressService.saveAddress(user.id, nextAddress);
+      }
+
+      if (!nameChanged && !changingPassword && !addressChanged) {
         snackbar.info('Nenhuma alteração para salvar');
         return;
       }
@@ -87,9 +133,18 @@ export default function ProfileScreen() {
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
+        ...buildAddressValues(nextAddress),
       });
 
-      if (nameChanged && changingPassword) {
+      if (nameChanged && changingPassword && addressChanged) {
+        snackbar.success('Perfil, endereço e senha atualizados');
+      } else if (nameChanged && addressChanged) {
+        snackbar.success('Perfil e endereço atualizados');
+      } else if (changingPassword && addressChanged) {
+        snackbar.success('Endereço e senha atualizados');
+      } else if (addressChanged) {
+        snackbar.success('Endereço atualizado');
+      } else if (nameChanged && changingPassword) {
         snackbar.success('Perfil e senha atualizados');
       } else if (nameChanged) {
         snackbar.success('Nome atualizado');
@@ -114,8 +169,8 @@ export default function ProfileScreen() {
 
       <ProfilePaper
         title="Minha Conta"
-        subtitle="Foto, nome e senha"
-        delay={60}>
+        subtitle="Foto, dados, endereço e senha"
+        delay={0}>
         <View style={styles.avatarBlock}>
           <ProfileAvatarPicker size="lg" />
         </View>
@@ -143,6 +198,65 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {isBuyer(user) ? (
+          <View style={styles.readOnlyField}>
+            <Text style={textStyles.label}>Crédito em conta</Text>
+            <View style={[styles.readOnlyBox, styles.balanceBox]}>
+              <Text style={styles.balanceText}>{formatCurrency(balance)}</Text>
+            </View>
+          </View>
+        ) : null}
+
+        <ProfilePaperDivider label="Endereço de entrega" />
+
+        <CustomInput
+          control={control}
+          name="zipCode"
+          label="CEP"
+          placeholder="00000-000"
+          keyboardType="numeric"
+        />
+        <CustomInput
+          control={control}
+          name="street"
+          label="Rua"
+          placeholder="Nome da rua"
+          autoCapitalize="words"
+        />
+        <CustomInput
+          control={control}
+          name="number"
+          label="Número"
+          placeholder="123"
+        />
+        <CustomInput
+          control={control}
+          name="complement"
+          label="Complemento"
+          placeholder="Apto, bloco, referência (opcional)"
+        />
+        <CustomInput
+          control={control}
+          name="neighborhood"
+          label="Bairro"
+          placeholder="Seu bairro"
+          autoCapitalize="words"
+        />
+        <CustomInput
+          control={control}
+          name="city"
+          label="Cidade"
+          placeholder="Sua cidade"
+          autoCapitalize="words"
+        />
+        <CustomInput
+          control={control}
+          name="state"
+          label="Estado (UF)"
+          placeholder="RS"
+          autoCapitalize="characters"
+        />
+
         <ProfilePaperDivider label="Senha" />
 
         <PasswordField
@@ -169,6 +283,22 @@ export default function ProfileScreen() {
           <SecondaryButton label="Sair da conta" onPress={logout} />
         </View>
       </ProfilePaper>
+
+      {isBuyer(user) ? (
+        <ProfilePaper
+          title="Histórico de Compras"
+          subtitle="Comprovantes e pedidos realizados"
+          delay={60}
+          showStamp={false}>
+          <Text style={styles.purchaseHint}>
+            Consulte todas as compras realizadas e abra o comprovante de cada pedido.
+          </Text>
+          <SecondaryButton
+            label="Ver histórico de compras"
+            onPress={() => router.push(routes.orderHistory)}
+          />
+        </ProfilePaper>
+      ) : null}
     </ScreenContainer>
   );
 }
@@ -176,6 +306,12 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   content: { paddingTop: 8, paddingBottom: 28 },
   pageTitle: { marginBottom: 12 },
+  purchaseHint: {
+    fontSize: 14,
+    color: colors.textMuted,
+    lineHeight: 20,
+    marginBottom: 14,
+  },
   avatarBlock: {
     alignItems: 'center',
     paddingVertical: 8,
@@ -192,6 +328,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: colors.textMuted,
+  },
+  balanceBox: {
+    backgroundColor: '#EEF8F3',
+    borderColor: 'rgba(16, 185, 129, 0.2)',
+  },
+  balanceText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.success,
   },
   actions: {
     gap: 10,

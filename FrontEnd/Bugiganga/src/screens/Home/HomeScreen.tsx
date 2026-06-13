@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useMemo, useState } from 'react';
 import { RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -36,6 +37,12 @@ export default function HomeScreen() {
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const toggle = useFavoritesStore((s) => s.toggle);
   const favoriteCount = useFavoritesStore((s) => s.items.length);
+
+  useFocusEffect(
+    useCallback(() => {
+      void reload();
+    }, [reload]),
+  );
 
   const filtered = useMemo(() => {
     let list = products;

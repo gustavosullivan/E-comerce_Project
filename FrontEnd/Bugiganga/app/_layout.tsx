@@ -25,7 +25,10 @@ export default function RootLayout() {
             options={{ presentation: 'transparentModal' }}
           />
           <Stack.Screen name="checkout" />
+          <Stack.Screen name="orders" />
           <Stack.Screen name="account" />
+          <Stack.Screen name="settings" />
+          <Stack.Screen name="admin" />
         </Stack>
         <StatusBar style="dark" />
         <Snackbar />

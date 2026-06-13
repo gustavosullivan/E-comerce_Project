@@ -74,7 +74,6 @@ export function useAuth() {
 
   const logout = useCallback(() => {
     clearSession();
-    snackbar.info('Você saiu da conta');
     router.replace('/login');
   }, [clearSession]);
 

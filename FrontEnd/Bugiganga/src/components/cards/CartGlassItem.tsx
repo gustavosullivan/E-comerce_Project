@@ -9,12 +9,19 @@ import { formatCurrency } from '@/src/utils/formatCurrency';
 
 type CartGlassItemProps = {
   item: CartItem;
-  onIncrease: () => void;
-  onDecrease: () => void;
-  onRemove: () => void;
+  onIncrease?: () => void;
+  onDecrease?: () => void;
+  onRemove?: () => void;
+  readOnly?: boolean;
 };
 
-export function CartGlassItem({ item, onIncrease, onDecrease, onRemove }: CartGlassItemProps) {
+export function CartGlassItem({
+  item,
+  onIncrease,
+  onDecrease,
+  onRemove,
+  readOnly = false,
+}: CartGlassItemProps) {
   const { product, quantity } = item;
   const lineTotal = product.price * quantity;
 
@@ -55,38 +62,44 @@ export function CartGlassItem({ item, onIncrease, onDecrease, onRemove }: CartGl
                 </Text>
               </View>
 
-              <Pressable
-                style={({ pressed }) => [styles.removeBtn, pressed && styles.removeBtnPressed]}
-                onPress={onRemove}
-                hitSlop={8}
-                accessibilityRole="button"
-                accessibilityLabel="Remover item">
-                <MaterialIcons name="delete-outline" size={18} color={colors.danger} />
-              </Pressable>
+              {!readOnly ? (
+                <Pressable
+                  style={({ pressed }) => [styles.removeBtn, pressed && styles.removeBtnPressed]}
+                  onPress={onRemove}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Remover item">
+                  <MaterialIcons name="delete-outline" size={18} color={colors.danger} />
+                </Pressable>
+              ) : null}
             </View>
 
             <View style={styles.bottomLine}>
-              <View style={styles.stepper}>
-                <Pressable
-                  style={({ pressed }) => [styles.stepBtn, pressed && styles.stepBtnPressed]}
-                  onPress={onDecrease}
-                  hitSlop={6}
-                  accessibilityRole="button"
-                  accessibilityLabel="Diminuir quantidade">
-                  <MaterialIcons name="remove" size={16} color={colors.primary} />
-                </Pressable>
+              {readOnly ? (
+                <Text style={styles.readOnlyQty}>Quantidade: {quantity}</Text>
+              ) : (
+                <View style={styles.stepper}>
+                  <Pressable
+                    style={({ pressed }) => [styles.stepBtn, pressed && styles.stepBtnPressed]}
+                    onPress={onDecrease}
+                    hitSlop={6}
+                    accessibilityRole="button"
+                    accessibilityLabel="Diminuir quantidade">
+                    <MaterialIcons name="remove" size={16} color={colors.cartGlassAccent} />
+                  </Pressable>
 
-                <Text style={styles.qty}>{quantity}</Text>
+                  <Text style={styles.qty}>{quantity}</Text>
 
-                <Pressable
-                  style={({ pressed }) => [styles.stepBtn, pressed && styles.stepBtnPressed]}
-                  onPress={onIncrease}
-                  hitSlop={6}
-                  accessibilityRole="button"
-                  accessibilityLabel="Aumentar quantidade">
-                  <MaterialIcons name="add" size={16} color={colors.primary} />
-                </Pressable>
-              </View>
+                  <Pressable
+                    style={({ pressed }) => [styles.stepBtn, pressed && styles.stepBtnPressed]}
+                    onPress={onIncrease}
+                    hitSlop={6}
+                    accessibilityRole="button"
+                    accessibilityLabel="Aumentar quantidade">
+                    <MaterialIcons name="add" size={16} color={colors.cartGlassAccent} />
+                  </Pressable>
+                </View>
+              )}
 
               <View style={styles.totalPill}>
                 <Text style={styles.totalLabel}>Total</Text>
@@ -115,7 +128,7 @@ const styles = StyleSheet.create({
   },
   tint: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(238, 242, 255, 0.45)',
+    backgroundColor: colors.cartGlassTint,
   },
   highlight: {
     position: 'absolute',
@@ -144,7 +157,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: 'rgba(91, 95, 239, 0.14)',
+    borderColor: colors.cartGlassAccentSoft,
   },
   image: {
     width: '100%',
@@ -155,7 +168,7 @@ const styles = StyleSheet.create({
     right: -10,
     top: '58%',
     transform: [{ translateY: -11 }],
-    backgroundColor: colors.primary,
+    backgroundColor: colors.cartGlassAccent,
     borderRadius: radius.full,
     minWidth: 28,
     height: 22,
@@ -222,13 +235,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
   },
+  readOnlyQty: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    fontWeight: '700',
+    color: colors.textMuted,
+  },
   stepper: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.cartGlassStepper,
     borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: 'rgba(91, 95, 239, 0.2)',
+    borderColor: colors.cartGlassAccentBorder,
     paddingHorizontal: 4,
     paddingVertical: 4,
     gap: 2,
@@ -237,12 +256,12 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: radius.full,
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.cartGlassLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepBtnPressed: {
-    backgroundColor: 'rgba(91, 95, 239, 0.22)',
+    backgroundColor: colors.cartGlassAccentPressed,
     transform: [{ scale: 0.94 }],
   },
   qty: {
@@ -251,7 +270,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.sans,
     fontSize: fontSizes.md,
     fontWeight: '800',
-    color: colors.primaryDark,
+    color: colors.cartGlassAccent,
   },
   totalPill: {
     alignItems: 'flex-end',

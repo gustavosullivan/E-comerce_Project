@@ -18,7 +18,12 @@ export const API_ENDPOINTS = {
   },
   cart: '/api/cart',
   orders: '/api/orders',
+  wallet: {
+    balance: '/api/wallet/balance',
+    debit: '/api/wallet/debit',
+  },
   users: {
     profile: '/api/users/me',
+    address: '/api/users/me/address',
   },
 } as const;

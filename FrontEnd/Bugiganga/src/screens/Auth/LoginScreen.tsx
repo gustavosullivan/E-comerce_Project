@@ -1,6 +1,7 @@
+import { MaterialIcons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Controller, useForm, type Control } from 'react-hook-form';
 import {
   KeyboardAvoidingView,
@@ -19,7 +20,11 @@ import { CustomInput } from '@/src/components/forms/CustomInput';
 import { PasswordVisibilityToggle } from '@/src/components/forms/PasswordVisibilityToggle';
 import { LoginLogo } from '@/src/components/layout/LoginLogo';
 import { VintageCard } from '@/src/components/layout/VintageCard';
-import { DEV_MOCK_LOGIN_FORM, formatDevLoginHint } from '@/src/config/devCredentials';
+import {
+  DEV_BUYER_LOGIN_FORM,
+  DEV_SELLER_LOGIN_FORM,
+  formatDevLoginHint,
+} from '@/src/config/devCredentials';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useDevLoginDefaults } from '@/src/hooks/useDevLoginDefaults';
 import { colors, fontSizes, fonts, radius } from '@/src/theme';
@@ -27,19 +32,30 @@ import { type LoginFormData, loginSchema } from '@/src/validation/loginSchema';
 
 export default function LoginScreen() {
   const { login, isLoading, error, clearError } = useAuth();
-  const { defaults, save } = useDevLoginDefaults();
+  const { defaults, ready, save } = useDevLoginDefaults();
   const [showPassword, setShowPassword] = useState(false);
-  const { control, handleSubmit } = useForm<LoginFormData>({
+  const { control, handleSubmit, reset } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: DEV_MOCK_LOGIN_FORM,
-    values: defaults,
+    defaultValues: DEV_BUYER_LOGIN_FORM,
   });
+
+  useEffect(() => {
+    if (ready) {
+      reset(defaults);
+    }
+  }, [ready, defaults, reset]);
 
   const onSubmit = handleSubmit((data) => {
     clearError();
     save(data);
     login(data);
   });
+
+  const quickLogin = (credentials: typeof DEV_BUYER_LOGIN_FORM) => {
+    clearError();
+    save(credentials);
+    login(credentials);
+  };
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -61,7 +77,7 @@ export default function LoginScreen() {
                 control={control}
                 name="email"
                 label="Email"
-                placeholder="demo@bugigangas.com"
+                placeholder="comprador@bugigangas.com"
                 autoCapitalize="none"
                 keyboardType="email-address"
               />
@@ -77,6 +93,24 @@ export default function LoginScreen() {
                 <Text style={styles.forgotText}>Esqueci a senha</Text>
               </Pressable>
               <PrimaryButton label="Entrar" onPress={onSubmit} isLoading={isLoading} />
+
+              <View style={styles.roleRow}>
+                <Pressable
+                  style={styles.roleChip}
+                  onPress={() => quickLogin(DEV_BUYER_LOGIN_FORM)}
+                  disabled={isLoading}>
+                  <MaterialIcons name="shopping-bag" size={18} color={colors.primary} />
+                  <Text style={styles.roleChipText}>Sou comprador</Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.roleChip, styles.roleChipSeller]}
+                  onPress={() => quickLogin(DEV_SELLER_LOGIN_FORM)}
+                  disabled={isLoading}>
+                  <MaterialIcons name="storefront" size={18} color={colors.primaryDark} />
+                  <Text style={[styles.roleChipText, styles.roleChipTextSeller]}>Sou vendedor</Text>
+                </Pressable>
+              </View>
+
               <Text style={styles.hint}>{formatDevLoginHint()}</Text>
             </VintageCard>
             <View style={styles.linkRow}>
@@ -183,6 +217,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: radius.sm,
     overflow: 'hidden',
+  },
+  roleRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 14,
+  },
+  roleChip: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: radius.md,
+    backgroundColor: colors.inputBg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  roleChipSeller: {
+    backgroundColor: colors.primaryLight,
+    borderColor: 'rgba(91, 95, 239, 0.28)',
+  },
+  roleChipText: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  roleChipTextSeller: {
+    color: colors.primaryDark,
   },
   linkRow: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 24 },
   linkLabel: { fontSize: fontSizes.md, color: colors.textMuted },
