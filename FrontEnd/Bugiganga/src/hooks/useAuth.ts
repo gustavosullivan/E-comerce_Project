@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 
 import { authService } from '@/src/services/authService';
 import { snackbar } from '@/src/store/snackbarStore';
-import { useAuthStore } from '@/src/stores/authStore';
+import { useAuthStore } from '@/src/store/authStore';
 import type { ApiError } from '@/src/types/api';
 import type { LoginFormData } from '@/src/validation/loginSchema';
 import type { ChangePasswordFormData } from '@/src/validation/changePasswordSchema';

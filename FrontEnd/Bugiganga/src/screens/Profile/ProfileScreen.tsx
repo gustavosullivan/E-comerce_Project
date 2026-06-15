@@ -19,12 +19,15 @@ import { routes } from '@/src/navigation/routes';
 import { userService } from '@/src/services/userService';
 import { addressService } from '@/src/services/addressService';
 import { snackbar } from '@/src/store/snackbarStore';
-import { useAuthStore } from '@/src/stores/authStore';
+import { useAuthStore } from '@/src/store/authStore';
 import { cardStyles, colors, textStyles } from '@/src/theme';
 import { isBuyer } from '@/src/types/auth';
-import { formatCurrency } from '@/src/utils/formatCurrency';
+import { confirmAction } from '@/src/utils/confirm';
 import { EMPTY_ADDRESS } from '@/src/types/address';
+import { formatCurrency } from '@/src/utils/formatCurrency';
 import {
+  type AdminProfileSettingsFormData,
+  adminProfileSettingsSchema,
   type ProfileSettingsFormData,
   profileSettingsSchema,
 } from '@/src/validation/profileSettingsSchema';
@@ -43,33 +46,62 @@ function buildAddressValues(address = EMPTY_ADDRESS) {
 
 export default function ProfileScreen() {
   const { user, changePassword, logout } = useAuth();
+  const buyer = isBuyer(user);
   const { contentBottomInset } = useTabBarInset();
-  const { balance } = useWallet(user?.id, isBuyer(user));
-  const { address } = useAddress(user?.id);
+  const { balance } = useWallet(user?.id, buyer);
+  const { address } = useAddress(buyer ? user?.id : undefined);
   const setUser = useAuthStore((s) => s.setUser);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { control, handleSubmit, reset } = useForm<ProfileSettingsFormData>({
-    resolver: zodResolver(profileSettingsSchema),
-    defaultValues: {
-      name: user?.name ?? '',
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
-      ...buildAddressValues(),
-    },
+  const handleLogout = () => {
+    confirmAction({
+      title: 'Confirmação de Saída',
+      message: 'Tem certeza de que deseja sair da sua conta?',
+      confirmLabel: 'Sair',
+      onConfirm: logout,
+    });
+  };
+
+  const { control, handleSubmit, reset } = useForm<
+    ProfileSettingsFormData | AdminProfileSettingsFormData
+  >({
+    resolver: zodResolver(buyer ? profileSettingsSchema : adminProfileSettingsSchema),
+    defaultValues: buyer
+      ? {
+          name: user?.name ?? '',
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: '',
+          ...buildAddressValues(),
+        }
+      : {
+          name: user?.name ?? '',
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: '',
+        },
   });
 
   useEffect(() => {
+    if (buyer) {
+      reset({
+        name: user?.name ?? '',
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+        ...buildAddressValues(address ?? EMPTY_ADDRESS),
+      });
+      return;
+    }
+
     reset({
       name: user?.name ?? '',
       currentPassword: '',
       newPassword: '',
       confirmPassword: '',
-      ...buildAddressValues(address ?? EMPTY_ADDRESS),
     });
-  }, [user?.name, address, reset]);
+  }, [user?.name, address, buyer, reset]);
 
   const onSave = handleSubmit(async (data) => {
     setError(null);
@@ -80,23 +112,28 @@ export default function ProfileScreen() {
         data.currentPassword.length > 0 ||
         data.newPassword.length > 0 ||
         data.confirmPassword.length > 0;
-      const nextAddress = {
-        zipCode: data.zipCode.trim(),
-        street: data.street.trim(),
-        number: data.number.trim(),
-        complement: data.complement?.trim() ?? '',
-        neighborhood: data.neighborhood.trim(),
-        city: data.city.trim(),
-        state: data.state.trim().toUpperCase(),
-      };
-      const addressChanged =
-        nextAddress.zipCode !== (address?.zipCode ?? '') ||
-        nextAddress.street !== (address?.street ?? '') ||
-        nextAddress.number !== (address?.number ?? '') ||
-        nextAddress.complement !== (address?.complement ?? '') ||
-        nextAddress.neighborhood !== (address?.neighborhood ?? '') ||
-        nextAddress.city !== (address?.city ?? '') ||
-        nextAddress.state !== (address?.state ?? '');
+      let addressChanged = false;
+      let nextAddress = EMPTY_ADDRESS;
+
+      if (buyer && 'zipCode' in data) {
+        nextAddress = {
+          zipCode: data.zipCode.trim(),
+          street: data.street.trim(),
+          number: data.number.trim(),
+          complement: data.complement?.trim() ?? '',
+          neighborhood: data.neighborhood.trim(),
+          city: data.city.trim(),
+          state: data.state.trim().toUpperCase(),
+        };
+        addressChanged =
+          nextAddress.zipCode !== (address?.zipCode ?? '') ||
+          nextAddress.street !== (address?.street ?? '') ||
+          nextAddress.number !== (address?.number ?? '') ||
+          nextAddress.complement !== (address?.complement ?? '') ||
+          nextAddress.neighborhood !== (address?.neighborhood ?? '') ||
+          nextAddress.city !== (address?.city ?? '') ||
+          nextAddress.state !== (address?.state ?? '');
+      }
 
       if (nameChanged) {
         const updated = await userService.updateProfile({ name: data.name.trim() });
@@ -119,7 +156,7 @@ export default function ProfileScreen() {
         });
       }
 
-      if (user?.id && addressChanged) {
+      if (buyer && user?.id && addressChanged) {
         await addressService.saveAddress(user.id, nextAddress);
       }
 
@@ -128,13 +165,22 @@ export default function ProfileScreen() {
         return;
       }
 
-      reset({
-        name: data.name.trim(),
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-        ...buildAddressValues(nextAddress),
-      });
+      reset(
+        buyer
+          ? {
+              name: data.name.trim(),
+              currentPassword: '',
+              newPassword: '',
+              confirmPassword: '',
+              ...buildAddressValues(nextAddress),
+            }
+          : {
+              name: data.name.trim(),
+              currentPassword: '',
+              newPassword: '',
+              confirmPassword: '',
+            },
+      );
 
       if (nameChanged && changingPassword && addressChanged) {
         snackbar.success('Perfil, endereço e senha atualizados');
@@ -169,7 +215,7 @@ export default function ProfileScreen() {
 
       <ProfilePaper
         title="Minha Conta"
-        subtitle="Foto, dados, endereço e senha"
+        subtitle={buyer ? 'Foto, dados, endereço e senha' : 'Foto, dados e senha'}
         delay={0}>
         <View style={styles.avatarBlock}>
           <ProfileAvatarPicker size="lg" />
@@ -198,7 +244,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {isBuyer(user) ? (
+        {buyer ? (
           <View style={styles.readOnlyField}>
             <Text style={textStyles.label}>Crédito em conta</Text>
             <View style={[styles.readOnlyBox, styles.balanceBox]}>
@@ -207,55 +253,59 @@ export default function ProfileScreen() {
           </View>
         ) : null}
 
-        <ProfilePaperDivider label="Endereço de entrega" />
+        {buyer ? (
+          <>
+            <ProfilePaperDivider label="Endereço de entrega" />
 
-        <CustomInput
-          control={control}
-          name="zipCode"
-          label="CEP"
-          placeholder="00000-000"
-          keyboardType="numeric"
-        />
-        <CustomInput
-          control={control}
-          name="street"
-          label="Rua"
-          placeholder="Nome da rua"
-          autoCapitalize="words"
-        />
-        <CustomInput
-          control={control}
-          name="number"
-          label="Número"
-          placeholder="123"
-        />
-        <CustomInput
-          control={control}
-          name="complement"
-          label="Complemento"
-          placeholder="Apto, bloco, referência (opcional)"
-        />
-        <CustomInput
-          control={control}
-          name="neighborhood"
-          label="Bairro"
-          placeholder="Seu bairro"
-          autoCapitalize="words"
-        />
-        <CustomInput
-          control={control}
-          name="city"
-          label="Cidade"
-          placeholder="Sua cidade"
-          autoCapitalize="words"
-        />
-        <CustomInput
-          control={control}
-          name="state"
-          label="Estado (UF)"
-          placeholder="RS"
-          autoCapitalize="characters"
-        />
+            <CustomInput
+              control={control}
+              name="zipCode"
+              label="CEP"
+              placeholder="00000-000"
+              keyboardType="numeric"
+            />
+            <CustomInput
+              control={control}
+              name="street"
+              label="Rua"
+              placeholder="Nome da rua"
+              autoCapitalize="words"
+            />
+            <CustomInput
+              control={control}
+              name="number"
+              label="Número"
+              placeholder="123"
+            />
+            <CustomInput
+              control={control}
+              name="complement"
+              label="Complemento"
+              placeholder="Apto, bloco, referência (opcional)"
+            />
+            <CustomInput
+              control={control}
+              name="neighborhood"
+              label="Bairro"
+              placeholder="Seu bairro"
+              autoCapitalize="words"
+            />
+            <CustomInput
+              control={control}
+              name="city"
+              label="Cidade"
+              placeholder="Sua cidade"
+              autoCapitalize="words"
+            />
+            <CustomInput
+              control={control}
+              name="state"
+              label="Estado (UF)"
+              placeholder="RS"
+              autoCapitalize="characters"
+            />
+          </>
+        ) : null}
 
         <ProfilePaperDivider label="Senha" />
 
@@ -280,11 +330,11 @@ export default function ProfileScreen() {
 
         <View style={styles.actions}>
           <PrimaryButton label="Salvar alterações" onPress={onSave} isLoading={isSaving} />
-          <SecondaryButton label="Sair da conta" onPress={logout} />
+          <SecondaryButton label="Sair da conta" onPress={handleLogout} />
         </View>
       </ProfilePaper>
 
-      {isBuyer(user) ? (
+      {buyer ? (
         <ProfilePaper
           title="Histórico de Compras"
           subtitle="Comprovantes e pedidos realizados"

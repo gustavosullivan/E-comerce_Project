@@ -5,12 +5,14 @@ import { StyleSheet } from 'react-native';
 import { GlassTabBar } from '@/src/components/layout/GlassTabBar';
 import { TAB_BAR_HEIGHT } from '@/src/hooks/useTabBarInset';
 import { useCartStore } from '@/src/store/cartStore';
-import { useAuthStore } from '@/src/stores/authStore';
+import { useAuthStore } from '@/src/store/authStore';
 import { colors, fontSizes, fonts } from '@/src/theme';
+import { isAdmin } from '@/src/types/auth';
 
 export default function TabLayout() {
-  const token = useAuthStore((s) => s.token);
+  const { user, token } = useAuthStore();
   const cartCount = useCartStore((s) => s.getItemCount());
+  const isCurrentUserAdmin = isAdmin(user);
 
   if (!token) return <Redirect href="/login" />;
 
@@ -27,7 +29,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Início',
+          title: isCurrentUserAdmin ? 'Produtos' : 'Início',
           tabBarIcon: ({ color, size, focused }) => (
             <MaterialIcons
               name={focused ? 'home-filled' : 'home'}
@@ -40,6 +42,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="favorites"
         options={{
+          href: isCurrentUserAdmin ? null : undefined,
           title: 'Favoritos',
           tabBarIcon: ({ color, size, focused }) => (
             <MaterialIcons
@@ -53,10 +56,35 @@ export default function TabLayout() {
       <Tabs.Screen
         name="cart"
         options={{
+          href: isCurrentUserAdmin ? null : undefined,
           title: 'Carrinho',
-          tabBarBadge: cartCount > 0 ? cartCount : undefined,
+          tabBarBadge: !isCurrentUserAdmin && cartCount > 0 ? cartCount : undefined,
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name="shopping-bag" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="novo"
+        options={{
+          href: isCurrentUserAdmin ? undefined : null,
+          title: 'Novo',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="add-box" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="vendas"
+        options={{
+          href: isCurrentUserAdmin ? undefined : null,
+          title: 'Vendas',
+          tabBarIcon: ({ color, size, focused }) => (
+            <MaterialIcons
+              name={focused ? 'leaderboard' : 'leaderboard'}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />

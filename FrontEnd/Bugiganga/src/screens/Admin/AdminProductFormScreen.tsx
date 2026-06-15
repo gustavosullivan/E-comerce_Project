@@ -4,7 +4,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
-  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -15,14 +14,15 @@ import {
 import { PrimaryButton } from '@/src/components/buttons/PrimaryButton';
 import { SecondaryButton } from '@/src/components/buttons/SecondaryButton';
 import { CustomInput } from '@/src/components/forms/CustomInput';
+import { CategoryPicker } from '@/src/components/forms/CategoryPicker';
 import { Loading } from '@/src/components/layout/Loading';
 import { ProfilePaper } from '@/src/components/layout/ProfilePaper';
 import { ScreenContainer } from '@/src/components/ui/ScreenContainer';
 import { useAdminProducts } from '@/src/hooks/useProducts';
 import { useProduct } from '@/src/hooks/useProducts';
-import { routes } from '@/src/navigation/routes';
 import { MOCK_CATEGORIES } from '@/src/mocks/categories';
 import { snackbar } from '@/src/store/snackbarStore';
+import { confirmAction } from '@/src/utils/confirm';
 import { colors, fontSizes, fonts, radius, textStyles } from '@/src/theme';
 import {
   type ProductFormData,
@@ -40,7 +40,7 @@ export default function AdminProductFormScreen() {
   const { createProduct, updateProduct, deleteProduct } = useAdminProducts();
   const [isSaving, setIsSaving] = useState(false);
 
-  const { control, handleSubmit, reset, setValue, watch } = useForm<ProductFormData>({
+  const { control, handleSubmit, reset } = useForm<ProductFormData>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
       name: '',
@@ -51,8 +51,6 @@ export default function AdminProductFormScreen() {
       imageUrl: 'https://picsum.photos/seed/bugiganga-new/400/400',
     },
   });
-
-  const selectedCategoryId = watch('categoryId');
 
   useEffect(() => {
     if (isEditing && product) {
@@ -79,7 +77,7 @@ export default function AdminProductFormScreen() {
         await createProduct(payload);
         snackbar.success('Produto cadastrado');
       }
-      router.back();
+      router.replace('/(tabs)/');
     } catch (err) {
       snackbar.error(err instanceof Error ? err.message : 'Não foi possível salvar');
     } finally {
@@ -89,22 +87,20 @@ export default function AdminProductFormScreen() {
 
   const handleDelete = () => {
     if (!isEditing || !productId) return;
-    Alert.alert('Excluir produto', 'Deseja remover este produto do catálogo?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Excluir',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteProduct(productId);
-            snackbar.success('Produto removido');
-            router.replace(routes.adminProducts);
-          } catch {
-            snackbar.error('Não foi possível excluir');
-          }
-        },
+    confirmAction({
+      title: 'Excluir produto',
+      message: 'Deseja remover este produto do catálogo?',
+      confirmLabel: 'Excluir',
+      onConfirm: async () => {
+        try {
+          await deleteProduct(productId);
+          snackbar.success('Produto removido');
+          router.replace('/(tabs)/');
+        } catch {
+          snackbar.error('Não foi possível excluir');
+        }
       },
-    ]);
+    });
   };
 
   return (
@@ -165,24 +161,13 @@ export default function AdminProductFormScreen() {
           placeholder="https://..."
         />
 
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Categoria</Text>
-          <View style={styles.categoryRow}>
-            {MOCK_CATEGORIES.map((category) => {
-              const active = selectedCategoryId === category.id;
-              return (
-                <Pressable
-                  key={category.id}
-                  style={[styles.categoryChip, active && styles.categoryChipActive]}
-                  onPress={() => setValue('categoryId', category.id, { shouldValidate: true })}>
-                  <Text style={[styles.categoryText, active && styles.categoryTextActive]}>
-                    {category.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
+        <Controller
+          control={control}
+          name="categoryId"
+          render={({ field: { value, onChange }, fieldState: { error } }) => (
+            <CategoryPicker value={value} onChange={onChange} error={error?.message} />
+          )}
+        />
 
         <View style={styles.actions}>
           <PrimaryButton
@@ -252,31 +237,6 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.xs,
     color: colors.danger,
     marginTop: 6,
-  },
-  categoryRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  categoryChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: radius.full,
-    backgroundColor: colors.inputBg,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  categoryChipActive: {
-    backgroundColor: colors.primaryLight,
-    borderColor: colors.primary,
-  },
-  categoryText: {
-    fontSize: fontSizes.xs,
-    color: colors.textMuted,
-    fontWeight: '600',
-  },
-  categoryTextActive: {
-    color: colors.primaryDark,
   },
   actions: {
     gap: 10,

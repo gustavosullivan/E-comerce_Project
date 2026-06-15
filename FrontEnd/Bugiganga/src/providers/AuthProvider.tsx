@@ -4,7 +4,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { USE_MOCK } from '@/src/config/api';
 import { useProductCatalogStore } from '@/src/store/productCatalogStore';
 import { colors } from '@/src/theme';
-import { useAuthStore } from '@/src/stores/authStore';
+import { useAuthStore } from '@/src/store/authStore';
 
 /** Aguarda hidratação do Zustand (AsyncStorage) antes de renderizar rotas */
 export function AuthProvider({ children }: PropsWithChildren) {

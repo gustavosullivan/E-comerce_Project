@@ -11,7 +11,7 @@ export const routes = {
   settings: '/settings' as Href,
   admin: '/admin' as Href,
   adminProducts: '/admin/products' as Href,
-  adminProductNew: '/admin/products/new' as Href,
+  adminProductNew: '/(tabs)/novo' as Href,
   adminProductEdit: (id: number): Href => ({
     pathname: '/admin/products/[id]',
     params: { id: String(id) },

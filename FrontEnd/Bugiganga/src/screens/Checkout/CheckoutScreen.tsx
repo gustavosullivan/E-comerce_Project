@@ -91,9 +91,11 @@ export default function CheckoutScreen() {
         clearCheckout();
         snackbar.purchaseSuccess();
         router.replace(routes.orderReceipt(order.id, true));
-      } catch {
+      } catch (error) {
         walletService.credit(user.id, total);
-        snackbar.error('Não foi possível confirmar a compra');
+        const message =
+          error instanceof Error ? error.message : 'Não foi possível confirmar a compra';
+        snackbar.error(message);
       }
     } catch (error) {
       if (error instanceof InsufficientBalanceError) {

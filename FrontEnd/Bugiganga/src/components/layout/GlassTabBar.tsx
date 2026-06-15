@@ -37,9 +37,21 @@ function getBadgeWidth(label: string): number {
 export function GlassTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const onHeightChange = useContext(BottomTabBarHeightCallbackContext);
   const { tabBarBottom } = useTabBarInset();
-  const tabCount = state.routes.length;
+  const visibleRoutes = useMemo(
+    () =>
+      state.routes.filter((route) => {
+        const { options } = descriptors[route.key];
+        return options.tabBarButton == null;
+      }),
+    [state.routes, descriptors],
+  );
+  const tabCount = visibleRoutes.length;
   const segmentPercent = tabCount > 0 ? 100 / tabCount : 0;
-  const animatedIndex = useRef(new Animated.Value(state.index)).current;
+  const focusedVisibleIndex = Math.max(
+    0,
+    visibleRoutes.findIndex((route) => route.key === state.routes[state.index]?.key),
+  );
+  const animatedIndex = useRef(new Animated.Value(focusedVisibleIndex)).current;
 
   const leftInterpolation = useMemo(() => {
     if (tabCount <= 1) return '0%';
@@ -56,12 +68,12 @@ export function GlassTabBar({ state, descriptors, navigation }: BottomTabBarProp
 
   useEffect(() => {
     Animated.timing(animatedIndex, {
-      toValue: state.index,
+      toValue: focusedVisibleIndex,
       duration: TAB_SLIDE_MS,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
-  }, [state.index, animatedIndex]);
+  }, [focusedVisibleIndex, animatedIndex]);
 
   return (
     <View
@@ -86,9 +98,10 @@ export function GlassTabBar({ state, descriptors, navigation }: BottomTabBarProp
       </View>
 
       <View style={styles.row}>
-        {state.routes.map((route, index) => {
+        {visibleRoutes.map((route) => {
+          const routeIndex = state.routes.findIndex((item) => item.key === route.key);
           const { options } = descriptors[route.key];
-          const isFocused = state.index === index;
+          const isFocused = state.index === routeIndex;
           const activeColor = options.tabBarActiveTintColor ?? colors.white;
           const inactiveColor = options.tabBarInactiveTintColor ?? colors.tabBarInactive;
           const color = isFocused ? activeColor : inactiveColor;

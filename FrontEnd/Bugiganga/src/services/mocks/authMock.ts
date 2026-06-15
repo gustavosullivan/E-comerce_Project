@@ -23,12 +23,12 @@ const MOCK_BUYER: User = {
   role: 'BUYER',
 };
 
-const MOCK_SELLER: User = {
+const MOCK_ADMIN: User = {
   id: 2,
   name: 'João Vendedor',
   email: DEV_SELLER_CREDENTIALS.email,
   username: DEV_SELLER_CREDENTIALS.login,
-  role: 'SELLER',
+  role: 'ADMIN',
 };
 
 type Account = {
@@ -53,7 +53,7 @@ function resolveLogin(data: LoginRequest): AuthResponse | null {
   if (sellerAccounts.some((account) => matchesAccount(identifier, account, data.password))) {
     return {
       token: 'mock-jwt-token-bugigangas-seller',
-      user: MOCK_SELLER,
+      user: MOCK_ADMIN,
     };
   }
 

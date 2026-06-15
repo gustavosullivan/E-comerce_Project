@@ -1,5 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
+import { useEffect, useState } from 'react';
 import { Redirect, router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -14,14 +15,17 @@ import {
 import { useAuth } from '@/src/hooks/useAuth';
 import { useWallet } from '@/src/hooks/useWallet';
 import { routes } from '@/src/navigation/routes';
+import { orderService } from '@/src/services/orderService';
+import { productService } from '@/src/services/productService';
 import { useCartStore } from '@/src/store/cartStore';
 import { useFavoritesStore } from '@/src/store/favoritesStore';
 import { useOrderHistoryStore } from '@/src/store/orderHistoryStore';
 import { snackbar } from '@/src/store/snackbarStore';
-import { useAuthStore } from '@/src/stores/authStore';
+import { useAuthStore } from '@/src/store/authStore';
 import { colors, fontSizes, fonts, textStyles } from '@/src/theme';
-import { isBuyer, isSeller } from '@/src/types/auth';
+import { isBuyer, isAdmin } from '@/src/types/auth';
 import { formatCurrency } from '@/src/utils/formatCurrency';
+import { confirmAction } from '@/src/utils/confirm';
 
 type MenuItem = {
   icon: ComponentProps<typeof MaterialIcons>['name'];
@@ -70,7 +74,7 @@ function SummaryChip({
 export default function SettingsScreen() {
   const { user, logout } = useAuth();
   const token = useAuthStore((s) => s.token);
-  const seller = isSeller(user);
+  const admin = isAdmin(user);
   const buyer = isBuyer(user);
   const cartCount = useCartStore((s) => s.getItemCount());
   const favoriteCount = useFavoritesStore((s) => s.items.length);
@@ -78,6 +82,34 @@ export default function SettingsScreen() {
     user?.id ? s.orders.filter((o) => o.userId === user.id).length : 0,
   );
   const { balance } = useWallet(user?.id, buyer);
+  const [productCount, setProductCount] = useState(0);
+  const [salesTotal, setSalesTotal] = useState(0);
+
+  useEffect(() => {
+    if (!admin || !user?.id) return;
+
+    let active = true;
+
+    (async () => {
+      try {
+        const [products, summary] = await Promise.all([
+          productService.getAdminProducts(user.id),
+          orderService.getAdminSalesSummary(user.id),
+        ]);
+        if (!active) return;
+        setProductCount(products.length);
+        setSalesTotal(summary.totalSalesValue);
+      } catch {
+        if (!active) return;
+        setProductCount(0);
+        setSalesTotal(0);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [admin, user?.id]);
 
   if (!token) {
     return <Redirect href="/login" />;
@@ -90,36 +122,38 @@ export default function SettingsScreen() {
       hint: 'Foto, nome e senha',
       onPress: () => router.push(routes.profile),
     },
-    {
-      icon: 'favorite-border',
-      label: 'Meus favoritos',
-      hint: favoriteCount > 0 ? `${favoriteCount} salvos` : 'Nenhum favorito ainda',
-      onPress: () => router.push(routes.favorites),
-    },
-    {
-      icon: 'shopping-bag',
-      label: 'Carrinho',
-      hint: cartCount > 0 ? `${cartCount} itens` : 'Carrinho vazio',
-      onPress: () => router.push(routes.cart),
-    },
   ];
 
   if (buyer) {
-    shortcutItems.push({
-      icon: 'receipt-long',
-      label: 'Histórico de compras',
-      hint: orderCount > 0 ? `${orderCount} pedidos` : 'Nenhuma compra ainda',
-      onPress: () => router.push(routes.orderHistory),
-    });
+    shortcutItems.push(
+      {
+        icon: 'favorite-border',
+        label: 'Meus favoritos',
+        hint: favoriteCount > 0 ? `${favoriteCount} salvos` : 'Nenhum favorito ainda',
+        onPress: () => router.push(routes.favorites),
+      },
+      {
+        icon: 'shopping-bag',
+        label: 'Carrinho',
+        hint: cartCount > 0 ? `${cartCount} itens` : 'Carrinho vazio',
+        onPress: () => router.push(routes.cart),
+      },
+      {
+        icon: 'receipt-long',
+        label: 'Histórico de compras',
+        hint: orderCount > 0 ? `${orderCount} pedidos` : 'Nenhuma compra ainda',
+        onPress: () => router.push(routes.orderHistory),
+      },
+    );
   }
 
-  if (seller) {
+  if (admin) {
     shortcutItems.push(
       {
         icon: 'storefront',
         label: 'Painel do vendedor',
         hint: 'Gerenciar catálogo',
-        onPress: () => router.push(routes.admin),
+        onPress: () => router.replace(routes.home),
       },
       {
         icon: 'add-box',
@@ -142,16 +176,25 @@ export default function SettingsScreen() {
 
       <ProfilePaper title="Resumo" subtitle="Sua atividade no marketplace" delay={0} showStamp={false}>
         <View style={styles.summaryRow}>
-          <SummaryChip icon="favorite" value={favoriteCount} label="Favoritos" />
-          <SummaryChip icon="shopping-bag" value={cartCount} label="Carrinho" />
           {buyer ? (
-            <SummaryChip
-              icon="account-balance-wallet"
-              value={formatCurrency(balance)}
-              label="Saldo"
-            />
+            <>
+              <SummaryChip icon="favorite" value={favoriteCount} label="Favoritos" />
+              <SummaryChip icon="shopping-bag" value={cartCount} label="Carrinho" />
+              <SummaryChip
+                icon="account-balance-wallet"
+                value={formatCurrency(balance)}
+                label="Saldo"
+              />
+            </>
           ) : (
-            <SummaryChip icon="storefront" value={0} label="Vendas" />
+            <>
+              <SummaryChip icon="inventory-2" value={productCount} label="Produtos" />
+              <SummaryChip
+                icon="storefront"
+                value={formatCurrency(salesTotal)}
+                label="Vendas"
+              />
+            </>
           )}
         </View>
       </ProfilePaper>
@@ -164,7 +207,7 @@ export default function SettingsScreen() {
         </View>
       </ProfilePaper>
 
-      {seller ? (
+      {admin ? (
         <ProfilePaper
           title="Área do vendedor"
           subtitle="Cadastre produtos, legendas e preços"
@@ -175,7 +218,7 @@ export default function SettingsScreen() {
             achados.
           </Text>
           <View style={styles.adminActions}>
-            <PrimaryButton label="Gerenciar produtos" onPress={() => router.push(routes.admin)} />
+            <PrimaryButton label="Gerenciar produtos" onPress={() => router.replace('/(tabs)/')} />
             <SecondaryButton
               label="Cadastrar novo produto"
               onPress={() => router.push(routes.adminProductNew)}
@@ -219,7 +262,7 @@ export default function SettingsScreen() {
         </Pressable>
       </ProfilePaper>
 
-      {seller ? (
+      {admin ? (
         <ProfilePaper title="Trocar de conta" subtitle="Entrar como comprador" delay={160} showStamp={false}>
           <Text style={styles.helper}>
             Para comprar como cliente, saia e use a conta comprador.
@@ -236,8 +279,12 @@ export default function SettingsScreen() {
         <SecondaryButton
           label="Sair da conta"
           onPress={() => {
-            logout();
-            router.replace('/login');
+            confirmAction({
+              title: 'Confirmação de Saída',
+              message: 'Tem certeza de que deseja sair da sua conta?',
+              confirmLabel: 'Sair',
+              onConfirm: logout,
+            });
           }}
         />
       </ProfilePaper>

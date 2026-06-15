@@ -8,12 +8,13 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { HeaderCartButton, HeaderProfileChip, HeaderSettingsButton } from '@/src/components/layout/HeaderCartButton';
 import { routes } from '@/src/navigation/routes';
 import { useCartStore } from '@/src/store/cartStore';
-import { useAuthStore } from '@/src/stores/authStore';
+import { useAuthStore } from '@/src/store/authStore';
 import { colors, fontSizes, fonts, motion, radius, shadows } from '@/src/theme';
 import { layout } from '@/src/theme/layout';
 
 type HomeHeaderProps = {
   userName: string;
+  isAdmin?: boolean;
 };
 
 type HomeHeroProps = HomeHeaderProps & {
@@ -57,7 +58,23 @@ function GlassPanel({ children }: PropsWithChildren) {
   );
 }
 
-export function HomeToolbar({ userName }: HomeHeaderProps) {
+import { Pressable } from 'react-native';
+
+// Helper component for "Add Product" button
+export function HeaderAddProductButton({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.iconButton,
+        pressed && styles.iconButtonPressed,
+      ]}>
+      <MaterialIcons name="add-box" size={24} color={colors.tabBarActive} />
+    </Pressable>
+  );
+}
+
+export function HomeToolbar({ userName, isAdmin }: HomeHeaderProps) {
   const initials = getInitials(userName);
   const avatarUri = useAuthStore((s) => s.avatarUri);
   const cartCount = useCartStore((s) => s.getItemCount());
@@ -73,10 +90,14 @@ export function HomeToolbar({ userName }: HomeHeaderProps) {
         />
         <View style={styles.toolbarActions}>
           <HeaderSettingsButton onPress={() => router.push(routes.settings)} />
-          <HeaderCartButton
-            count={cartCount}
-            onPress={() => router.push('/(tabs)/cart')}
-          />
+          {isAdmin ? (
+            <HeaderAddProductButton onPress={() => router.push('/(tabs)/novo')} />
+          ) : (
+            <HeaderCartButton
+              count={cartCount}
+              onPress={() => router.push('/(tabs)/cart')}
+            />
+          )}
         </View>
       </View>
     </GlassPanel>

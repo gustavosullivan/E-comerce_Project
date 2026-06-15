@@ -1,4 +1,4 @@
-export type UserRole = 'BUYER' | 'SELLER';
+export type UserRole = 'BUYER' | 'ADMIN';
 
 export interface User {
   id: number;
@@ -38,12 +38,12 @@ export function isBuyer(user: User | null | undefined): boolean {
   return user?.role === 'BUYER';
 }
 
-export function isSeller(user: User | null | undefined): boolean {
-  return user?.role === 'SELLER';
+export function isAdmin(user: User | null | undefined): boolean {
+  return user?.role === 'ADMIN';
 }
 
 export function getRoleLabel(role: UserRole | undefined): string {
-  if (role === 'SELLER') return 'Vendedor';
+  if (role === 'ADMIN') return 'Vendedor';
   if (role === 'BUYER') return 'Comprador';
   return '—';
 }

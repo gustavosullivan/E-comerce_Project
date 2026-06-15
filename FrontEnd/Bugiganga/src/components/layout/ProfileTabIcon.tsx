@@ -2,7 +2,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { StyleSheet } from 'react-native';
 
-import { useAuthStore } from '@/src/stores/authStore';
+import { useAuthStore } from '@/src/store/authStore';
 import { colors } from '@/src/theme';
 
 type ProfileTabIconProps = {

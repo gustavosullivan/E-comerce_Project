@@ -1,7 +1,7 @@
 import axios, { isAxiosError, type AxiosError } from 'axios';
 
 import { API_BASE_URL } from '@/src/config/api';
-import { useAuthStore } from '@/src/stores/authStore';
+import { useAuthStore } from '@/src/store/authStore';
 import type { ApiError } from '@/src/types/api';
 
 export const apiClient = axios.create({

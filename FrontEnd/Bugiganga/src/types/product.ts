@@ -15,6 +15,7 @@ export interface Product {
   stock: number;
   categoryId: number;
   categoryName: string;
+  userId: number; // Added userId
   isNew?: boolean;
   isFeatured?: boolean;
   isBestseller?: boolean;

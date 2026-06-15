@@ -37,6 +37,7 @@ export const MOCK_PRODUCTS: Product[] = NAMES.map((name, index) => {
     stock: (index % 5) + 1,
     categoryId: category.id,
     categoryName: category.name,
+    userId: index < 7 ? 2 : 0,
     isNew: index < 6,
     isFeatured: index >= 4 && index < 12,
     isBestseller: index >= 10,

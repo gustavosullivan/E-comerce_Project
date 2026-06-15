@@ -15,11 +15,18 @@ function nextProductId(products: Product[]): number {
   return Math.max(...products.map((p) => p.id)) + 1;
 }
 
+interface StockAdjustment {
+  productId: number;
+  quantity: number;
+}
+
 interface ProductCatalogState {
   products: Product[];
   addProduct: (data: ProductInput) => Product;
   updateProduct: (id: number, data: Partial<ProductInput>) => Product;
   removeProduct: (id: number) => void;
+  decreaseStockForItems: (items: StockAdjustment[]) => void;
+  restoreStockForItems: (items: StockAdjustment[]) => void;
   resetCatalog: () => void;
 }
 
@@ -37,6 +44,7 @@ export const useProductCatalogStore = create<ProductCatalogState>()(
           stock: data.stock,
           categoryId: data.categoryId,
           categoryName: resolveCategoryName(data.categoryId),
+          userId: data.userId ?? 0,
           isNew: data.isNew ?? true,
           isFeatured: data.isFeatured ?? false,
           isBestseller: data.isBestseller ?? false,
@@ -66,6 +74,40 @@ export const useProductCatalogStore = create<ProductCatalogState>()(
       },
       removeProduct: (id) => {
         set({ products: get().products.filter((p) => p.id !== id) });
+      },
+      decreaseStockForItems: (items) => {
+        if (items.length === 0) return;
+
+        const products = get().products;
+
+        for (const item of items) {
+          const product = products.find((p) => p.id === item.productId);
+          if (!product) {
+            throw new Error('Produto não encontrado');
+          }
+          if (product.stock < item.quantity) {
+            throw new Error(`Estoque insuficiente para "${product.name}"`);
+          }
+        }
+
+        set({
+          products: products.map((product) => {
+            const adjustment = items.find((item) => item.productId === product.id);
+            if (!adjustment) return product;
+            return { ...product, stock: product.stock - adjustment.quantity };
+          }),
+        });
+      },
+      restoreStockForItems: (items) => {
+        if (items.length === 0) return;
+
+        set({
+          products: get().products.map((product) => {
+            const adjustment = items.find((item) => item.productId === product.id);
+            if (!adjustment) return product;
+            return { ...product, stock: product.stock + adjustment.quantity };
+          }),
+        });
       },
       resetCatalog: () => set({ products: MOCK_PRODUCTS }),
     }),

@@ -9,7 +9,7 @@ import Animated, {
 
 import { ScalePressable } from '@/src/components/ui/ScalePressable';
 import { snackbar } from '@/src/store/snackbarStore';
-import { useAuthStore } from '@/src/stores/authStore';
+import { useAuthStore } from '@/src/store/authStore';
 import { colors, fonts, motion, radii, shadow } from '@/src/theme';
 import { pickAvatarImage } from '@/src/utils/pickAvatarImage';
 import { selectionFeedback, successFeedback } from '@/src/utils/haptics';

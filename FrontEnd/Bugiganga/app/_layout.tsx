@@ -6,6 +6,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 
 import 'react-native-reanimated';
 import { Snackbar } from '@/src/components/ui/Snackbar';
+import { ConfirmModal } from '@/src/components/ui/ConfirmModal';
 import { AuthProvider } from '@/src/providers/AuthProvider';
 
 export default function RootLayout() {
@@ -32,6 +33,7 @@ export default function RootLayout() {
         </Stack>
         <StatusBar style="dark" />
         <Snackbar />
+        <ConfirmModal />
       </ThemeProvider>
     </AuthProvider>
   );
