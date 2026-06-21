@@ -51,14 +51,20 @@ export const loginGlass = {
   cardGlass: 'rgba(255, 255, 255, 0.14)',
   cardBorder: 'rgba(255, 255, 255, 0.24)',
   cardTint: 'rgba(255, 255, 255, 0.08)',
+  /** Modais / sheets — fundo mais escuro e vidro mais sólido */
+  modalOverlay: 'rgba(6, 4, 2, 0.78)',
+  modalGlass: 'rgba(38, 24, 14, 0.94)',
+  modalGlassBorder: 'rgba(255, 255, 255, 0.2)',
+  modalGlassTint: 'rgba(18, 10, 6, 0.55)',
+  modalWebFill: 'rgba(32, 20, 12, 0.9)',
   accent: '#B45309',
   vignette: 'rgba(20, 12, 8, 0.16)',
 } as const;
 
 export const glassBlur = {
-  ios: { shell: 78, form: 62, card: 52, tabBar: 68 },
-  android: { shell: 62, form: 50, card: 42, tabBar: 56 },
-  web: { shell: '42px', form: '34px', card: '28px', tabBar: '38px' },
+  ios: { shell: 78, form: 62, card: 52, tabBar: 68, modal: 72 },
+  android: { shell: 62, form: 50, card: 42, tabBar: 56, modal: 64 },
+  web: { shell: '42px', form: '34px', card: '28px', tabBar: '38px', modal: '36px' },
 } as const;
 
 /** Alias para reutilizar a paleta fora da tela de login */

@@ -39,6 +39,7 @@ function applyPasswordRefine<T extends {
 
 const profileBaseSchema = z.object({
   name: z.string().min(2, 'Informe seu nome'),
+  email: z.string().min(1, 'Informe seu e-mail').email('E-mail inválido'),
   currentPassword: z.string(),
   newPassword: z.string(),
   confirmPassword: z.string(),

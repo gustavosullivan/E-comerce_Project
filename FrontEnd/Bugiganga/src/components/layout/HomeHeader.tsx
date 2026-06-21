@@ -22,8 +22,8 @@ type HomeHeroProps = HomeHeaderProps & {
   favoriteCount?: number;
 };
 
-/** Altura reservada para a toolbar fixa no topo da Home */
-export const HOME_STICKY_TOOLBAR_HEIGHT = 64;
+/** Altura interna da toolbar (chip + ações), sem safe area */
+export const HOME_STICKY_TOOLBAR_HEIGHT = 56;
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -156,7 +156,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    minHeight: HOME_STICKY_TOOLBAR_HEIGHT,
+    paddingVertical: 6,
     paddingHorizontal: 10,
     gap: 8,
   },
@@ -181,9 +182,9 @@ const styles = StyleSheet.create({
   },
   hero: {
     alignItems: 'flex-start',
-    paddingTop: layout.lg,
-    paddingBottom: layout.sm,
-    gap: 10,
+    paddingTop: layout.sm,
+    paddingBottom: layout.xs,
+    gap: 8,
   },
   greeting: {
     fontSize: fontSizes.sm,

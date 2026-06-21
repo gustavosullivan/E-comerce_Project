@@ -212,9 +212,11 @@ const styles = StyleSheet.create({
   },
   headerWarm: {
     marginBottom: 16,
+    width: '100%',
+    alignItems: 'center',
   },
   headerWarmWithStamp: {
-    paddingRight: 78,
+    paddingHorizontal: 4,
   },
   title: {
     ...textStyles.sectionTitle,
@@ -226,6 +228,7 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.lg,
     fontWeight: '800',
     color: loginGlass.text,
+    width: '100%',
     textAlign: 'center',
   },
   subtitle: {
@@ -240,6 +243,8 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
     color: loginGlass.textMuted,
     fontStyle: 'normal',
+    width: '100%',
+    textAlign: 'center',
   },
   headerLine: {
     width: 64,

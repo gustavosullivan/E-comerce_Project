@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { productService } from '@/src/services/productService';
-import type { Product, ProductInput } from '@/src/types/product';
+import { productService, type AdminProductSubmit } from '@/src/services/productService';
+import { useAuthStore } from '@/src/store/authStore';
+import type { Product } from '@/src/types/product';
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -67,6 +68,7 @@ export function useProduct(id: number) {
 }
 
 export function useAdminProducts() {
+  const user = useAuthStore((state) => state.user);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,31 +77,36 @@ export function useAdminProducts() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await productService.list();
+      const data = user
+        ? await productService.getAdminProducts(user.id)
+        : await productService.list();
       setProducts(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar produtos');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
   const createProduct = useCallback(
-    async (data: ProductInput) => {
-      const created = await productService.create(data);
+    async (submit: AdminProductSubmit) => {
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+      const created = await productService.createFromAdminForm(user.id, submit);
       await load();
       return created;
     },
-    [load],
+    [load, user],
   );
 
   const updateProduct = useCallback(
-    async (id: number, data: Partial<ProductInput>) => {
-      const updated = await productService.update(id, data);
+    async (id: number, submit: AdminProductSubmit) => {
+      const updated = await productService.updateFromAdminForm(id, submit);
       await load();
       return updated;
     },
@@ -108,7 +115,7 @@ export function useAdminProducts() {
 
   const deleteProduct = useCallback(
     async (id: number) => {
-      await productService.remove(id);
+      await productService.deleteProduct(id);
       await load();
     },
     [load],

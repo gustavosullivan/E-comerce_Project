@@ -1,6 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { Alert, Platform, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Platform, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -8,6 +9,9 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ScalePressable } from '@/src/components/ui/ScalePressable';
+import { getErrorMessage } from '@/src/services/api/client';
+import { uploadUserAvatar } from '@/src/services/cloudinaryService';
+import { userService } from '@/src/services/userService';
 import { snackbar } from '@/src/store/snackbarStore';
 import { useAuthStore } from '@/src/store/authStore';
 import { colors, fontSizes, fonts, loginGlass, motion, radii, radius, shadow } from '@/src/theme';
@@ -33,22 +37,45 @@ export function ProfileAvatarPicker({
   const warm = variant === 'warm';
   const avatarUri = useAuthStore((s) => s.avatarUri);
   const setAvatarUri = useAuthStore((s) => s.setAvatarUri);
+  const isHydrated = useAuthStore((s) => s.isHydrated);
+  const [isUploading, setIsUploading] = useState(false);
   const dims = SIZES[size];
   const ringScale = useSharedValue(1);
+
+  useEffect(() => {
+    if (!isHydrated || avatarUri) return;
+
+    void userService.getProfile().then((profile) => {
+      if (profile.avatarUrl) {
+        setAvatarUri(profile.avatarUrl);
+      }
+    });
+  }, [avatarUri, isHydrated, setAvatarUri]);
 
   const ringStyle = useAnimatedStyle(() => ({
     transform: [{ scale: ringScale.value }],
   }));
 
   const pickImage = async () => {
+    if (isUploading) return;
+
     selectionFeedback();
-    const result = await pickAvatarImage();
-    if (result?.uri) {
-      setAvatarUri(result.uri);
+    const asset = await pickAvatarImage();
+    if (!asset) return;
+
+    setIsUploading(true);
+    try {
+      const secureUrl = await uploadUserAvatar(asset);
+      setAvatarUri(secureUrl);
+      await userService.updateProfile({ avatarUrl: secureUrl });
       successFeedback();
       snackbar.success('Foto de perfil atualizada');
       ringScale.value = withSpring(1.06, motion.spring);
       ringScale.value = withSpring(1, motion.spring);
+    } catch (error) {
+      snackbar.error(getErrorMessage(error, 'Não foi possível enviar a foto de perfil'));
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -59,8 +86,15 @@ export function ProfileAvatarPicker({
         text: 'Remover',
         style: 'destructive',
         onPress: () => {
-          setAvatarUri(null);
-          snackbar.info('Foto de perfil removida');
+          void (async () => {
+            try {
+              setAvatarUri(null);
+              await userService.updateProfile({ avatarUrl: '' });
+              snackbar.info('Foto de perfil removida');
+            } catch (error) {
+              snackbar.error(getErrorMessage(error, 'Não foi possível remover a foto'));
+            }
+          })();
         },
       },
     ]);
@@ -82,8 +116,13 @@ export function ProfileAvatarPicker({
             },
           ]}
           onPress={pickImage}
+          disabled={isUploading}
           accessibilityLabel="Editar foto de perfil">
-          {avatarUri ? (
+          {isUploading ? (
+            <View style={[styles.placeholder, warm && styles.placeholderWarm]}>
+              <ActivityIndicator size="small" color={warm ? loginGlass.goldLight : colors.white} />
+            </View>
+          ) : avatarUri ? (
             <Image source={{ uri: avatarUri }} style={styles.avatarImage} contentFit="cover" />
           ) : (
             <View style={[styles.placeholder, warm && styles.placeholderWarm]}>
@@ -113,7 +152,10 @@ export function ProfileAvatarPicker({
       </Animated.View>
 
       <View style={styles.actions}>
-        <ScalePressable onPress={pickImage} style={[styles.actionBtn, warm && styles.actionBtnWarm]}>
+        <ScalePressable
+          onPress={pickImage}
+          disabled={isUploading}
+          style={[styles.actionBtn, warm && styles.actionBtnWarm]}>
           <MaterialIcons
             name="photo-library"
             size={16}

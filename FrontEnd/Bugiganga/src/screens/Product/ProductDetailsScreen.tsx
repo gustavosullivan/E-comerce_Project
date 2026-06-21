@@ -11,6 +11,7 @@ import { ProductModalGallery } from '@/src/components/layout/ProductModalGallery
 import { ProductPaper } from '@/src/components/layout/ProductPaper';
 import { QuantitySelector } from '@/src/components/layout/QuantitySelector';
 import { AnimatedPrice } from '@/src/components/ui/AnimatedPrice';
+import { ProductStockBadge } from '@/src/components/ui/ProductStockBadge';
 import { useProduct } from '@/src/hooks/useProducts';
 import { useCartStore } from '@/src/store/cartStore';
 import { useCheckoutStore } from '@/src/store/checkoutStore';
@@ -30,7 +31,7 @@ export default function ProductDetailsScreen() {
   const handleClose = () => router.back();
 
   const handleAddToCart = () => {
-    if (!product) return;
+    if (!product || product.stock <= 0) return;
     addItem(product, quantity);
     successFeedback();
     snackbar.success(
@@ -42,7 +43,7 @@ export default function ProductDetailsScreen() {
   };
 
   const handleBuyNow = () => {
-    if (!product) return;
+    if (!product || product.stock <= 0) return;
     setBuyNow(product, quantity);
     snackbar.info('Indo para o checkout…');
     router.push('/checkout');
@@ -65,6 +66,8 @@ export default function ProductDetailsScreen() {
   }
 
   const lineTotal = product.price * quantity;
+  const outOfStock = product.stock <= 0;
+  const maxQuantity = Math.max(product.stock, 1);
 
   return (
     <ProductPaper onClose={handleClose} large hideClose>
@@ -79,6 +82,9 @@ export default function ProductDetailsScreen() {
             {product.description}
           </Text>
           <Text style={styles.unitPrice}>{formatCurrency(product.price)} / un.</Text>
+          <View style={styles.stockWrap}>
+            <ProductStockBadge stock={product.stock} />
+          </View>
         </View>
 
         <View style={styles.purchaseBar}>
@@ -86,7 +92,7 @@ export default function ProductDetailsScreen() {
             compact
             quantity={quantity}
             onDecrease={() => setQuantity((q) => Math.max(1, q - 1))}
-            onIncrease={() => setQuantity((q) => q + 1)}
+            onIncrease={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
           />
           <View style={styles.totalWrap}>
             <Text style={styles.totalLabel}>Total</Text>
@@ -96,10 +102,20 @@ export default function ProductDetailsScreen() {
 
         <View style={styles.actions}>
           <View style={styles.actionSlot}>
-            <PrimaryButton compact label="Comprar Agora" onPress={handleBuyNow} />
+            <PrimaryButton
+              compact
+              label="Comprar Agora"
+              onPress={handleBuyNow}
+              disabled={outOfStock}
+            />
           </View>
           <View style={styles.actionSlot}>
-            <SecondaryButton compact label="Carrinho" onPress={handleAddToCart} />
+            <SecondaryButton
+              compact
+              label="Carrinho"
+              onPress={handleAddToCart}
+              disabled={outOfStock}
+            />
           </View>
         </View>
       </Animated.View>
@@ -135,6 +151,10 @@ const styles = StyleSheet.create({
     color: colors.secondary,
     fontWeight: '600',
     marginTop: 2,
+  },
+  stockWrap: {
+    marginTop: 8,
+    alignItems: 'center',
   },
   purchaseBar: {
     flexDirection: 'row',

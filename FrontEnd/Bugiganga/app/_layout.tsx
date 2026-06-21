@@ -1,6 +1,7 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -13,28 +14,30 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <AuthProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack screenOptions={{ headerShown: false }} initialRouteName="login">
-          <Stack.Screen name="login" />
-          <Stack.Screen name="index" />
-          <Stack.Screen name="register" />
-          <Stack.Screen name="forgot-password" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen
-            name="product"
-            options={{ presentation: 'transparentModal' }}
-          />
-          <Stack.Screen name="checkout" />
-          <Stack.Screen name="orders" />
-          <Stack.Screen name="account" />
-          <Stack.Screen name="settings" />
-          <Stack.Screen name="admin" />
-        </Stack>
-        <StatusBar style="dark" />
-        <Snackbar />
-        <ConfirmModal />
-      </ThemeProvider>
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack screenOptions={{ headerShown: false }} initialRouteName="login">
+            <Stack.Screen name="login" />
+            <Stack.Screen name="index" />
+            <Stack.Screen name="register" />
+            <Stack.Screen name="forgot-password" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen
+              name="product"
+              options={{ presentation: 'transparentModal' }}
+            />
+            <Stack.Screen name="checkout" />
+            <Stack.Screen name="orders" />
+            <Stack.Screen name="account" />
+            <Stack.Screen name="settings" />
+            <Stack.Screen name="admin" />
+          </Stack>
+          <StatusBar style="dark" />
+          <Snackbar />
+          <ConfirmModal />
+        </ThemeProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

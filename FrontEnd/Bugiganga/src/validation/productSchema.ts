@@ -13,7 +13,7 @@ export const productFormSchema = z.object({
     .string()
     .min(1, 'Informe o estoque')
     .refine((value) => /^\d+$/.test(value), 'Estoque inválido'),
-  imageUrl: z.string().min(1, 'Informe a URL da imagem'),
+  imageUrl: z.string().optional(),
 });
 
 export type ProductFormData = z.infer<typeof productFormSchema>;
@@ -25,7 +25,7 @@ export function parseProductForm(data: ProductFormData) {
     price: Number(data.price.replace(',', '.')),
     categoryId: data.categoryId,
     stock: Number(data.stock),
-    imageUrl: data.imageUrl.trim(),
+    imageUrl: data.imageUrl?.trim() ?? '',
   };
 }
 

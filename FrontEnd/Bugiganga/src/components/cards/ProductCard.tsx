@@ -6,6 +6,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 import { useCartStore } from '@/src/store/cartStore';
 import { useFavoritesStore } from '@/src/store/favoritesStore';
+import { ProductStockBadge } from '@/src/components/ui/ProductStockBadge';
 import { colors, fontSizes, fonts, loginGlass, radius, shadows } from '@/src/theme';
 import { glassBlur } from '@/src/theme/loginGlass';
 import type { Product } from '@/src/types/product';
@@ -38,6 +39,7 @@ export function ProductCard({
   const [justAdded, setJustAdded] = useState(false);
 
   const handleAddToCart = () => {
+    if (product.stock <= 0) return;
     addItem(product, 1);
     setJustAdded(true);
     setTimeout(() => setJustAdded(false), 1400);
@@ -98,6 +100,9 @@ export function ProductCard({
               <Text style={[styles.category, warm && styles.categoryWarm]} numberOfLines={1}>
                 {product.categoryName}
               </Text>
+              <View style={styles.stockWrap}>
+                <ProductStockBadge stock={product.stock} variant={warm ? 'warm' : 'default'} compact />
+              </View>
             </View>
 
             <View style={styles.priceRow}>
@@ -105,11 +110,17 @@ export function ProductCard({
                 {formatCurrency(product.price)}
               </Text>
               <Pressable
-                style={[styles.cartBtn, warm && styles.cartBtnWarm, justAdded && styles.cartBtnAdded]}
+                style={[
+                  styles.cartBtn,
+                  warm && styles.cartBtnWarm,
+                  justAdded && styles.cartBtnAdded,
+                  product.stock <= 0 && styles.cartBtnDisabled,
+                ]}
                 onPress={(e) => {
                   e.stopPropagation();
                   handleAddToCart();
                 }}
+                disabled={product.stock <= 0}
                 hitSlop={6}
                 accessibilityRole="button"
                 accessibilityLabel="Adicionar ao carrinho">
@@ -223,7 +234,7 @@ const styles = StyleSheet.create({
   },
   textBlock: {
     flexShrink: 1,
-    minHeight: 52,
+    minHeight: 68,
   },
   name: {
     fontFamily: fonts.sans,
@@ -245,6 +256,9 @@ const styles = StyleSheet.create({
   },
   categoryWarm: {
     color: loginGlass.textMuted,
+  },
+  stockWrap: {
+    marginTop: 4,
   },
   priceRow: {
     flexDirection: 'row',
@@ -279,5 +293,8 @@ const styles = StyleSheet.create({
   },
   cartBtnAdded: {
     backgroundColor: colors.primaryDark,
+  },
+  cartBtnDisabled: {
+    opacity: 0.4,
   },
 });

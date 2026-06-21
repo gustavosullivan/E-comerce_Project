@@ -1,7 +1,6 @@
 import { type PropsWithChildren, useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
-import { USE_MOCK } from '@/src/config/api';
 import { useProductCatalogStore } from '@/src/store/productCatalogStore';
 import { colors } from '@/src/theme';
 import { useAuthStore } from '@/src/store/authStore';
@@ -12,9 +11,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     const finish = () => {
-      if (USE_MOCK) {
-        useAuthStore.getState().clearSession();
-      }
       void useProductCatalogStore.persist.rehydrate();
       useAuthStore.getState().setHydrated(true);
       setReady(true);

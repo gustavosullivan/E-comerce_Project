@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
   },
   headerWrap: {
     alignSelf: 'center',
-    marginBottom: layout.sm,
+    marginBottom: layout.xs,
   },
   row: {
     flexDirection: 'row',

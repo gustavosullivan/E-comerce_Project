@@ -1,20 +1,15 @@
 import * as ImagePicker from 'expo-image-picker';
 import { Alert, Platform } from 'react-native';
 
-export type PickAvatarResult = {
-  uri: string;
-  fileName?: string;
-};
-
 /** Abre seletor de imagem — no web, pasta/arquivos do PC; no mobile, galeria. */
-export async function pickAvatarImage(): Promise<PickAvatarResult | null> {
+export async function pickAvatarImage(): Promise<ImagePicker.ImagePickerAsset | null> {
   if (Platform.OS === 'web') {
     return pickAvatarFromWeb();
   }
   return pickAvatarFromDevice();
 }
 
-async function pickAvatarFromWeb(): Promise<PickAvatarResult | null> {
+async function pickAvatarFromWeb(): Promise<ImagePicker.ImagePickerAsset | null> {
   return new Promise((resolve) => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -44,12 +39,23 @@ async function pickAvatarFromWeb(): Promise<PickAvatarResult | null> {
       const reader = new FileReader();
       reader.onload = () => {
         cleanup();
-        const uri = reader.result;
-        if (typeof uri === 'string') {
-          resolve({ uri, fileName: file.name });
-        } else {
+        const dataUrl = reader.result;
+        if (typeof dataUrl !== 'string') {
           resolve(null);
+          return;
         }
+
+        const commaIndex = dataUrl.indexOf(',');
+        const base64 = commaIndex !== -1 ? dataUrl.slice(commaIndex + 1) : '';
+
+        resolve({
+          uri: dataUrl,
+          base64,
+          mimeType: file.type,
+          width: 0,
+          height: 0,
+          fileName: file.name,
+        });
       };
       reader.onerror = () => {
         cleanup();
@@ -68,7 +74,7 @@ async function pickAvatarFromWeb(): Promise<PickAvatarResult | null> {
   });
 }
 
-async function pickAvatarFromDevice(): Promise<PickAvatarResult | null> {
+async function pickAvatarFromDevice(): Promise<ImagePicker.ImagePickerAsset | null> {
   const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (status !== 'granted') {
     Alert.alert('Permissão necessária', 'Permita acesso às fotos para alterar o perfil.');
@@ -80,14 +86,12 @@ async function pickAvatarFromDevice(): Promise<PickAvatarResult | null> {
     allowsEditing: true,
     aspect: [1, 1],
     quality: 0.85,
+    base64: true,
   });
 
-  if (result.canceled || !result.assets[0]?.uri) {
+  if (result.canceled || !result.assets[0]) {
     return null;
   }
 
-  return {
-    uri: result.assets[0].uri,
-    fileName: result.assets[0].fileName ?? undefined,
-  };
+  return result.assets[0];
 }

@@ -10,7 +10,7 @@ type WarmGlassSurfaceProps = PropsWithChildren<{
   style?: StyleProp<ViewStyle>;
   contentStyle?: StyleProp<ViewStyle>;
   level?: GlassLevel;
-  variant?: 'default' | 'card';
+  variant?: 'default' | 'card' | 'modal';
 }>;
 
 function getBlurIntensity(level: GlassLevel) {
@@ -24,14 +24,17 @@ export function WarmGlassSurface({
   level = 'shell',
   variant = 'default',
 }: WarmGlassSurfaceProps) {
-  const webBlur = glassBlur.web[level];
-  const isCard = variant === 'card';
+  const isModal = variant === 'modal';
+  const isCard = variant === 'card' || isModal;
+  const blurLevel: GlassLevel = isModal ? 'modal' : level;
+  const webBlur = glassBlur.web[blurLevel];
 
   return (
     <View
       style={[
         styles.shell,
-        isCard && styles.shellCard,
+        isCard && !isModal && styles.shellCard,
+        isModal && styles.shellModal,
         Platform.OS === 'web'
           ? {
               backdropFilter: `blur(${webBlur})`,
@@ -41,15 +44,15 @@ export function WarmGlassSurface({
         style,
       ]}>
       {Platform.OS === 'web' ? (
-        <View style={[styles.webFill, isCard && styles.webFillCard]} />
+        <View style={[styles.webFill, isCard && !isModal && styles.webFillCard, isModal && styles.webFillModal]} />
       ) : (
         <BlurView
-          intensity={getBlurIntensity(level)}
+          intensity={getBlurIntensity(blurLevel)}
           tint="dark"
           style={StyleSheet.absoluteFill}
         />
       )}
-      <View style={[styles.lightTint, isCard && styles.lightTintCard]} />
+      <View style={[styles.lightTint, isCard && !isModal && styles.lightTintCard, isModal && styles.lightTintModal]} />
       <View style={styles.highlight} />
       <View style={[styles.content, contentStyle]}>{children}</View>
     </View>
@@ -67,6 +70,10 @@ const styles = StyleSheet.create({
     backgroundColor: loginGlass.cardGlass,
     borderColor: loginGlass.cardBorder,
   },
+  shellModal: {
+    backgroundColor: loginGlass.modalGlass,
+    borderColor: loginGlass.modalGlassBorder,
+  },
   webFill: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: loginGlass.glassWebFill,
@@ -74,12 +81,18 @@ const styles = StyleSheet.create({
   webFillCard: {
     backgroundColor: loginGlass.glassWebFill,
   },
+  webFillModal: {
+    backgroundColor: loginGlass.modalWebFill,
+  },
   lightTint: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: loginGlass.glassLightTint,
   },
   lightTintCard: {
     backgroundColor: loginGlass.cardTint,
+  },
+  lightTintModal: {
+    backgroundColor: loginGlass.modalGlassTint,
   },
   highlight: {
     position: 'absolute',

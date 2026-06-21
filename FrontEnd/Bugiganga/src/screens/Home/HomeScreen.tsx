@@ -4,7 +4,6 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { type ReactNode, useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { ProductCard } from '@/src/components/cards/ProductCard';
 import { AdminProductCard } from '@/src/components/cards/AdminProductCard';
 import { ProductPreviewSheet } from '@/src/components/cards/ProductPreviewSheet';
@@ -13,21 +12,25 @@ import { BannerCarousel } from '@/src/components/layout/BannerCarousel';
 import { CategoryChips } from '@/src/components/layout/CategoryChips';
 import { ErrorState } from '@/src/components/layout/ErrorState';
 import {
-  HOME_STICKY_TOOLBAR_HEIGHT,
   HomeHero,
   HomeToolbar,
 } from '@/src/components/layout/HomeHeader';
 import { LoginGlassBackground } from '@/src/components/layout/LoginGlassBackground';
 import { PageContainer } from '@/src/components/layout/PageContainer';
 import { ProductGrid } from '@/src/components/layout/ProductGrid';
-import { ProductGridSkeleton } from '@/src/components/ui/SkeletonBlock';import { useTabBarInset } from '@/src/hooks/useTabBarInset';
+import { ProductGridSkeleton } from '@/src/components/ui/SkeletonBlock';
+import { PriceFilterChips } from '@/src/components/forms/ProductFiltersSheet';
+import { useTabBarInset, useTopChromeInset } from '@/src/hooks/useTabBarInset';
 import { useAuthStore } from '@/src/store/authStore';
 import { isAdmin } from '@/src/types/auth';
 import { useProducts } from '@/src/hooks/useProducts'; // This hook is for buyer products
 import { MOCK_CATEGORIES } from '@/src/mocks/categories';
 import { snackbar } from '@/src/store/snackbarStore';
 import { useFavoritesStore } from '@/src/store/favoritesStore';
-import { fontSizes, fonts, layout, loginGlass } from '@/src/theme';import type { Product } from '@/src/types/product';
+import { fontSizes, fonts, layout, loginGlass } from '@/src/theme';
+import type { Product } from '@/src/types/product';
+import { EMPTY_PRODUCT_FILTERS, type ProductFilters } from '@/src/types/productFilters';
+import { applyProductFilters, countActiveProductFilters } from '@/src/utils/productFilters';
 import { productService } from '@/src/services/productService';
 import { routes } from '@/src/navigation/routes';
 import { confirmAction } from '@/src/utils/confirm';
@@ -48,15 +51,35 @@ const AdminProductItem = ({ product, onEdit, onDelete }: AdminProductItemProps) 
   />
 );
 
+function HomeScreenLayout({
+  toolbar,
+  children,
+}: {
+  toolbar: ReactNode;
+  children: ReactNode;
+}) {
+  const { stickyToolbarStyle } = useTopChromeInset();
+
+  return (
+    <View style={styles.screen}>
+      <View style={[styles.topChrome, stickyToolbarStyle]}>
+        <PageContainer>{toolbar}</PageContainer>
+      </View>
+      <View style={styles.scrollArea}>{children}</View>
+    </View>
+  );
+}
+
 export default function HomeScreen() {
   const { contentBottomInset } = useTabBarInset();
+  const { topInset } = useTopChromeInset();
   const { user } = useAuthStore();
   const isCurrentUserAdmin = isAdmin(user);
 
   // Buyer specific states and functions
   const { products, isLoading, error, reload } = useProducts();
   const [query, setQuery] = useState('');
-  const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [productFilters, setProductFilters] = useState<ProductFilters>(EMPTY_PRODUCT_FILTERS);
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const toggle = useFavoritesStore((s) => s.toggle);
   const favoriteCount = useFavoritesStore((s) => s.items.length);
@@ -129,19 +152,12 @@ export default function HomeScreen() {
     });
   };
 
-  const filtered = useMemo(() => {
-    let list = products;
-    if (categoryId != null) {
-      list = list.filter((p) => p.categoryId === categoryId);
-    }
-    const q = query.trim().toLowerCase();
-    if (!q) return list;
-    return list.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.categoryName.toLowerCase().includes(q),
-    );
-  }, [products, query, categoryId]);
+  const filtered = useMemo(
+    () => applyProductFilters(products, query, productFilters),
+    [products, query, productFilters],
+  );
+
+  const activeFilterCount = countActiveProductFilters(productFilters);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -160,19 +176,13 @@ export default function HomeScreen() {
     if (adminLoading) {
       return (
         <HomeShell>
-          <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
-            <View style={styles.stickyToolbar}>
-              <PageContainer>
-                <HomeToolbar userName={displayName} isAdmin={isCurrentUserAdmin} />
-              </PageContainer>
-            </View>
-            <View style={styles.scrollArea}>
-              <PageContainer style={adminStyles.loadingContainer}>
-                <ActivityIndicator size="large" color={loginGlass.gold} />
-                <Text style={adminStyles.loadingText}>Carregando seus produtos...</Text>
-              </PageContainer>
-            </View>
-          </SafeAreaView>
+          <HomeScreenLayout
+            toolbar={<HomeToolbar userName={displayName} isAdmin={isCurrentUserAdmin} />}>
+            <PageContainer style={adminStyles.loadingContainer}>
+              <ActivityIndicator size="large" color={loginGlass.gold} />
+              <Text style={adminStyles.loadingText}>Carregando seus produtos...</Text>
+            </PageContainer>
+          </HomeScreenLayout>
         </HomeShell>
       );
     }
@@ -180,23 +190,17 @@ export default function HomeScreen() {
     if (adminError) {
       return (
         <HomeShell>
-          <SafeAreaView style={styles.screen}>
+          <View style={[styles.screen, { paddingTop: topInset }]}>
             <ErrorState message={adminError} onRetry={fetchAdminProducts} />
-          </SafeAreaView>
+          </View>
         </HomeShell>
       );
     }
 
     return (
       <HomeShell>
-        <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
-        <View style={styles.stickyToolbar}>
-          <PageContainer>
-            <HomeToolbar userName={displayName} isAdmin={isCurrentUserAdmin} />
-          </PageContainer>
-        </View>
-
-        <View style={styles.scrollArea}>
+        <HomeScreenLayout
+          toolbar={<HomeToolbar userName={displayName} isAdmin={isCurrentUserAdmin} />}>
           {filteredAdminProducts.length > 0 ? (
             <ProductGrid
               products={filteredAdminProducts}
@@ -250,8 +254,7 @@ export default function HomeScreen() {
               </View>
             </PageContainer>
           )}
-        </View>
-        </SafeAreaView>
+        </HomeScreenLayout>
       </HomeShell>
     );
   }
@@ -260,19 +263,13 @@ export default function HomeScreen() {
   if (isLoading && products.length === 0) {
     return (
       <HomeShell>
-        <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
-          <View style={styles.stickyToolbar}>
-            <PageContainer>
-              <HomeToolbar userName={displayName} isAdmin={isCurrentUserAdmin} />
-            </PageContainer>
-          </View>
-          <View style={styles.scrollArea}>
-            <PageContainer>
-              <SearchBar value="" onChangeText={() => {}} editable={false} variant="warm" />
-              <ProductGridSkeleton columns={2} />
-            </PageContainer>
-          </View>
-        </SafeAreaView>
+        <HomeScreenLayout
+          toolbar={<HomeToolbar userName={displayName} isAdmin={isCurrentUserAdmin} />}>
+          <PageContainer>
+            <SearchBar value="" onChangeText={() => {}} editable={false} variant="warm" />
+            <ProductGridSkeleton columns={2} />
+          </PageContainer>
+        </HomeScreenLayout>
       </HomeShell>
     );
   }
@@ -280,16 +277,15 @@ export default function HomeScreen() {
   if (error && products.length === 0) {
     return (
       <HomeShell>
-        <SafeAreaView style={styles.screen}>
+        <View style={[styles.screen, { paddingTop: topInset }]}>
           <ErrorState message={error} onRetry={reload} />
-        </SafeAreaView>
+        </View>
       </HomeShell>
     );
   }
 
   return (
     <HomeShell>
-      <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       {previewProduct ? (
         <ProductPreviewSheet
           product={previewProduct}
@@ -298,13 +294,8 @@ export default function HomeScreen() {
         />
       ) : null}
 
-      <View style={styles.stickyToolbar}>
-        <PageContainer>
-          <HomeToolbar userName={displayName} isAdmin={isCurrentUserAdmin} />
-        </PageContainer>
-      </View>
-
-      <View style={styles.scrollArea}>
+      <HomeScreenLayout
+        toolbar={<HomeToolbar userName={displayName} isAdmin={isCurrentUserAdmin} />}>
         <ProductGrid
           products={filtered}
           contentBottomInset={contentBottomInset}
@@ -327,15 +318,33 @@ export default function HomeScreen() {
               <BannerCarousel variant="warm" />
               <CategoryChips
                 categories={MOCK_CATEGORIES}
-                selectedId={categoryId}
-                onSelect={setCategoryId}
+                selectedId={productFilters.categoryId}
+                onSelect={(categoryId) =>
+                  setProductFilters((current) => ({ ...current, categoryId }))
+                }
+                variant="warm"
+              />
+              <PriceFilterChips
+                value={productFilters.priceRange}
+                onChange={(priceRange) =>
+                  setProductFilters((current) => ({ ...current, priceRange }))
+                }
                 variant="warm"
               />
               <View style={styles.sectionHead}>
                 <Text style={styles.sectionTitle}>
-                  {categoryId ? 'Filtrados' : 'Destaques'}
+                  {activeFilterCount > 0 ? 'Filtrados' : 'Destaques'}
                 </Text>
-                <Text style={styles.count}>{filtered.length} itens</Text>
+                <View style={styles.sectionMeta}>
+                  <Text style={styles.count}>{filtered.length} itens</Text>
+                  {activeFilterCount > 0 ? (
+                    <Pressable
+                      onPress={() => setProductFilters(EMPTY_PRODUCT_FILTERS)}
+                      hitSlop={8}>
+                      <Text style={styles.clearFilters}>Limpar filtros</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
               </View>
             </PageContainer>
           }
@@ -349,8 +358,7 @@ export default function HomeScreen() {
             />
           )}
         />
-      </View>
-    </SafeAreaView>
+      </HomeScreenLayout>
     </HomeShell>
   );
 }
@@ -365,25 +373,15 @@ function HomeShell({ children }: { children: ReactNode }) {
   );
 }
 
-const TOOLBAR_SLOT = HOME_STICKY_TOOLBAR_HEIGHT + layout.md;
-
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: loginGlass.background },
   screen: { flex: 1, backgroundColor: 'transparent' },
-  stickyToolbar: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
+  topChrome: {
     zIndex: 20,
-    paddingTop: layout.xs,
-    paddingBottom: layout.xs,
-    paddingHorizontal: 0,
     backgroundColor: 'transparent',
   },
   scrollArea: {
     flex: 1,
-    paddingTop: TOOLBAR_SLOT,
   },
   sectionHead: {
     flexDirection: 'row',
@@ -407,6 +405,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: loginGlass.textMuted,
   },
+  sectionMeta: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  clearFilters: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    fontWeight: '700',
+    color: loginGlass.goldLight,
+    textDecorationLine: 'underline',
+  },
 });
 
 const adminStyles = StyleSheet.create({
@@ -421,8 +430,8 @@ const adminStyles = StyleSheet.create({
     color: loginGlass.textMuted,
   },
   adminSectionTitle: {
-    marginTop: 20,
-    marginBottom: 10,
+    marginTop: layout.sm,
+    marginBottom: layout.sm,
     fontFamily: fonts.gothic,
     fontSize: fontSizes.lg,
     fontWeight: '700',

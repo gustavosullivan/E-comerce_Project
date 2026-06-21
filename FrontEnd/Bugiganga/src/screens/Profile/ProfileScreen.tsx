@@ -80,6 +80,7 @@ export default function ProfileScreen() {
     defaultValues: buyer
       ? {
           name: user?.name ?? '',
+          email: user?.email ?? '',
           currentPassword: '',
           newPassword: '',
           confirmPassword: '',
@@ -87,6 +88,7 @@ export default function ProfileScreen() {
         }
       : {
           name: user?.name ?? '',
+          email: user?.email ?? '',
           currentPassword: '',
           newPassword: '',
           confirmPassword: '',
@@ -97,6 +99,7 @@ export default function ProfileScreen() {
     if (buyer) {
       reset({
         name: user?.name ?? '',
+        email: user?.email ?? '',
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
@@ -107,17 +110,20 @@ export default function ProfileScreen() {
 
     reset({
       name: user?.name ?? '',
+      email: user?.email ?? '',
       currentPassword: '',
       newPassword: '',
       confirmPassword: '',
     });
-  }, [user?.name, address, buyer, reset]);
+  }, [user?.name, user?.email, address, buyer, reset]);
 
   const onSave = handleSubmit(async (data) => {
     setError(null);
     setIsSaving(true);
     try {
       const nameChanged = data.name.trim() !== (user?.name ?? '');
+      const emailChanged =
+        data.email.trim().toLowerCase() !== (user?.email ?? '').toLowerCase();
       const changingPassword =
         data.currentPassword.length > 0 ||
         data.newPassword.length > 0 ||
@@ -145,8 +151,11 @@ export default function ProfileScreen() {
           nextAddress.state !== (address?.state ?? '');
       }
 
-      if (nameChanged) {
-        const updated = await userService.updateProfile({ name: data.name.trim() });
+      if (nameChanged || emailChanged) {
+        const updated = await userService.updateProfile({
+          ...(nameChanged ? { name: data.name.trim() } : {}),
+          ...(emailChanged ? { email: data.email.trim() } : {}),
+        });
         if (user) {
           setUser({
             ...user,
@@ -170,7 +179,7 @@ export default function ProfileScreen() {
         await addressService.saveAddress(user.id, nextAddress);
       }
 
-      if (!nameChanged && !changingPassword && !addressChanged) {
+      if (!nameChanged && !emailChanged && !changingPassword && !addressChanged) {
         snackbar.info('Nenhuma alteração para salvar');
         return;
       }
@@ -179,6 +188,7 @@ export default function ProfileScreen() {
         buyer
           ? {
               name: data.name.trim(),
+              email: data.email.trim(),
               currentPassword: '',
               newPassword: '',
               confirmPassword: '',
@@ -186,24 +196,25 @@ export default function ProfileScreen() {
             }
           : {
               name: data.name.trim(),
+              email: data.email.trim(),
               currentPassword: '',
               newPassword: '',
               confirmPassword: '',
             },
       );
 
-      if (nameChanged && changingPassword && addressChanged) {
+      if ((nameChanged || emailChanged) && changingPassword && addressChanged) {
         snackbar.success('Perfil, endereço e senha atualizados');
-      } else if (nameChanged && addressChanged) {
+      } else if ((nameChanged || emailChanged) && addressChanged) {
         snackbar.success('Perfil e endereço atualizados');
       } else if (changingPassword && addressChanged) {
         snackbar.success('Endereço e senha atualizados');
       } else if (addressChanged) {
         snackbar.success('Endereço atualizado');
-      } else if (nameChanged && changingPassword) {
+      } else if ((nameChanged || emailChanged) && changingPassword) {
         snackbar.success('Perfil e senha atualizados');
-      } else if (nameChanged) {
-        snackbar.success('Nome atualizado');
+      } else if (nameChanged || emailChanged) {
+        snackbar.success('Perfil atualizado');
       } else {
         snackbar.success('Senha alterada com sucesso');
       }
@@ -251,12 +262,15 @@ export default function ProfileScreen() {
                   variant="warm"
                 />
 
-                <View style={styles.readOnlyField}>
-                  <Text style={styles.readOnlyLabel}>Email</Text>
-                  <View style={styles.readOnlyBox}>
-                    <Text style={styles.readOnlyText}>{user?.email ?? '—'}</Text>
-                  </View>
-                </View>
+                <CustomInput
+                  control={control}
+                  name="email"
+                  label="Email"
+                  placeholder="seu@email.com"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  variant="warm"
+                />
 
                 {buyer ? (
                   <View style={styles.readOnlyField}>

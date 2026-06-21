@@ -1,8 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import type { ImagePickerAsset } from 'expo-image-picker';
 import { useEffect, useState } from 'react';
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -14,12 +15,12 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Image } from 'expo-image';
 
 import { PrimaryButton } from '@/src/components/buttons/PrimaryButton';
 import { SecondaryButton } from '@/src/components/buttons/SecondaryButton';
 import { CustomInput } from '@/src/components/forms/CustomInput';
 import { CategoryPicker } from '@/src/components/forms/CategoryPicker';
+import { ProductImagePicker } from '@/src/components/forms/ProductImagePicker';
 import { Loading } from '@/src/components/layout/Loading';
 import { PageContainer } from '@/src/components/layout/PageContainer';
 import { ProfilePaper } from '@/src/components/layout/ProfilePaper';
@@ -31,6 +32,7 @@ import { useProduct } from '@/src/hooks/useProducts';
 import { routes } from '@/src/navigation/routes';
 import { MOCK_CATEGORIES } from '@/src/mocks/categories';
 import { snackbar } from '@/src/store/snackbarStore';
+import { getErrorMessage } from '@/src/services/api/client';
 import { confirmAction } from '@/src/utils/confirm';
 import { fontSizes, fonts, layout, loginGlass, radius } from '@/src/theme';
 import {
@@ -39,8 +41,6 @@ import {
   productFormSchema,
   productToFormValues,
 } from '@/src/validation/productSchema';
-
-const DEFAULT_IMAGE = 'https://picsum.photos/seed/bugiganga-new/400/400';
 
 export default function AdminProductFormScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
@@ -51,6 +51,8 @@ export default function AdminProductFormScreen() {
   const { product, isLoading: loadingProduct } = useProduct(isEditing ? productId : 0);
   const { createProduct, updateProduct, deleteProduct } = useAdminProducts();
   const [isSaving, setIsSaving] = useState(false);
+  const [imageAsset, setImageAsset] = useState<ImagePickerAsset | null>(null);
+  const [imageUrl, setImageUrl] = useState('');
 
   const { control, handleSubmit, reset } = useForm<ProductFormData>({
     resolver: zodResolver(productFormSchema),
@@ -60,18 +62,17 @@ export default function AdminProductFormScreen() {
       price: '',
       categoryId: MOCK_CATEGORIES[0]?.id ?? 1,
       stock: '1',
-      imageUrl: 'https://picsum.photos/seed/bugiganga-new/400/400',
+      imageUrl: '',
     },
   });
 
   useEffect(() => {
     if (isEditing && product) {
       reset(productToFormValues(product));
+      setImageUrl(product.imageUrl);
+      setImageAsset(null);
     }
   }, [isEditing, product, reset]);
-
-  const imageUrl = useWatch({ control, name: 'imageUrl' });
-  const previewUri = imageUrl?.trim() || DEFAULT_IMAGE;
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -92,19 +93,26 @@ export default function AdminProductFormScreen() {
   }
 
   const onSubmit = handleSubmit(async (data) => {
+    if (!imageAsset && !imageUrl.trim()) {
+      snackbar.error('Selecione uma imagem do produto');
+      return;
+    }
+
     setIsSaving(true);
     try {
-      const payload = parseProductForm(data);
+      const payload = parseProductForm({ ...data, imageUrl });
+      const submit = { data: payload, imageAsset };
+
       if (isEditing && productId) {
-        await updateProduct(productId, payload);
+        await updateProduct(productId, submit);
         snackbar.success('Produto atualizado');
       } else {
-        await createProduct(payload);
+        await createProduct(submit);
         snackbar.success('Produto cadastrado');
       }
       router.replace(routes.home);
     } catch (err) {
-      snackbar.error(err instanceof Error ? err.message : 'Não foi possível salvar');
+      snackbar.error(getErrorMessage(err, 'Não foi possível salvar'));
     } finally {
       setIsSaving(false);
     }
@@ -156,22 +164,18 @@ export default function AdminProductFormScreen() {
 
               <ProfilePaper
                 title="Imagem"
-                subtitle="Pré-visualização do produto"
+                subtitle="Selecione a foto do produto"
                 showStamp={false}
                 variant="warm">
-                <View style={styles.previewWrap}>
-                  <Image
-                    source={{ uri: previewUri }}
-                    style={styles.previewImage}
-                    contentFit="cover"
-                  />
-                </View>
-                <CustomInput
-                  control={control}
-                  name="imageUrl"
-                  label="URL da imagem"
-                  placeholder="https://..."
-                  keyboardType="url"
+                <ProductImagePicker
+                  disabled={isSaving}
+                  imageAsset={imageAsset}
+                  imageUrl={imageUrl}
+                  onRemoveImage={() => {
+                    setImageUrl('');
+                    setImageAsset(null);
+                  }}
+                  onSelectImage={setImageAsset}
                   variant="warm"
                 />
               </ProfilePaper>
@@ -309,17 +313,5 @@ const styles = StyleSheet.create({
   actions: {
     gap: 10,
     marginTop: 8,
-  },
-  previewWrap: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  previewImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: radius.lg,
-    backgroundColor: loginGlass.formFieldBg,
-    borderWidth: 1,
-    borderColor: loginGlass.cardBorder,
   },
 });

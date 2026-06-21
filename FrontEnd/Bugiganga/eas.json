@@ -1,0 +1,22 @@
+{
+  "cli": {
+    "version": ">= 16.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME": "seu_cloud_name",
+        "EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET": "seu_unsigned_upload_preset_produtos",
+        "EXPO_PUBLIC_CLOUDINARY_USERS_UPLOAD_PRESET": "seu_unsigned_upload_preset_usuarios",
+        "EXPO_PUBLIC_CLOUDINARY_PRODUCTS_FOLDER": "produtos",
+        "EXPO_PUBLIC_CLOUDINARY_USERS_FOLDER": "usuarios"
+      }
+    },
+    "production": {}
+  }
+}

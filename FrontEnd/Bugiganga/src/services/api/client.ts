@@ -31,5 +31,19 @@ export function mapAxiosError(error: unknown): ApiError {
   if (error instanceof Error) {
     return { message: error.message };
   }
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) {
+      return { message };
+    }
+  }
   return { message: 'Erro inesperado' };
+}
+
+export function getErrorMessage(error: unknown, fallback = 'Erro inesperado'): string {
+  return mapAxiosError(error).message || fallback;
+}
+
+export function throwServiceError(error: unknown): never {
+  throw new Error(getErrorMessage(error));
 }

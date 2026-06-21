@@ -31,7 +31,7 @@ export function ConfirmModal() {
   };
 
   const blurIntensity =
-    Platform.OS === 'android' ? glassBlur.android.shell : glassBlur.ios.shell;
+    Platform.OS === 'android' ? glassBlur.android.modal : glassBlur.ios.modal;
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={hide}>
@@ -43,7 +43,7 @@ export function ConfirmModal() {
         <View style={styles.paperWrap}>
           <WarmGlassSurface
             level="card"
-            variant="card"
+            variant="modal"
             style={styles.paper}
             contentStyle={styles.paperContent}>
             <View style={[styles.iconBadge, destructive && styles.iconBadgeDanger]}>
@@ -88,14 +88,14 @@ const styles = StyleSheet.create({
     padding: 24,
     ...(Platform.OS === 'web'
       ? {
-          backdropFilter: `blur(${glassBlur.web.shell})`,
-          WebkitBackdropFilter: `blur(${glassBlur.web.shell})`,
+          backdropFilter: `blur(${glassBlur.web.modal})`,
+          WebkitBackdropFilter: `blur(${glassBlur.web.modal})`,
         }
       : {}),
   },
   dim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(20, 12, 8, 0.45)',
+    backgroundColor: loginGlass.modalOverlay,
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,

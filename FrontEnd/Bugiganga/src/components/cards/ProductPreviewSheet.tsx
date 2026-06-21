@@ -5,6 +5,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
 import { WarmGlassSurface } from '@/src/components/layout/WarmGlassSurface';
+import { ProductStockBadge } from '@/src/components/ui/ProductStockBadge';
 import { snackbar } from '@/src/store/snackbarStore';
 import { useCartStore } from '@/src/store/cartStore';
 import { useCheckoutStore } from '@/src/store/checkoutStore';
@@ -22,14 +23,23 @@ type ProductPreviewSheetProps = {
 export function ProductPreviewSheet({ product, visible, onClose }: ProductPreviewSheetProps) {
   const addItem = useCartStore((s) => s.addItem);
   const setBuyNow = useCheckoutStore((s) => s.setBuyNow);
+  const outOfStock = product.stock <= 0;
 
   const handleAddToCart = () => {
+    if (outOfStock) {
+      snackbar.error('Produto sem estoque disponível');
+      return;
+    }
     addItem(product, 1);
     snackbar.success(`${product.name} adicionado ao carrinho`);
     onClose();
   };
 
   const handleBuyNow = () => {
+    if (outOfStock) {
+      snackbar.error('Produto sem estoque disponível');
+      return;
+    }
     setBuyNow(product, 1);
     snackbar.info('Indo para o checkout…');
     onClose();
@@ -40,7 +50,9 @@ export function ProductPreviewSheet({ product, visible, onClose }: ProductPrevie
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <BlurView
-          intensity={Platform.OS === 'android' ? 42 : 56}
+          intensity={
+            Platform.OS === 'android' ? glassBlur.android.modal : glassBlur.ios.modal
+          }
           tint="dark"
           style={StyleSheet.absoluteFill}
         />
@@ -51,7 +63,7 @@ export function ProductPreviewSheet({ product, visible, onClose }: ProductPrevie
         <View style={styles.paperWrap}>
           <WarmGlassSurface
             level="card"
-            variant="card"
+            variant="modal"
             style={styles.paper}
             contentStyle={styles.paperContent}>
             <View style={styles.imageWrap}>
@@ -73,22 +85,32 @@ export function ProductPreviewSheet({ product, visible, onClose }: ProductPrevie
 
             <Text style={styles.name}>{product.name}</Text>
             <Text style={styles.price}>{formatCurrency(product.price)}</Text>
+            <View style={styles.stockWrap}>
+              <ProductStockBadge stock={product.stock} variant="warm" />
+            </View>
             <Text style={styles.description} numberOfLines={4}>
               {product.description}
             </Text>
 
             <View style={styles.actions}>
               <Pressable
-                style={({ pressed }) => [styles.primaryBtn, pressed && styles.primaryBtnPressed]}
-                onPress={handleBuyNow}>
+                style={({ pressed }) => [
+                  styles.primaryBtn,
+                  outOfStock && styles.btnDisabled,
+                  pressed && !outOfStock && styles.primaryBtnPressed,
+                ]}
+                onPress={handleBuyNow}
+                disabled={outOfStock}>
                 <Text style={styles.primaryBtnText}>Comprar agora</Text>
               </Pressable>
               <Pressable
                 style={({ pressed }) => [
                   styles.secondaryBtn,
-                  pressed && styles.secondaryBtnPressed,
+                  outOfStock && styles.btnDisabled,
+                  pressed && !outOfStock && styles.secondaryBtnPressed,
                 ]}
-                onPress={handleAddToCart}>
+                onPress={handleAddToCart}
+                disabled={outOfStock}>
                 <Text style={styles.secondaryBtnText}>Adicionar ao carrinho</Text>
               </Pressable>
             </View>
@@ -106,14 +128,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     ...(Platform.OS === 'web'
       ? {
-          backdropFilter: `blur(${glassBlur.web.shell})`,
-          WebkitBackdropFilter: `blur(${glassBlur.web.shell})`,
+          backdropFilter: `blur(${glassBlur.web.modal})`,
+          WebkitBackdropFilter: `blur(${glassBlur.web.modal})`,
         }
       : {}),
   },
   dim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(20, 12, 8, 0.55)',
+    backgroundColor: loginGlass.modalOverlay,
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
@@ -170,6 +192,9 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.xl,
     fontWeight: '800',
     color: loginGlass.goldLight,
+    marginBottom: 8,
+  },
+  stockWrap: {
     marginBottom: 10,
   },
   description: {
@@ -222,5 +247,8 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.md,
     fontWeight: '700',
     color: loginGlass.goldLight,
+  },
+  btnDisabled: {
+    opacity: 0.45,
   },
 });

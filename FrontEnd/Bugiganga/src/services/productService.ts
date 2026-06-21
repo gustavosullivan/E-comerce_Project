@@ -1,11 +1,14 @@
 import { API_ENDPOINTS, USE_MOCK } from '@/src/config/api';
 import { MOCK_CATEGORIES } from '@/src/mocks/categories';
 import type { ProductFormData } from '@/src/schemas/productSchema';
-import { apiClient, mapAxiosError } from '@/src/services/api/client';
+import { apiClient, throwServiceError } from '@/src/services/api/client';
+import { uploadProductImage } from '@/src/services/cloudinaryService';
 import { productMock } from '@/src/services/mocks/productMock';
 import { getCatalogProducts, useProductCatalogStore } from '@/src/store/productCatalogStore';
 import type { User } from '@/src/types/auth';
 import type { Product, ProductInput } from '@/src/types/product';
+import type { ImagePickerAsset } from 'expo-image-picker';
+import type { parseProductForm } from '@/src/validation/productSchema';
 
 function resolveCategoryId(categoryName: string): number {
   const normalized = categoryName.trim().toLowerCase();
@@ -38,6 +41,58 @@ function formDataToPartialInput(data: Partial<ProductFormData>): Partial<Product
   return partial;
 }
 
+export type AdminProductFormPayload = ReturnType<typeof parseProductForm>;
+
+export type AdminProductSubmit = {
+  data: AdminProductFormPayload;
+  imageAsset?: ImagePickerAsset | null;
+};
+
+function adminFormToProductInput(
+  data: AdminProductFormPayload,
+  userId: User['id'],
+  imageUrl: string,
+): ProductInput {
+  return {
+    name: data.name,
+    description: data.description,
+    price: data.price,
+    stock: data.stock,
+    imageUrl,
+    categoryId: data.categoryId,
+    userId,
+  };
+}
+
+function adminFormToPartialInput(
+  data: Partial<AdminProductFormPayload>,
+  imageUrl?: string,
+): Partial<ProductInput> {
+  const partial: Partial<ProductInput> = {};
+
+  if (data.name != null) partial.name = data.name;
+  if (data.description != null) partial.description = data.description;
+  if (data.price != null) partial.price = data.price;
+  if (data.stock != null) partial.stock = data.stock;
+  if (imageUrl != null) partial.imageUrl = imageUrl;
+  if (data.categoryId != null) {
+    partial.categoryId = data.categoryId;
+  }
+
+  return partial;
+}
+
+async function resolveProductImageUrl(
+  imageAsset?: ImagePickerAsset | null,
+  existingUrl?: string,
+): Promise<string> {
+  if (imageAsset) {
+    return uploadProductImage(imageAsset);
+  }
+
+  return existingUrl?.trim() ?? '';
+}
+
 export const productService = {
   async list(): Promise<Product[]> {
     try {
@@ -45,7 +100,7 @@ export const productService = {
       const response = await apiClient.get<Product[]>(API_ENDPOINTS.products.list);
       return response.data;
     } catch (error) {
-      throw mapAxiosError(error);
+      throwServiceError(error);
     }
   },
 
@@ -55,7 +110,7 @@ export const productService = {
       const response = await apiClient.get<Product>(API_ENDPOINTS.products.byId(id));
       return response.data;
     } catch (error) {
-      throw mapAxiosError(error);
+      throwServiceError(error);
     }
   },
 
@@ -67,7 +122,7 @@ export const productService = {
       });
       return response.data;
     } catch (error) {
-      throw mapAxiosError(error);
+      throwServiceError(error);
     }
   },
 
@@ -77,7 +132,7 @@ export const productService = {
       const response = await apiClient.post<Product>(API_ENDPOINTS.products.list, data);
       return response.data;
     } catch (error) {
-      throw mapAxiosError(error);
+      throwServiceError(error);
     }
   },
 
@@ -87,7 +142,7 @@ export const productService = {
       const response = await apiClient.put<Product>(API_ENDPOINTS.products.byId(id), data);
       return response.data;
     } catch (error) {
-      throw mapAxiosError(error);
+      throwServiceError(error);
     }
   },
 
@@ -96,7 +151,7 @@ export const productService = {
       if (USE_MOCK) return await productMock.remove(id);
       await apiClient.delete(API_ENDPOINTS.products.byId(id));
     } catch (error) {
-      throw mapAxiosError(error);
+      throwServiceError(error);
     }
   },
 
@@ -110,7 +165,7 @@ export const productService = {
       });
       return response.data;
     } catch (error) {
-      throw mapAxiosError(error);
+      throwServiceError(error);
     }
   },
 
@@ -125,7 +180,7 @@ export const productService = {
       });
       return response.data;
     } catch (error) {
-      throw mapAxiosError(error);
+      throwServiceError(error);
     }
   },
 
@@ -140,7 +195,7 @@ export const productService = {
       );
       return response.data;
     } catch (error) {
-      throw mapAxiosError(error);
+      throwServiceError(error);
     }
   },
 
@@ -152,7 +207,53 @@ export const productService = {
       }
       await apiClient.delete(API_ENDPOINTS.products.byId(productId));
     } catch (error) {
-      throw mapAxiosError(error);
+      throwServiceError(error);
+    }
+  },
+
+  async createFromAdminForm(userId: User['id'], submit: AdminProductSubmit): Promise<Product> {
+    try {
+      const imageUrl = await resolveProductImageUrl(submit.imageAsset, submit.data.imageUrl);
+      if (!imageUrl) {
+        throw new Error('Selecione uma imagem do produto.');
+      }
+
+      const input = adminFormToProductInput(submit.data, userId, imageUrl);
+
+      if (USE_MOCK) {
+        return useProductCatalogStore.getState().addProduct(input);
+      }
+
+      const response = await apiClient.post<Product>(API_ENDPOINTS.products.list, input);
+      return response.data;
+    } catch (error) {
+      throwServiceError(error);
+    }
+  },
+
+  async updateFromAdminForm(
+    productId: Product['id'],
+    submit: AdminProductSubmit,
+  ): Promise<Product> {
+    try {
+      const imageUrl = await resolveProductImageUrl(submit.imageAsset, submit.data.imageUrl);
+      if (!imageUrl) {
+        throw new Error('Selecione uma imagem do produto.');
+      }
+
+      const input = adminFormToPartialInput(submit.data, imageUrl);
+
+      if (USE_MOCK) {
+        return useProductCatalogStore.getState().updateProduct(productId, input);
+      }
+
+      const response = await apiClient.put<Product>(
+        API_ENDPOINTS.products.byId(productId),
+        input,
+      );
+      return response.data;
+    } catch (error) {
+      throwServiceError(error);
     }
   },
 };

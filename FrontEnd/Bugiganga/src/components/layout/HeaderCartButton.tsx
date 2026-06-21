@@ -200,8 +200,8 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   avatarWrap: {
-    width: 42,
-    height: 42,
+    width: 40,
+    height: 40,
     borderRadius: radius.md,
     overflow: 'hidden',
     backgroundColor: colors.primary,
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontFamily: fonts.sans,
-    fontSize: fontSizes.lg,
+    fontSize: fontSizes.md,
     fontWeight: '800',
     color: colors.glassText,
     letterSpacing: -0.2,
