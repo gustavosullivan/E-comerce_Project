@@ -2,28 +2,37 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import {
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 
 import { PrimaryButton } from '@/src/components/buttons/PrimaryButton';
 import { SecondaryButton } from '@/src/components/buttons/SecondaryButton';
 import { CustomInput } from '@/src/components/forms/CustomInput';
 import { CategoryPicker } from '@/src/components/forms/CategoryPicker';
 import { Loading } from '@/src/components/layout/Loading';
+import { PageContainer } from '@/src/components/layout/PageContainer';
 import { ProfilePaper } from '@/src/components/layout/ProfilePaper';
-import { ScreenContainer } from '@/src/components/ui/ScreenContainer';
+import { ScreenHeader } from '@/src/components/layout/ScreenHeader';
+import { WarmAppShell } from '@/src/components/layout/WarmAppShell';
+import { useTabBarInset } from '@/src/hooks/useTabBarInset';
 import { useAdminProducts } from '@/src/hooks/useProducts';
 import { useProduct } from '@/src/hooks/useProducts';
+import { routes } from '@/src/navigation/routes';
 import { MOCK_CATEGORIES } from '@/src/mocks/categories';
 import { snackbar } from '@/src/store/snackbarStore';
 import { confirmAction } from '@/src/utils/confirm';
-import { colors, fontSizes, fonts, radius, textStyles } from '@/src/theme';
+import { fontSizes, fonts, layout, loginGlass, radius } from '@/src/theme';
 import {
   type ProductFormData,
   parseProductForm,
@@ -31,10 +40,13 @@ import {
   productToFormValues,
 } from '@/src/validation/productSchema';
 
+const DEFAULT_IMAGE = 'https://picsum.photos/seed/bugiganga-new/400/400';
+
 export default function AdminProductFormScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
   const productId = params.id ? Number(params.id) : null;
   const isEditing = productId != null && !Number.isNaN(productId);
+  const { contentBottomInset } = useTabBarInset();
 
   const { product, isLoading: loadingProduct } = useProduct(isEditing ? productId : 0);
   const { createProduct, updateProduct, deleteProduct } = useAdminProducts();
@@ -58,11 +70,24 @@ export default function AdminProductFormScreen() {
     }
   }, [isEditing, product, reset]);
 
+  const imageUrl = useWatch({ control, name: 'imageUrl' });
+  const previewUri = imageUrl?.trim() || DEFAULT_IMAGE;
+
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace(routes.home);
+  };
+
   if (isEditing && loadingProduct) {
     return (
-      <ScreenContainer>
-        <Loading />
-      </ScreenContainer>
+      <WarmAppShell>
+        <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+          <Loading />
+        </SafeAreaView>
+      </WarmAppShell>
     );
   }
 
@@ -77,7 +102,7 @@ export default function AdminProductFormScreen() {
         await createProduct(payload);
         snackbar.success('Produto cadastrado');
       }
-      router.replace('/(tabs)/');
+      router.replace(routes.home);
     } catch (err) {
       snackbar.error(err instanceof Error ? err.message : 'Não foi possível salvar');
     } finally {
@@ -95,7 +120,7 @@ export default function AdminProductFormScreen() {
         try {
           await deleteProduct(productId);
           snackbar.success('Produto removido');
-          router.replace('/(tabs)/');
+          router.replace(routes.home);
         } catch {
           snackbar.error('Não foi possível excluir');
         }
@@ -104,110 +129,153 @@ export default function AdminProductFormScreen() {
   };
 
   return (
-    <ScreenContainer scroll keyboard contentStyle={styles.content}>
-      <Pressable style={styles.back} onPress={() => router.back()}>
-        <MaterialIcons name="arrow-back" size={22} color={colors.primary} />
-        <Text style={styles.backText}>Voltar</Text>
-      </Pressable>
+    <WarmAppShell>
+      <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <ScrollView
+            contentContainerStyle={[
+              styles.content,
+              { paddingBottom: contentBottomInset + layout.lg },
+            ]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
+            <PageContainer>
+              <Pressable style={styles.back} onPress={handleBack} hitSlop={12}>
+                <MaterialIcons name="arrow-back" size={22} color={loginGlass.goldLight} />
+                <Text style={styles.backText}>Voltar</Text>
+              </Pressable>
 
-      <Text style={[textStyles.pageTitle, styles.pageTitle]}>
-        {isEditing ? 'Editar produto' : 'Cadastrar produto'}
-      </Text>
-      <Text style={styles.subtitle}>
-        Nome, legenda (descrição), preço, categoria, estoque e imagem
-      </Text>
-
-      <ProfilePaper title="Informações" subtitle="Dados do anúncio" delay={40}>
-        <CustomInput control={control} name="name" label="Nome" placeholder="Nome do produto" />
-        <Controller
-          control={control}
-          name="description"
-          render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Legenda / descrição</Text>
-              <TextInput
-                style={[styles.textArea, error && styles.inputError]}
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                placeholder="Descreva a peça, história e estado de conservação"
-                placeholderTextColor={colors.textMuted}
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
+              <ScreenHeader
+                title={isEditing ? 'Editar produto' : 'Cadastrar produto'}
+                subtitle="Nome, legenda, preço, categoria, estoque e imagem"
+                icon={isEditing ? 'edit' : 'add-box'}
+                variant="warm"
               />
-              {error ? <Text style={styles.fieldError}>{error.message}</Text> : null}
-            </View>
-          )}
-        />
-        <CustomInput
-          control={control}
-          name="price"
-          label="Preço (R$)"
-          placeholder="99.90"
-          keyboardType="decimal-pad"
-        />
-        <CustomInput
-          control={control}
-          name="stock"
-          label="Estoque"
-          placeholder="1"
-          keyboardType="number-pad"
-        />
-        <CustomInput
-          control={control}
-          name="imageUrl"
-          label="URL da imagem"
-          placeholder="https://..."
-        />
 
-        <Controller
-          control={control}
-          name="categoryId"
-          render={({ field: { value, onChange }, fieldState: { error } }) => (
-            <CategoryPicker value={value} onChange={onChange} error={error?.message} />
-          )}
-        />
+              <ProfilePaper
+                title="Imagem"
+                subtitle="Pré-visualização do produto"
+                showStamp={false}
+                variant="warm">
+                <View style={styles.previewWrap}>
+                  <Image
+                    source={{ uri: previewUri }}
+                    style={styles.previewImage}
+                    contentFit="cover"
+                  />
+                </View>
+                <CustomInput
+                  control={control}
+                  name="imageUrl"
+                  label="URL da imagem"
+                  placeholder="https://..."
+                  keyboardType="url"
+                  variant="warm"
+                />
+              </ProfilePaper>
 
-        <View style={styles.actions}>
-          <PrimaryButton
-            label={isEditing ? 'Salvar alterações' : 'Salvar produto'}
-            onPress={onSubmit}
-            isLoading={isSaving}
-          />
-          {isEditing ? (
-            <SecondaryButton label="Excluir produto" onPress={handleDelete} />
-          ) : null}
-        </View>
-      </ProfilePaper>
-    </ScreenContainer>
+              <ProfilePaper title="Informações" subtitle="Dados do anúncio" delay={40} variant="warm">
+                <CustomInput
+                  control={control}
+                  name="name"
+                  label="Nome"
+                  placeholder="Nome do produto"
+                  variant="warm"
+                />
+                <Controller
+                  control={control}
+                  name="description"
+                  render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+                    <View style={styles.fieldGroup}>
+                      <Text style={styles.label}>Legenda / descrição</Text>
+                      <TextInput
+                        style={[styles.textArea, error && styles.inputError]}
+                        value={value}
+                        onChangeText={onChange}
+                        onBlur={onBlur}
+                        placeholder="Descreva a peça, história e estado de conservação"
+                        placeholderTextColor={loginGlass.textMuted}
+                        multiline
+                        numberOfLines={4}
+                        textAlignVertical="top"
+                      />
+                      {error ? <Text style={styles.fieldError}>{error.message}</Text> : null}
+                    </View>
+                  )}
+                />
+                <CustomInput
+                  control={control}
+                  name="price"
+                  label="Preço (R$)"
+                  placeholder="99.90"
+                  keyboardType="decimal-pad"
+                  variant="warm"
+                />
+                <CustomInput
+                  control={control}
+                  name="stock"
+                  label="Estoque"
+                  placeholder="1"
+                  keyboardType="number-pad"
+                  variant="warm"
+                />
+
+                <Controller
+                  control={control}
+                  name="categoryId"
+                  render={({ field: { value, onChange }, fieldState: { error } }) => (
+                    <CategoryPicker
+                      value={value}
+                      onChange={onChange}
+                      error={error?.message}
+                      variant="warm"
+                    />
+                  )}
+                />
+
+                <View style={styles.actions}>
+                  <PrimaryButton
+                    label={isEditing ? 'Salvar alterações' : 'Salvar produto'}
+                    onPress={onSubmit}
+                    isLoading={isSaving}
+                    variant="warm"
+                  />
+                  {isEditing ? (
+                    <SecondaryButton
+                      label="Excluir produto"
+                      onPress={handleDelete}
+                      variant="warm"
+                    />
+                  ) : null}
+                </View>
+              </ProfilePaper>
+            </PageContainer>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </WarmAppShell>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: 'transparent' },
+  flex: { flex: 1 },
   content: {
-    paddingTop: 8,
-    paddingBottom: 32,
+    paddingTop: layout.sm,
   },
   back: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 12,
+    marginBottom: layout.sm,
   },
   backText: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.md,
-    color: colors.primary,
+    color: loginGlass.goldLight,
     fontWeight: '600',
-  },
-  pageTitle: {
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: fontSizes.sm,
-    color: colors.textMuted,
-    marginBottom: 20,
   },
   fieldGroup: {
     marginBottom: 8,
@@ -216,30 +284,42 @@ const styles = StyleSheet.create({
     fontFamily: fonts.sans,
     fontSize: fontSizes.sm,
     fontWeight: '600',
-    color: colors.text,
+    color: loginGlass.text,
     marginBottom: 8,
   },
   textArea: {
-    backgroundColor: colors.inputBg,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    backgroundColor: loginGlass.formFieldBg,
+    borderWidth: 1,
+    borderColor: loginGlass.cardBorder,
     borderRadius: radius.md,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: fontSizes.md,
-    color: colors.text,
+    color: loginGlass.text,
     minHeight: 110,
   },
   inputError: {
-    borderColor: colors.danger,
+    borderColor: 'rgba(220, 80, 70, 0.65)',
   },
   fieldError: {
     fontSize: fontSizes.xs,
-    color: colors.danger,
+    color: '#F5A8A0',
     marginTop: 6,
   },
   actions: {
     gap: 10,
     marginTop: 8,
+  },
+  previewWrap: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  previewImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: radius.lg,
+    backgroundColor: loginGlass.formFieldBg,
+    borderWidth: 1,
+    borderColor: loginGlass.cardBorder,
   },
 });

@@ -3,7 +3,8 @@ import { Image } from 'expo-image';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { colors, fontSizes, fonts, radius, shadows } from '@/src/theme';
+import { colors, fontSizes, fonts, loginGlass, radius, shadows } from '@/src/theme';
+import { glassBlur } from '@/src/theme/loginGlass';
 import type { CartItem } from '@/src/types/cart';
 import { formatCurrency } from '@/src/utils/formatCurrency';
 
@@ -13,6 +14,7 @@ type CartGlassItemProps = {
   onDecrease?: () => void;
   onRemove?: () => void;
   readOnly?: boolean;
+  variant?: 'default' | 'warm';
 };
 
 export function CartGlassItem({
@@ -21,24 +23,41 @@ export function CartGlassItem({
   onDecrease,
   onRemove,
   readOnly = false,
+  variant = 'default',
 }: CartGlassItemProps) {
+  const warm = variant === 'warm';
+  const blurIntensity =
+    Platform.OS === 'android' ? glassBlur.android.card : glassBlur.ios.card;
   const { product, quantity } = item;
   const lineTotal = product.price * quantity;
 
   return (
     <View style={styles.shell}>
-      <View style={styles.glass}>
-        <BlurView
-          intensity={Platform.OS === 'web' ? 20 : Platform.OS === 'android' ? 30 : 38}
-          tint="light"
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={styles.tint} />
-        <View style={styles.highlight} />
+      <View
+        style={[
+          styles.glass,
+          warm && styles.glassWarm,
+          warm &&
+            Platform.OS === 'web' && {
+              backdropFilter: `blur(${glassBlur.web.card})`,
+              WebkitBackdropFilter: `blur(${glassBlur.web.card})`,
+            },
+        ]}>
+        {Platform.OS === 'web' ? (
+          <View style={[styles.webFill, warm && styles.webFillWarm]} />
+        ) : (
+          <BlurView
+            intensity={warm ? blurIntensity : Platform.OS === 'android' ? 30 : 38}
+            tint={warm ? 'dark' : 'light'}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+        <View style={[styles.tint, warm && styles.tintWarm]} />
+        <View style={[styles.highlight, warm && styles.highlightWarm]} />
 
         <View style={styles.row}>
           <View style={styles.imageColumn}>
-            <View style={styles.imageFrame}>
+            <View style={[styles.imageFrame, warm && styles.imageFrameWarm]}>
               <Image
                 source={{ uri: product.imageUrl }}
                 style={styles.image}
@@ -46,7 +65,7 @@ export function CartGlassItem({
                 transition={180}
               />
             </View>
-            <View style={styles.qtyBadge}>
+            <View style={[styles.qtyBadge, warm && styles.qtyBadgeWarm]}>
               <Text style={styles.qtyBadgeText}>{quantity}x</Text>
             </View>
           </View>
@@ -54,17 +73,21 @@ export function CartGlassItem({
           <View style={styles.body}>
             <View style={styles.topLine}>
               <View style={styles.titleBlock}>
-                <Text style={styles.name} numberOfLines={2}>
+                <Text style={[styles.name, warm && styles.nameWarm]} numberOfLines={2}>
                   {product.name}
                 </Text>
-                <Text style={styles.unitPrice}>
+                <Text style={[styles.unitPrice, warm && styles.unitPriceWarm]}>
                   {formatCurrency(product.price)} · unidade
                 </Text>
               </View>
 
               {!readOnly ? (
                 <Pressable
-                  style={({ pressed }) => [styles.removeBtn, pressed && styles.removeBtnPressed]}
+                  style={({ pressed }) => [
+                    styles.removeBtn,
+                    warm && styles.removeBtnWarm,
+                    pressed && styles.removeBtnPressed,
+                  ]}
                   onPress={onRemove}
                   hitSlop={8}
                   accessibilityRole="button"
@@ -76,34 +99,50 @@ export function CartGlassItem({
 
             <View style={styles.bottomLine}>
               {readOnly ? (
-                <Text style={styles.readOnlyQty}>Quantidade: {quantity}</Text>
+                <Text style={[styles.readOnlyQty, warm && styles.readOnlyQtyWarm]}>Quantidade: {quantity}</Text>
               ) : (
-                <View style={styles.stepper}>
+                <View style={[styles.stepper, warm && styles.stepperWarm]}>
                   <Pressable
-                    style={({ pressed }) => [styles.stepBtn, pressed && styles.stepBtnPressed]}
+                    style={({ pressed }) => [
+                      styles.stepBtn,
+                      warm && styles.stepBtnWarm,
+                      pressed && styles.stepBtnPressed,
+                    ]}
                     onPress={onDecrease}
                     hitSlop={6}
                     accessibilityRole="button"
                     accessibilityLabel="Diminuir quantidade">
-                    <MaterialIcons name="remove" size={16} color={colors.cartGlassAccent} />
+                    <MaterialIcons
+                      name="remove"
+                      size={16}
+                      color={warm ? loginGlass.goldLight : colors.cartGlassAccent}
+                    />
                   </Pressable>
 
-                  <Text style={styles.qty}>{quantity}</Text>
+                  <Text style={[styles.qty, warm && styles.qtyWarm]}>{quantity}</Text>
 
                   <Pressable
-                    style={({ pressed }) => [styles.stepBtn, pressed && styles.stepBtnPressed]}
+                    style={({ pressed }) => [
+                      styles.stepBtn,
+                      warm && styles.stepBtnWarm,
+                      pressed && styles.stepBtnPressed,
+                    ]}
                     onPress={onIncrease}
                     hitSlop={6}
                     accessibilityRole="button"
                     accessibilityLabel="Aumentar quantidade">
-                    <MaterialIcons name="add" size={16} color={colors.cartGlassAccent} />
+                    <MaterialIcons
+                      name="add"
+                      size={16}
+                      color={warm ? loginGlass.goldLight : colors.cartGlassAccent}
+                    />
                   </Pressable>
                 </View>
               )}
 
-              <View style={styles.totalPill}>
-                <Text style={styles.totalLabel}>Total</Text>
-                <Text style={styles.totalValue}>{formatCurrency(lineTotal)}</Text>
+              <View style={[styles.totalPill, warm && styles.totalPillWarm]}>
+                <Text style={[styles.totalLabel, warm && styles.totalLabelWarm]}>Total</Text>
+                <Text style={[styles.totalValue, warm && styles.totalValueWarm]}>{formatCurrency(lineTotal)}</Text>
               </View>
             </View>
           </View>
@@ -126,9 +165,23 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cartGlass,
     ...shadows.md,
   },
+  glassWarm: {
+    backgroundColor: loginGlass.cardGlass,
+    borderColor: loginGlass.cardBorder,
+  },
+  webFill: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.cartGlass,
+  },
+  webFillWarm: {
+    backgroundColor: loginGlass.glassWebFill,
+  },
   tint: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: colors.cartGlassTint,
+  },
+  tintWarm: {
+    backgroundColor: loginGlass.cardTint,
   },
   highlight: {
     position: 'absolute',
@@ -137,6 +190,9 @@ const styles = StyleSheet.create({
     right: 16,
     height: 1,
     backgroundColor: colors.cartGlassHighlight,
+  },
+  highlightWarm: {
+    backgroundColor: loginGlass.shellHighlight,
   },
   row: {
     flexDirection: 'row',
@@ -159,6 +215,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.cartGlassAccentSoft,
   },
+  imageFrameWarm: {
+    borderColor: loginGlass.cardBorder,
+  },
   image: {
     width: '100%',
     height: '100%',
@@ -179,6 +238,10 @@ const styles = StyleSheet.create({
     borderColor: colors.white,
     ...shadows.sm,
     zIndex: 2,
+  },
+  qtyBadgeWarm: {
+    backgroundColor: loginGlass.button,
+    borderColor: loginGlass.cardBorder,
   },
   qtyBadgeText: {
     fontFamily: fonts.sans,
@@ -209,11 +272,17 @@ const styles = StyleSheet.create({
     color: colors.text,
     lineHeight: 18,
   },
+  nameWarm: {
+    color: loginGlass.text,
+  },
   unitPrice: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.xs,
     color: colors.textMuted,
     marginTop: 3,
+  },
+  unitPriceWarm: {
+    color: loginGlass.textMuted,
   },
   removeBtn: {
     width: 34,
@@ -224,6 +293,10 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(239, 68, 68, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  removeBtnWarm: {
+    backgroundColor: loginGlass.formFieldBg,
+    borderColor: 'rgba(239, 68, 68, 0.35)',
   },
   removeBtnPressed: {
     backgroundColor: colors.dangerLight,
@@ -241,6 +314,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textMuted,
   },
+  readOnlyQtyWarm: {
+    color: loginGlass.textMuted,
+  },
   stepper: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -252,6 +328,10 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     gap: 2,
   },
+  stepperWarm: {
+    backgroundColor: loginGlass.formFieldBg,
+    borderColor: loginGlass.cardBorder,
+  },
   stepBtn: {
     width: 28,
     height: 28,
@@ -259,6 +339,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cartGlassLight,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  stepBtnWarm: {
+    backgroundColor: 'rgba(45, 30, 20, 0.72)',
   },
   stepBtnPressed: {
     backgroundColor: colors.cartGlassAccentPressed,
@@ -272,6 +355,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.cartGlassAccent,
   },
+  qtyWarm: {
+    color: loginGlass.goldLight,
+  },
   totalPill: {
     alignItems: 'flex-end',
     backgroundColor: 'rgba(16, 185, 129, 0.12)',
@@ -281,6 +367,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
+  totalPillWarm: {
+    backgroundColor: 'rgba(212, 175, 55, 0.14)',
+    borderColor: loginGlass.cardBorder,
+  },
   totalLabel: {
     fontFamily: fonts.sans,
     fontSize: 10,
@@ -289,11 +379,17 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
+  totalLabelWarm: {
+    color: loginGlass.goldMuted,
+  },
   totalValue: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.sm,
     fontWeight: '800',
     color: '#0B7A55',
     marginTop: 1,
+  },
+  totalValueWarm: {
+    color: loginGlass.goldLight,
   },
 });

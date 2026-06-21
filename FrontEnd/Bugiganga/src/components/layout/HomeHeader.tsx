@@ -1,15 +1,15 @@
-import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { type PropsWithChildren } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { HeaderCartButton, HeaderProfileChip, HeaderSettingsButton } from '@/src/components/layout/HeaderCartButton';
+import { WarmGlassSurface } from '@/src/components/layout/WarmGlassSurface';
 import { routes } from '@/src/navigation/routes';
 import { useCartStore } from '@/src/store/cartStore';
 import { useAuthStore } from '@/src/store/authStore';
-import { colors, fontSizes, fonts, motion, radius, shadows } from '@/src/theme';
+import { fontSizes, fonts, loginGlass, motion, radius } from '@/src/theme';
 import { layout } from '@/src/theme/layout';
 
 type HomeHeaderProps = {
@@ -41,26 +41,12 @@ function getInitials(name: string): string {
 
 function GlassPanel({ children }: PropsWithChildren) {
   return (
-    <View style={styles.glassShell}>
-      {Platform.OS === 'web' ? (
-        <View style={styles.webGlassFill} />
-      ) : (
-        <BlurView
-          intensity={Platform.OS === 'android' ? 32 : 44}
-          tint="dark"
-          style={StyleSheet.absoluteFill}
-        />
-      )}
-      <View style={styles.glassTint} />
-      <View style={styles.glassSheen} />
-      <View style={styles.glassContent}>{children}</View>
-    </View>
+    <WarmGlassSurface level="shell" style={styles.glassShell} contentStyle={styles.glassContent}>
+      {children}
+    </WarmGlassSurface>
   );
 }
 
-import { Pressable } from 'react-native';
-
-// Helper component for "Add Product" button
 export function HeaderAddProductButton({ onPress }: { onPress: () => void }) {
   return (
     <Pressable
@@ -69,7 +55,7 @@ export function HeaderAddProductButton({ onPress }: { onPress: () => void }) {
         styles.iconButton,
         pressed && styles.iconButtonPressed,
       ]}>
-      <MaterialIcons name="add-box" size={24} color={colors.tabBarActive} />
+      <MaterialIcons name="add-box" size={24} color={loginGlass.goldLight} />
     </Pressable>
   );
 }
@@ -87,15 +73,17 @@ export function HomeToolbar({ userName, isAdmin }: HomeHeaderProps) {
           initials={initials}
           imageUri={avatarUri}
           onPress={() => router.push('/(tabs)/profile')}
+          tone="warm"
         />
         <View style={styles.toolbarActions}>
-          <HeaderSettingsButton onPress={() => router.push(routes.settings)} />
+          <HeaderSettingsButton onPress={() => router.push(routes.settings)} tone="warm" />
           {isAdmin ? (
             <HeaderAddProductButton onPress={() => router.push('/(tabs)/novo')} />
           ) : (
             <HeaderCartButton
               count={cartCount}
               onPress={() => router.push('/(tabs)/cart')}
+              tone="warm"
             />
           )}
         </View>
@@ -126,11 +114,11 @@ export function HomeHero({ userName, productCount = 0, favoriteCount = 0 }: Home
         entering={FadeInDown.delay(120).duration(motion.normal).springify()}
         style={styles.statsRow}>
         <View style={styles.statChip}>
-          <MaterialIcons name="inventory-2" size={14} color={colors.tabBarActive} />
+          <MaterialIcons name="inventory-2" size={14} color={loginGlass.goldLight} />
           <Text style={styles.statText}>{productCount} achados</Text>
         </View>
         <View style={styles.statChip}>
-          <MaterialIcons name="favorite" size={14} color={colors.accent} />
+          <MaterialIcons name="favorite" size={14} color={loginGlass.gold} />
           <Text style={styles.statText}>{favoriteCount} favoritos</Text>
         </View>
       </Animated.View>
@@ -154,28 +142,12 @@ const styles = StyleSheet.create({
     marginBottom: layout.md,
   },
   glassShell: {
-    borderRadius: radius.sm,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
-    backgroundColor: colors.tabBarGlass,
-    ...shadows.md,
-  },
-  webGlassFill: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.tabBarGlass,
-  },
-  glassTint: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(8, 10, 20, 0.34)',
-  },
-  glassSheen: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: colors.glassHighlight,
+    borderRadius: radius.lg,
+    shadowColor: loginGlass.gold,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 20,
+    elevation: 8,
   },
   glassContent: {
     zIndex: 1,
@@ -193,6 +165,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 2,
   },
+  iconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: loginGlass.inputBg,
+    borderWidth: 1,
+    borderColor: loginGlass.shellBorder,
+  },
+  iconButtonPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
+  },
   hero: {
     alignItems: 'flex-start',
     paddingTop: layout.lg,
@@ -201,23 +187,23 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontSize: fontSizes.sm,
-    color: colors.textMuted,
+    color: loginGlass.textMuted,
     fontWeight: '500',
   },
   greetingName: {
-    color: colors.primary,
+    color: loginGlass.goldLight,
     fontWeight: '700',
   },
   headline: {
     fontFamily: fonts.gothic,
-    fontSize: fontSizes.xl + 2,
-    color: colors.text,
-    lineHeight: 30,
+    fontSize: fontSizes.xl + 4,
+    color: loginGlass.text,
+    lineHeight: 32,
     maxWidth: 320,
   },
   subtitle: {
     fontSize: fontSizes.sm,
-    color: colors.textMuted,
+    color: loginGlass.textMuted,
     lineHeight: 20,
     marginTop: 6,
     maxWidth: 340,
@@ -235,14 +221,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: radius.full,
-    backgroundColor: colors.cartGlassLight,
+    backgroundColor: loginGlass.chipActiveBg,
     borderWidth: 1,
-    borderColor: colors.cartGlassAccentBorder,
+    borderColor: loginGlass.chipActiveBorder,
   },
   statText: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.xs,
     fontWeight: '700',
-    color: colors.cartGlassAccent,
+    color: loginGlass.cream,
   },
 });

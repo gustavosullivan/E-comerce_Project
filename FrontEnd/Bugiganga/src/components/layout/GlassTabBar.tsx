@@ -16,7 +16,7 @@ import {
 
 import { GlassTabBarBackground } from '@/src/components/layout/GlassTabBarBackground';
 import { TAB_BAR_HEIGHT, useTabBarInset } from '@/src/hooks/useTabBarInset';
-import { colors, fontSizes, fonts, layout, motion, radius } from '@/src/theme';
+import { colors, fontSizes, fonts, layout, loginGlass, motion, radius } from '@/src/theme';
 
 const TAB_SLIDE_MS = motion.normal;
 const TAB_INSET = 6;
@@ -191,9 +191,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     zIndex: 100,
     elevation: 24,
-    shadowColor: '#0F172A',
+    borderWidth: 1,
+    borderColor: loginGlass.shellBorder,
+    shadowColor: '#1A1008',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
+    shadowOpacity: 0.28,
     shadowRadius: 20,
   },
   containerWeb: {
@@ -213,9 +215,9 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     borderRadius: radius.lg,
-    backgroundColor: colors.primary,
+    backgroundColor: loginGlass.tabBarIndicator,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: loginGlass.tabBarIndicatorBorder,
   },
   row: {
     flex: 1,
@@ -267,7 +269,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 4,
     borderWidth: 1.5,
-    borderColor: 'rgba(8, 10, 20, 0.9)',
+    borderColor: loginGlass.tabBarGlass,
     zIndex: 2,
   },
   badgeText: {

@@ -2,15 +2,25 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { StyleSheet, Text, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '@/src/components/buttons/PrimaryButton';
 import { SecondaryButton } from '@/src/components/buttons/SecondaryButton';
 import { CustomInput } from '@/src/components/forms/CustomInput';
 import { PasswordField } from '@/src/components/forms/PasswordField';
+import { PageContainer } from '@/src/components/layout/PageContainer';
 import { ProfilePaper, ProfilePaperDivider } from '@/src/components/layout/ProfilePaper';
 import { ProfileAvatarPicker } from '@/src/components/profile/ProfileAvatarPicker';
-import { ScreenContainer } from '@/src/components/ui/ScreenContainer';
+import { ScreenHeader } from '@/src/components/layout/ScreenHeader';
+import { WarmAppShell } from '@/src/components/layout/WarmAppShell';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useAddress } from '@/src/hooks/useAddress';
 import { useTabBarInset } from '@/src/hooks/useTabBarInset';
@@ -20,7 +30,7 @@ import { userService } from '@/src/services/userService';
 import { addressService } from '@/src/services/addressService';
 import { snackbar } from '@/src/store/snackbarStore';
 import { useAuthStore } from '@/src/store/authStore';
-import { cardStyles, colors, textStyles } from '@/src/theme';
+import { cardStyles, colors, fontSizes, fonts, layout, loginGlass, radius } from '@/src/theme';
 import { isBuyer } from '@/src/types/auth';
 import { confirmAction } from '@/src/utils/confirm';
 import { EMPTY_ADDRESS } from '@/src/types/address';
@@ -207,158 +217,185 @@ export default function ProfileScreen() {
   });
 
   return (
-    <ScreenContainer
-      scroll
-      keyboard
-      contentStyle={{ ...styles.content, paddingBottom: contentBottomInset + 24 }}>
-      <Text style={[textStyles.pageTitle, styles.pageTitle]}>Conta</Text>
+    <WarmAppShell>
+      <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <ScrollView
+            contentContainerStyle={[styles.content, { paddingBottom: contentBottomInset + layout.lg }]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
+            <PageContainer>
+              <ScreenHeader title="Conta" icon="person" variant="warm" />
 
-      <ProfilePaper
-        title="Minha Conta"
-        subtitle={buyer ? 'Foto, dados, endereço e senha' : 'Foto, dados e senha'}
-        delay={0}>
-        <View style={styles.avatarBlock}>
-          <ProfileAvatarPicker size="lg" />
-        </View>
+              <ProfilePaper title="Minha Conta" delay={0} variant="warm">
+                <View style={styles.avatarBlock}>
+                  <ProfileAvatarPicker size="lg" variant="warm" />
+                </View>
 
-        <ProfilePaperDivider label="Dados" />
+                <ProfilePaperDivider label="Dados" variant="warm" />
 
-        {error ? (
-          <View style={styles.errorBox}>
-            <Text style={styles.error}>{error}</Text>
-          </View>
-        ) : null}
+                {error ? (
+                  <View style={[styles.errorBox, styles.errorBoxWarm]}>
+                    <Text style={styles.error}>{error}</Text>
+                  </View>
+                ) : null}
 
-        <CustomInput
-          control={control}
-          name="name"
-          label="Nome"
-          placeholder="Seu nome completo"
-          autoCapitalize="words"
-        />
+                <CustomInput
+                  control={control}
+                  name="name"
+                  label="Nome"
+                  placeholder="Seu nome completo"
+                  autoCapitalize="words"
+                  variant="warm"
+                />
 
-        <View style={styles.readOnlyField}>
-          <Text style={textStyles.label}>Email</Text>
-          <View style={styles.readOnlyBox}>
-            <Text style={styles.readOnlyText}>{user?.email ?? '—'}</Text>
-          </View>
-        </View>
+                <View style={styles.readOnlyField}>
+                  <Text style={styles.readOnlyLabel}>Email</Text>
+                  <View style={styles.readOnlyBox}>
+                    <Text style={styles.readOnlyText}>{user?.email ?? '—'}</Text>
+                  </View>
+                </View>
 
-        {buyer ? (
-          <View style={styles.readOnlyField}>
-            <Text style={textStyles.label}>Crédito em conta</Text>
-            <View style={[styles.readOnlyBox, styles.balanceBox]}>
-              <Text style={styles.balanceText}>{formatCurrency(balance)}</Text>
-            </View>
-          </View>
-        ) : null}
+                {buyer ? (
+                  <View style={styles.readOnlyField}>
+                    <Text style={styles.readOnlyLabel}>Crédito em conta</Text>
+                    <View style={[styles.readOnlyBox, styles.balanceBox]}>
+                      <Text style={styles.balanceText}>{formatCurrency(balance)}</Text>
+                    </View>
+                  </View>
+                ) : null}
 
-        {buyer ? (
-          <>
-            <ProfilePaperDivider label="Endereço de entrega" />
+                {buyer ? (
+                  <>
+                    <ProfilePaperDivider label="Endereço de entrega" variant="warm" />
 
-            <CustomInput
-              control={control}
-              name="zipCode"
-              label="CEP"
-              placeholder="00000-000"
-              keyboardType="numeric"
-            />
-            <CustomInput
-              control={control}
-              name="street"
-              label="Rua"
-              placeholder="Nome da rua"
-              autoCapitalize="words"
-            />
-            <CustomInput
-              control={control}
-              name="number"
-              label="Número"
-              placeholder="123"
-            />
-            <CustomInput
-              control={control}
-              name="complement"
-              label="Complemento"
-              placeholder="Apto, bloco, referência (opcional)"
-            />
-            <CustomInput
-              control={control}
-              name="neighborhood"
-              label="Bairro"
-              placeholder="Seu bairro"
-              autoCapitalize="words"
-            />
-            <CustomInput
-              control={control}
-              name="city"
-              label="Cidade"
-              placeholder="Sua cidade"
-              autoCapitalize="words"
-            />
-            <CustomInput
-              control={control}
-              name="state"
-              label="Estado (UF)"
-              placeholder="RS"
-              autoCapitalize="characters"
-            />
-          </>
-        ) : null}
+                    <CustomInput
+                      control={control}
+                      name="zipCode"
+                      label="CEP"
+                      placeholder="00000-000"
+                      keyboardType="numeric"
+                      variant="warm"
+                    />
+                    <CustomInput
+                      control={control}
+                      name="street"
+                      label="Rua"
+                      placeholder="Nome da rua"
+                      autoCapitalize="words"
+                      variant="warm"
+                    />
+                    <CustomInput
+                      control={control}
+                      name="number"
+                      label="Número"
+                      placeholder="123"
+                      variant="warm"
+                    />
+                    <CustomInput
+                      control={control}
+                      name="complement"
+                      label="Complemento"
+                      placeholder="Apto, bloco, referência (opcional)"
+                      variant="warm"
+                    />
+                    <CustomInput
+                      control={control}
+                      name="neighborhood"
+                      label="Bairro"
+                      placeholder="Seu bairro"
+                      autoCapitalize="words"
+                      variant="warm"
+                    />
+                    <CustomInput
+                      control={control}
+                      name="city"
+                      label="Cidade"
+                      placeholder="Sua cidade"
+                      autoCapitalize="words"
+                      variant="warm"
+                    />
+                    <CustomInput
+                      control={control}
+                      name="state"
+                      label="Estado (UF)"
+                      placeholder="RS"
+                      autoCapitalize="characters"
+                      variant="warm"
+                    />
+                  </>
+                ) : null}
 
-        <ProfilePaperDivider label="Senha" />
+                <ProfilePaperDivider label="Senha" variant="warm" />
 
-        <PasswordField
-          control={control}
-          name="currentPassword"
-          label="Senha atual"
-          placeholder="Só se for trocar a senha"
-        />
-        <PasswordField
-          control={control}
-          name="newPassword"
-          label="Nova senha"
-          placeholder="Mínimo 8 caracteres"
-        />
-        <PasswordField
-          control={control}
-          name="confirmPassword"
-          label="Confirmar nova senha"
-          placeholder="Repita a nova senha"
-        />
+                <PasswordField
+                  control={control}
+                  name="currentPassword"
+                  label="Senha atual"
+                  placeholder="Só se for trocar a senha"
+                  variant="warm"
+                />
+                <PasswordField
+                  control={control}
+                  name="newPassword"
+                  label="Nova senha"
+                  placeholder="Mínimo 8 caracteres"
+                  variant="warm"
+                />
+                <PasswordField
+                  control={control}
+                  name="confirmPassword"
+                  label="Confirmar nova senha"
+                  placeholder="Repita a nova senha"
+                  variant="warm"
+                />
 
-        <View style={styles.actions}>
-          <PrimaryButton label="Salvar alterações" onPress={onSave} isLoading={isSaving} />
-          <SecondaryButton label="Sair da conta" onPress={handleLogout} />
-        </View>
-      </ProfilePaper>
+                <View style={styles.actions}>
+                  <PrimaryButton
+                    label="Salvar alterações"
+                    onPress={onSave}
+                    isLoading={isSaving}
+                    variant="warm"
+                  />
+                  <SecondaryButton label="Sair da conta" onPress={handleLogout} variant="warm" />
+                </View>
+              </ProfilePaper>
 
-      {buyer ? (
-        <ProfilePaper
-          title="Histórico de Compras"
-          subtitle="Comprovantes e pedidos realizados"
-          delay={60}
-          showStamp={false}>
-          <Text style={styles.purchaseHint}>
-            Consulte todas as compras realizadas e abra o comprovante de cada pedido.
-          </Text>
-          <SecondaryButton
-            label="Ver histórico de compras"
-            onPress={() => router.push(routes.orderHistory)}
-          />
-        </ProfilePaper>
-      ) : null}
-    </ScreenContainer>
+              {buyer ? (
+                <ProfilePaper
+                  title="Histórico de Compras"
+                  subtitle="Comprovantes e pedidos realizados"
+                  delay={60}
+                  showStamp={false}
+                  variant="warm">
+                  <Text style={styles.purchaseHint}>
+                    Consulte todas as compras realizadas e abra o comprovante de cada pedido.
+                  </Text>
+                  <SecondaryButton
+                    label="Ver histórico de compras"
+                    onPress={() => router.push(routes.orderHistory)}
+                    variant="warm"
+                  />
+                </ProfilePaper>
+              ) : null}
+            </PageContainer>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </WarmAppShell>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { paddingTop: 8, paddingBottom: 28 },
-  pageTitle: { marginBottom: 12 },
+  screen: { flex: 1, backgroundColor: 'transparent' },
+  flex: { flex: 1 },
+  content: { paddingTop: layout.sm },
   purchaseHint: {
-    fontSize: 14,
-    color: colors.textMuted,
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    color: loginGlass.textMuted,
     lineHeight: 20,
     marginBottom: 14,
   },
@@ -369,24 +406,37 @@ const styles = StyleSheet.create({
   readOnlyField: {
     marginBottom: 14,
   },
+  readOnlyLabel: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    fontWeight: '600',
+    color: loginGlass.formLabel,
+    marginBottom: 8,
+  },
   readOnlyBox: {
-    ...cardStyles.inset,
+    backgroundColor: loginGlass.formFieldBg,
+    borderWidth: 1,
+    borderColor: loginGlass.formFieldBorder,
+    borderRadius: radius.full,
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    opacity: 0.85,
+    opacity: 0.9,
   },
   readOnlyText: {
-    fontSize: 15,
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.md,
     fontWeight: '600',
-    color: colors.textMuted,
+    color: loginGlass.textMuted,
   },
   balanceBox: {
-    backgroundColor: '#EEF8F3',
-    borderColor: 'rgba(16, 185, 129, 0.2)',
+    backgroundColor: 'rgba(16, 120, 80, 0.22)',
+    borderColor: 'rgba(120, 220, 170, 0.28)',
   },
   balanceText: {
-    fontSize: 16,
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.md,
     fontWeight: '800',
-    color: colors.success,
+    color: loginGlass.goldLight,
   },
   actions: {
     gap: 10,
@@ -397,6 +447,11 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     borderColor: colors.danger,
     backgroundColor: '#F5E0DC',
+  },
+  errorBoxWarm: {
+    backgroundColor: 'rgba(120, 40, 30, 0.35)',
+    borderColor: 'rgba(255, 140, 120, 0.45)',
+    borderRadius: radius.md,
   },
   error: { color: colors.danger, fontSize: 14 },
 });

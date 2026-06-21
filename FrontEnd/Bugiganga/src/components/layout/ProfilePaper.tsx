@@ -2,23 +2,73 @@ import { type PropsWithChildren } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { colors, contentLayout, fonts, radii, shadow, textStyles } from '@/src/theme';
+import { WarmGlassSurface } from '@/src/components/layout/WarmGlassSurface';
+import {
+  colors,
+  contentLayout,
+  fontSizes,
+  fonts,
+  loginGlass,
+  radii,
+  radius,
+  shadow,
+  textStyles,
+} from '@/src/theme';
 
 type ProfilePaperProps = PropsWithChildren<{
   title?: string;
   subtitle?: string;
   showStamp?: boolean;
   delay?: number;
+  variant?: 'default' | 'warm';
 }>;
 
-/** Folha estática estilo documento vintage — base visual do perfil. */
+/** Folha do perfil — vintage (default) ou vidro quente (warm). */
 export function ProfilePaper({
   children,
   title,
   subtitle,
   showStamp = true,
   delay = 0,
+  variant = 'default',
 }: ProfilePaperProps) {
+  const warm = variant === 'warm';
+
+  const header = title ? (
+    <View
+      style={[
+        styles.header,
+        warm && styles.headerWarm,
+        warm && showStamp && styles.headerWarmWithStamp,
+      ]}>
+      <Text style={[styles.title, warm && styles.titleWarm]}>{title}</Text>
+      {subtitle && !warm ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      {subtitle && warm ? (
+        <Text style={styles.subtitleWarm}>{subtitle}</Text>
+      ) : null}
+      <View style={[styles.headerLine, warm && styles.headerLineWarm]} />
+    </View>
+  ) : null;
+
+  const stamp = showStamp ? (
+    <View style={[styles.stamp, warm && styles.stampWarm]}>
+      <Text style={[styles.stampText, warm && styles.stampTextWarm]}>BUGIGANGA</Text>
+      <Text style={[styles.stampSub, warm && styles.stampSubWarm]}>autêntico</Text>
+    </View>
+  ) : null;
+
+  if (warm) {
+    return (
+      <Animated.View entering={FadeInDown.delay(delay).duration(420).springify()} style={styles.warmWrap}>
+        <WarmGlassSurface level="card" variant="card" style={styles.warmSheet} contentStyle={styles.warmContent}>
+          {stamp}
+          {header}
+          {children}
+        </WarmGlassSurface>
+      </Animated.View>
+    );
+  }
+
   return (
     <Animated.View
       entering={FadeInDown.delay(delay).duration(420).springify()}
@@ -28,33 +78,29 @@ export function ProfilePaper({
       <View style={styles.cornerTR} />
       <View style={styles.cornerBL} />
       <View style={styles.cornerBR} />
-
-      {showStamp ? (
-        <View style={styles.stamp}>
-          <Text style={styles.stampText}>BUGIGANGA</Text>
-          <Text style={styles.stampSub}>autêntico</Text>
-        </View>
-      ) : null}
-
-      {title ? (
-        <View style={styles.header}>
-          <Text style={styles.title}>{title}</Text>
-          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
-          <View style={styles.headerLine} />
-        </View>
-      ) : null}
-
+      {stamp}
+      {header}
       {children}
     </Animated.View>
   );
 }
 
-export function ProfilePaperDivider({ label }: { label?: string }) {
+export function ProfilePaperDivider({
+  label,
+  variant = 'default',
+}: {
+  label?: string;
+  variant?: 'default' | 'warm';
+}) {
+  const warm = variant === 'warm';
+
   return (
     <View style={dividerStyles.wrap}>
-      <View style={dividerStyles.line} />
-      {label ? <Text style={dividerStyles.label}>{label}</Text> : null}
-      <View style={dividerStyles.line} />
+      <View style={[dividerStyles.line, warm && dividerStyles.lineWarm]} />
+      {label ? (
+        <Text style={[dividerStyles.label, warm && dividerStyles.labelWarm]}>{label}</Text>
+      ) : null}
+      <View style={[dividerStyles.line, warm && dividerStyles.lineWarm]} />
     </View>
   );
 }
@@ -67,6 +113,19 @@ const CORNER = {
 };
 
 const styles = StyleSheet.create({
+  warmWrap: {
+    width: '100%',
+    marginBottom: 16,
+  },
+  warmSheet: {
+    borderRadius: radius.lg,
+  },
+  warmContent: {
+    paddingHorizontal: contentLayout.screenPadding,
+    paddingTop: 20,
+    paddingBottom: contentLayout.cardPadding,
+    position: 'relative',
+  },
   sheet: {
     backgroundColor: colors.inputBg,
     borderRadius: radii.md,
@@ -102,18 +161,34 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    borderWidth: 2,
+    borderWidth: 2.5,
     borderColor: colors.danger,
     alignItems: 'center',
     justifyContent: 'center',
     transform: [{ rotate: '-12deg' }],
-    opacity: 0.35,
+    opacity: 0.52,
+    zIndex: 3,
+  },
+  stampWarm: {
+    top: 8,
+    right: 6,
+    borderColor: loginGlass.goldLight,
+    borderWidth: 2.5,
+    backgroundColor: 'rgba(212, 175, 55, 0.16)',
+    opacity: 0.88,
   },
   stampText: {
     fontFamily: fonts.serif,
     fontSize: 9,
     fontWeight: '800',
     color: colors.danger,
+    letterSpacing: 0.8,
+  },
+  stampTextWarm: {
+    fontFamily: fonts.sans,
+    fontSize: 9,
+    fontWeight: '800',
+    color: loginGlass.cream,
     letterSpacing: 0.8,
   },
   stampSub: {
@@ -123,14 +198,34 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginTop: 1,
   },
+  stampSubWarm: {
+    fontSize: 7,
+    fontWeight: '800',
+    color: loginGlass.goldLight,
+    textTransform: 'uppercase',
+    marginTop: 1,
+  },
   header: {
     alignItems: 'center',
     marginBottom: 18,
     paddingTop: 4,
   },
+  headerWarm: {
+    marginBottom: 16,
+  },
+  headerWarmWithStamp: {
+    paddingRight: 78,
+  },
   title: {
     ...textStyles.sectionTitle,
     fontSize: 19,
+    textAlign: 'center',
+  },
+  titleWarm: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.lg,
+    fontWeight: '800',
+    color: loginGlass.text,
     textAlign: 'center',
   },
   subtitle: {
@@ -140,6 +235,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: 'center',
   },
+  subtitleWarm: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    color: loginGlass.textMuted,
+    fontStyle: 'normal',
+  },
   headerLine: {
     width: 64,
     height: 2,
@@ -147,6 +248,10 @@ const styles = StyleSheet.create({
     marginTop: 10,
     borderRadius: radii.full,
     opacity: 0.45,
+  },
+  headerLineWarm: {
+    backgroundColor: loginGlass.goldLight,
+    opacity: 1,
   },
 });
 
@@ -162,6 +267,9 @@ const dividerStyles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.border,
   },
+  lineWarm: {
+    backgroundColor: loginGlass.shellBorder,
+  },
   label: {
     fontFamily: fonts.serif,
     fontSize: 11,
@@ -169,5 +277,10 @@ const dividerStyles = StyleSheet.create({
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
+  },
+  labelWarm: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    color: loginGlass.goldMuted,
   },
 });

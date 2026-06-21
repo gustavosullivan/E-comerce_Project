@@ -7,6 +7,7 @@ import { CartSummaryGlass } from '@/src/components/cards/CartSummaryGlass';
 import { EmptyState } from '@/src/components/layout/EmptyState';
 import { PageContainer } from '@/src/components/layout/PageContainer';
 import { ScreenHeader } from '@/src/components/layout/ScreenHeader';
+import { WarmAppShell } from '@/src/components/layout/WarmAppShell';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useTabBarInset } from '@/src/hooks/useTabBarInset';
 import { useWallet } from '@/src/hooks/useWallet';
@@ -14,7 +15,7 @@ import { snackbar } from '@/src/store/snackbarStore';
 import { useCartStore } from '@/src/store/cartStore';
 import { useCheckoutStore } from '@/src/store/checkoutStore';
 import { isBuyer } from '@/src/types/auth';
-import { colors, layout } from '@/src/theme';
+import { layout } from '@/src/theme';
 
 export default function CartScreen() {
   const { user } = useAuth();
@@ -46,57 +47,70 @@ export default function CartScreen() {
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
-      <View style={[styles.content, { marginBottom: contentBottomInset }]}>
-        <PageContainer>
-          <ScreenHeader
-            title="Carrinho"
-            icon="shopping-bag"
-            subtitle={items.length === 0 ? 'Nenhum item ainda' : `${itemCount} unidade(s) · ${items.length} produto(s)`}
-          />
-        </PageContainer>
+    <WarmAppShell>
+      <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+        <View style={[styles.content, { marginBottom: contentBottomInset }]}>
+          <PageContainer>
+            <ScreenHeader
+              title="Carrinho"
+              icon="shopping-bag"
+              subtitle={
+                items.length === 0
+                  ? 'Nenhum item ainda'
+                  : `${itemCount} unidade(s) · ${items.length} produto(s)`
+              }
+              variant="warm"
+            />
+          </PageContainer>
 
-        {items.length === 0 ? (
-          <EmptyState icon="shopping-bag" message="Seu carrinho está vazio. Explore produtos na home!" />
-        ) : (
-          <View style={styles.body}>
-            <FlatList
-              style={styles.listFlex}
-              data={items}
-              keyExtractor={(item) => String(item.product.id)}
-              contentContainerStyle={styles.list}
-              showsVerticalScrollIndicator={false}
-              renderItem={({ item }) => (
+          {items.length === 0 ? (
+            <EmptyState
+              icon="shopping-bag"
+              message="Seu carrinho está vazio. Explore produtos na home!"
+              variant="warm"
+            />
+          ) : (
+            <View style={styles.body}>
+              <FlatList
+                style={styles.listFlex}
+                data={items}
+                keyExtractor={(item) => String(item.product.id)}
+                contentContainerStyle={styles.list}
+                showsVerticalScrollIndicator={false}
+                renderItem={({ item }) => (
+                  <PageContainer>
+                    <CartGlassItem
+                      item={item}
+                      variant="warm"
+                      onIncrease={() => updateQuantity(item.product.id, item.quantity + 1)}
+                      onDecrease={() => updateQuantity(item.product.id, item.quantity - 1)}
+                      onRemove={() => handleRemove(item.product.id, item.product.name)}
+                    />
+                  </PageContainer>
+                )}
+              />
+
+              <View style={styles.summaryDock}>
                 <PageContainer>
-                  <CartGlassItem
-                    item={item}
-                    onIncrease={() => updateQuantity(item.product.id, item.quantity + 1)}
-                    onDecrease={() => updateQuantity(item.product.id, item.quantity - 1)}
-                    onRemove={() => handleRemove(item.product.id, item.product.name)}
+                  <CartSummaryGlass
+                    subtotal={subtotal}
+                    total={total}
+                    balance={buyer ? balance : undefined}
+                    onCheckout={handleCheckout}
+                    variant="warm"
                   />
                 </PageContainer>
-              )}
-            />
-
-            <View style={styles.summaryDock}>
-              <PageContainer>
-                <CartSummaryGlass
-                  subtotal={subtotal}
-                  total={total}
-                  balance={buyer ? balance : undefined}
-                  onCheckout={handleCheckout}
-                />
-              </PageContainer>
+              </View>
             </View>
-          </View>
-        )}
-      </View>
-    </SafeAreaView>
+          )}
+        </View>
+      </SafeAreaView>
+    </WarmAppShell>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
+  screen: { flex: 1, backgroundColor: 'transparent' },
   content: { flex: 1 },
   body: { flex: 1 },
   listFlex: { flex: 1 },

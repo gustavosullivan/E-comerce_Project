@@ -1,13 +1,23 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 
-import { ScreenContainer } from '@/src/components/ui/ScreenContainer';
+import { PageContainer } from '@/src/components/layout/PageContainer';
+import { ProfilePaper } from '@/src/components/layout/ProfilePaper';
 import { ScreenHeader } from '@/src/components/layout/ScreenHeader';
+import { WarmAppShell } from '@/src/components/layout/WarmAppShell';
 import { useAuthStore } from '@/src/store/authStore';
 import { useTabBarInset } from '@/src/hooks/useTabBarInset';
 import { orderService, AdminSalesSummary } from '@/src/services/orderService';
-import { colors, textStyles, cardStyles, radius } from '@/src/theme';
+import { fontSizes, fonts, layout, loginGlass, radius } from '@/src/theme';
 import { formatCurrency } from '@/src/utils/formatCurrency';
 import { Product } from '@/src/types/product';
 
@@ -51,7 +61,8 @@ export default function AdminDashboardScreen() {
         const summary = await orderService.getAdminSalesSummary(user.id);
         setSalesSummary(summary);
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Não foi possível carregar o painel de vendas.';
+        const message =
+          err instanceof Error ? err.message : 'Não foi possível carregar o painel de vendas.';
         setError(message);
       } finally {
         setIsLoading(false);
@@ -63,111 +74,131 @@ export default function AdminDashboardScreen() {
 
   if (isLoading) {
     return (
-      <ScreenContainer style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Carregando painel de vendas...</Text>
-      </ScreenContainer>
+      <WarmAppShell>
+        <SafeAreaView style={styles.centered} edges={['top', 'left', 'right']}>
+          <ActivityIndicator size="large" color={loginGlass.gold} />
+          <Text style={styles.loadingText}>Carregando painel de vendas...</Text>
+        </SafeAreaView>
+      </WarmAppShell>
     );
   }
 
   if (error) {
     return (
-      <ScreenContainer style={styles.errorContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-      </ScreenContainer>
+      <WarmAppShell>
+        <SafeAreaView style={styles.centered} edges={['top', 'left', 'right']}>
+          <Text style={styles.errorText}>{error}</Text>
+        </SafeAreaView>
+      </WarmAppShell>
     );
   }
 
   return (
-    <ScreenContainer scroll contentStyle={{ paddingBottom: contentBottomInset }}>
-      <ScreenHeader
-        title="Vendas"
-        subtitle="Acompanhe o desempenho das suas vendas."
-        icon="leaderboard"
-      />
+    <WarmAppShell>
+      <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.content,
+            { paddingBottom: contentBottomInset + layout.lg },
+          ]}
+          showsVerticalScrollIndicator={false}>
+          <PageContainer>
+            <ScreenHeader
+              title="Vendas"
+              subtitle="Acompanhe o desempenho das suas vendas."
+              icon="leaderboard"
+              variant="warm"
+            />
 
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>Valor Total das Vendas</Text>
-        <Text style={styles.totalSalesValue}>
-          {formatCurrency(salesSummary?.totalSalesValue || 0)}
-        </Text>
-      </View>
+            <ProfilePaper
+              title="Resumo"
+              subtitle="Total acumulado no marketplace"
+              showStamp={false}
+              variant="warm">
+              <View style={styles.summaryInner}>
+                <Text style={styles.summaryLabel}>Valor Total das Vendas</Text>
+                <Text style={styles.totalSalesValue}>
+                  {formatCurrency(salesSummary?.totalSalesValue || 0)}
+                </Text>
+              </View>
+            </ProfilePaper>
 
-      <Text style={styles.sectionTitle}>Produtos Vendidos</Text>
-      {salesSummary?.soldProducts && salesSummary.soldProducts.length > 0 ? (
-        <FlatList
-          data={salesSummary.soldProducts}
-          keyExtractor={(item) => item.product.id.toString()}
-          renderItem={({ item }) => <SoldProductItem item={item} />}
-          contentContainerStyle={styles.productList}
-          scrollEnabled={false}
-        />
-      ) : (
-        <Text style={styles.noDataText}>Nenhum produto vendido ainda.</Text>
-      )}
-    </ScreenContainer>
+            <ProfilePaper
+              title="Produtos Vendidos"
+              subtitle={
+                salesSummary?.soldProducts?.length
+                  ? `${salesSummary.soldProducts.length} itens`
+                  : 'Nenhuma venda registrada'
+              }
+              delay={60}
+              showStamp={false}
+              variant="warm">
+              {salesSummary?.soldProducts && salesSummary.soldProducts.length > 0 ? (
+                <FlatList
+                  data={salesSummary.soldProducts}
+                  keyExtractor={(item) => item.product.id.toString()}
+                  renderItem={({ item }) => <SoldProductItem item={item} />}
+                  scrollEnabled={false}
+                />
+              ) : (
+                <Text style={styles.noDataText}>Nenhum produto vendido ainda.</Text>
+              )}
+            </ProfilePaper>
+          </PageContainer>
+        </ScrollView>
+      </SafeAreaView>
+    </WarmAppShell>
   );
 }
 
 const styles = StyleSheet.create({
-  loadingContainer: {
+  screen: { flex: 1, backgroundColor: 'transparent' },
+  centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'transparent',
+    padding: 20,
+  },
+  content: {
+    paddingTop: layout.sm,
   },
   loadingText: {
     marginTop: 10,
-    fontSize: 16,
-    color: colors.textMuted,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.md,
+    color: loginGlass.textMuted,
   },
   errorText: {
-    fontSize: 16,
-    color: colors.danger,
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.md,
+    color: '#F5A8A0',
     textAlign: 'center',
   },
-  container: {
-    padding: 20,
-  },
-  summaryCard: {
-    ...cardStyles.shadow,
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
+  summaryInner: {
     alignItems: 'center',
+    paddingVertical: 8,
   },
   summaryLabel: {
-    fontSize: 16,
-    color: colors.textMuted,
-    marginBottom: 5,
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.md,
+    color: loginGlass.textMuted,
+    marginBottom: 6,
   },
   totalSalesValue: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: colors.primary,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 10,
-  },
-  productList: {
-    paddingBottom: 20,
+    fontFamily: fonts.sans,
+    fontSize: 32,
+    fontWeight: '800',
+    color: loginGlass.goldLight,
   },
   productItem: {
-    ...cardStyles.inset,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: colors.card,
+    backgroundColor: loginGlass.formFieldBg,
     borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: loginGlass.cardBorder,
     padding: 12,
     marginBottom: 10,
   },
@@ -175,27 +206,30 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: radius.md,
-    backgroundColor: colors.background,
+    backgroundColor: 'rgba(45, 30, 20, 0.4)',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: loginGlass.cardBorder,
   },
   productInfo: {
     flex: 1,
   },
   productName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.text,
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.md,
+    fontWeight: '700',
+    color: loginGlass.text,
   },
   productDetails: {
-    fontSize: 14,
-    color: colors.textMuted,
-    marginTop: 5,
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    color: loginGlass.textMuted,
+    marginTop: 4,
   },
   noDataText: {
-    fontSize: 16,
-    color: colors.textMuted,
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.md,
+    color: loginGlass.textMuted,
     textAlign: 'center',
-    marginTop: 20,
+    paddingVertical: 12,
   },
 });

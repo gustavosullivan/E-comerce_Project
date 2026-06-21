@@ -10,13 +10,14 @@ import Animated, {
 import { ScalePressable } from '@/src/components/ui/ScalePressable';
 import { snackbar } from '@/src/store/snackbarStore';
 import { useAuthStore } from '@/src/store/authStore';
-import { colors, fonts, motion, radii, shadow } from '@/src/theme';
+import { colors, fontSizes, fonts, loginGlass, motion, radii, radius, shadow } from '@/src/theme';
 import { pickAvatarImage } from '@/src/utils/pickAvatarImage';
 import { selectionFeedback, successFeedback } from '@/src/utils/haptics';
 
 type ProfileAvatarPickerProps = {
   size?: 'md' | 'lg';
   layout?: 'column' | 'inline';
+  variant?: 'default' | 'warm';
 };
 
 const SIZES = {
@@ -24,7 +25,12 @@ const SIZES = {
   lg: { ring: 120, icon: 64, badge: 30, edit: 16 },
 };
 
-export function ProfileAvatarPicker({ size = 'md', layout = 'column' }: ProfileAvatarPickerProps) {
+export function ProfileAvatarPicker({
+  size = 'md',
+  layout = 'column',
+  variant = 'default',
+}: ProfileAvatarPickerProps) {
+  const warm = variant === 'warm';
   const avatarUri = useAuthStore((s) => s.avatarUri);
   const setAvatarUri = useAuthStore((s) => s.setAvatarUri);
   const dims = SIZES[size];
@@ -68,6 +74,7 @@ export function ProfileAvatarPicker({ size = 'md', layout = 'column' }: ProfileA
         <ScalePressable
           style={[
             styles.avatarFrame,
+            warm && styles.avatarFrameWarm,
             {
               width: dims.ring,
               height: dims.ring,
@@ -79,21 +86,40 @@ export function ProfileAvatarPicker({ size = 'md', layout = 'column' }: ProfileA
           {avatarUri ? (
             <Image source={{ uri: avatarUri }} style={styles.avatarImage} contentFit="cover" />
           ) : (
-            <View style={styles.placeholder}>
-              <MaterialIcons name="add-a-photo" size={dims.icon * 0.55} color={colors.white} />
-              <Text style={styles.placeholderHint}>Sua foto</Text>
+            <View style={[styles.placeholder, warm && styles.placeholderWarm]}>
+              <MaterialIcons
+                name="add-a-photo"
+                size={dims.icon * 0.55}
+                color={warm ? loginGlass.text : colors.white}
+              />
+              <Text style={[styles.placeholderHint, warm && styles.placeholderHintWarm]}>
+                Sua foto
+              </Text>
             </View>
           )}
-          <View style={[styles.editBadge, { width: dims.badge, height: dims.badge, borderRadius: dims.badge / 2 }]}>
-            <MaterialIcons name="folder-open" size={dims.edit} color={colors.white} />
+          <View
+            style={[
+              styles.editBadge,
+              warm && styles.editBadgeWarm,
+              { width: dims.badge, height: dims.badge, borderRadius: dims.badge / 2 },
+            ]}>
+            <MaterialIcons
+              name="folder-open"
+              size={dims.edit}
+              color={warm ? loginGlass.text : colors.white}
+            />
           </View>
         </ScalePressable>
       </Animated.View>
 
       <View style={styles.actions}>
-        <ScalePressable onPress={pickImage} style={styles.actionBtn}>
-          <MaterialIcons name="photo-library" size={16} color={colors.primary} />
-          <Text style={styles.actionLabel}>{pickLabel}</Text>
+        <ScalePressable onPress={pickImage} style={[styles.actionBtn, warm && styles.actionBtnWarm]}>
+          <MaterialIcons
+            name="photo-library"
+            size={16}
+            color={warm ? loginGlass.goldLight : colors.primary}
+          />
+          <Text style={[styles.actionLabel, warm && styles.actionLabelWarm]}>{pickLabel}</Text>
         </ScalePressable>
         {avatarUri ? (
           <ScalePressable onPress={removeImage} style={styles.removeBtn}>
@@ -123,6 +149,10 @@ const styles = StyleSheet.create({
     position: 'relative',
     ...shadow.lift,
   },
+  avatarFrameWarm: {
+    borderColor: loginGlass.goldLight,
+    backgroundColor: loginGlass.formFieldBg,
+  },
   avatarImage: {
     width: '100%',
     height: '100%',
@@ -135,12 +165,19 @@ const styles = StyleSheet.create({
     gap: 4,
     padding: 8,
   },
+  placeholderWarm: {
+    backgroundColor: loginGlass.button,
+  },
   placeholderHint: {
     fontFamily: fonts.serif,
     fontSize: 10,
     fontWeight: '700',
     color: colors.background,
     textAlign: 'center',
+  },
+  placeholderHintWarm: {
+    fontFamily: fonts.sans,
+    color: loginGlass.text,
   },
   editBadge: {
     position: 'absolute',
@@ -151,6 +188,10 @@ const styles = StyleSheet.create({
     borderColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  editBadgeWarm: {
+    backgroundColor: loginGlass.formButtonPrimary,
+    borderColor: loginGlass.shellBorder,
   },
   actions: {
     alignItems: 'center',
@@ -167,11 +208,21 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.card,
   },
+  actionBtnWarm: {
+    borderColor: loginGlass.shellBorder,
+    backgroundColor: loginGlass.formFieldBg,
+    borderRadius: radius.full,
+  },
   actionLabel: {
     fontFamily: fonts.serif,
     fontSize: 12,
     fontWeight: '700',
     color: colors.primary,
+  },
+  actionLabelWarm: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    color: loginGlass.goldLight,
   },
   removeBtn: {
     flexDirection: 'row',

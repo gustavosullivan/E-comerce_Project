@@ -1,10 +1,10 @@
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useMemo, useState } from 'react';
-import { RefreshControl, StyleSheet, Text, View, ActivityIndicator, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-
+import { StatusBar } from 'expo-status-bar';
+import { type ReactNode, useCallback, useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ProductCard } from '@/src/components/cards/ProductCard';
 import { AdminProductCard } from '@/src/components/cards/AdminProductCard';
 import { ProductPreviewSheet } from '@/src/components/cards/ProductPreviewSheet';
@@ -17,19 +17,17 @@ import {
   HomeHero,
   HomeToolbar,
 } from '@/src/components/layout/HomeHeader';
+import { LoginGlassBackground } from '@/src/components/layout/LoginGlassBackground';
 import { PageContainer } from '@/src/components/layout/PageContainer';
 import { ProductGrid } from '@/src/components/layout/ProductGrid';
-import { Loading } from '@/src/components/layout/Loading';
-import { ProductGridSkeleton } from '@/src/components/ui/SkeletonBlock';
-import { useTabBarInset } from '@/src/hooks/useTabBarInset';
+import { ProductGridSkeleton } from '@/src/components/ui/SkeletonBlock';import { useTabBarInset } from '@/src/hooks/useTabBarInset';
 import { useAuthStore } from '@/src/store/authStore';
 import { isAdmin } from '@/src/types/auth';
 import { useProducts } from '@/src/hooks/useProducts'; // This hook is for buyer products
 import { MOCK_CATEGORIES } from '@/src/mocks/categories';
 import { snackbar } from '@/src/store/snackbarStore';
 import { useFavoritesStore } from '@/src/store/favoritesStore';
-import { colors, fontSizes, fonts, layout, textStyles } from '@/src/theme';
-import type { Product } from '@/src/types/product';
+import { fontSizes, fonts, layout, loginGlass } from '@/src/theme';import type { Product } from '@/src/types/product';
 import { productService } from '@/src/services/productService';
 import { routes } from '@/src/navigation/routes';
 import { confirmAction } from '@/src/utils/confirm';
@@ -44,6 +42,7 @@ const AdminProductItem = ({ product, onEdit, onDelete }: AdminProductItemProps) 
   <AdminProductCard
     product={product}
     compact
+    variant="warm"
     onEdit={() => onEdit(product.id)}
     onDelete={() => onDelete(product.id)}
   />
@@ -160,32 +159,37 @@ export default function HomeScreen() {
   if (isCurrentUserAdmin) {
     if (adminLoading) {
       return (
-        <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
-          <View style={styles.stickyToolbar}>
-            <PageContainer>
-              <HomeToolbar userName={displayName} isAdmin={isCurrentUserAdmin} />
-            </PageContainer>
-          </View>
-          <View style={styles.scrollArea}>
-            <PageContainer style={adminStyles.loadingContainer}>
-              <ActivityIndicator size="large" color={colors.primary} />
-              <Text style={adminStyles.loadingText}>Carregando seus produtos...</Text>
-            </PageContainer>
-          </View>
-        </SafeAreaView>
+        <HomeShell>
+          <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+            <View style={styles.stickyToolbar}>
+              <PageContainer>
+                <HomeToolbar userName={displayName} isAdmin={isCurrentUserAdmin} />
+              </PageContainer>
+            </View>
+            <View style={styles.scrollArea}>
+              <PageContainer style={adminStyles.loadingContainer}>
+                <ActivityIndicator size="large" color={loginGlass.gold} />
+                <Text style={adminStyles.loadingText}>Carregando seus produtos...</Text>
+              </PageContainer>
+            </View>
+          </SafeAreaView>
+        </HomeShell>
       );
     }
 
     if (adminError) {
       return (
-        <SafeAreaView style={styles.screen}>
-          <ErrorState message={adminError} onRetry={fetchAdminProducts} />
-        </SafeAreaView>
+        <HomeShell>
+          <SafeAreaView style={styles.screen}>
+            <ErrorState message={adminError} onRetry={fetchAdminProducts} />
+          </SafeAreaView>
+        </HomeShell>
       );
     }
 
     return (
-      <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+      <HomeShell>
+        <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
         <View style={styles.stickyToolbar}>
           <PageContainer>
             <HomeToolbar userName={displayName} isAdmin={isCurrentUserAdmin} />
@@ -201,8 +205,8 @@ export default function HomeScreen() {
                 <RefreshControl
                   refreshing={refreshing}
                   onRefresh={handleRefresh}
-                  tintColor={colors.primary}
-                  colors={[colors.primary]}
+                  tintColor={loginGlass.gold}
+                  colors={[loginGlass.gold]}
                 />
               }
               ListHeaderComponent={
@@ -211,8 +215,9 @@ export default function HomeScreen() {
                     value={adminSearchQuery}
                     onChangeText={setAdminSearchQuery}
                     placeholder="Buscar meus produtos..."
+                    variant="warm"
                   />
-                  <Text style={[textStyles.sectionTitle, adminStyles.adminSectionTitle]}>
+                  <Text style={adminStyles.adminSectionTitle}>
                     Seus Produtos ({filteredAdminProducts.length})
                   </Text>
                 </PageContainer>
@@ -231,12 +236,11 @@ export default function HomeScreen() {
                 value={adminSearchQuery}
                 onChangeText={setAdminSearchQuery}
                 placeholder="Buscar meus produtos..."
+                variant="warm"
               />
-              <Text style={[textStyles.sectionTitle, adminStyles.adminSectionTitle]}>
-                Seus Produtos (0)
-              </Text>
+              <Text style={adminStyles.adminSectionTitle}>Seus Produtos (0)</Text>
               <View style={adminStyles.noProductsContainer}>
-                <MaterialIcons name="inventory-2" size={50} color={colors.textMuted} />
+                <MaterialIcons name="inventory-2" size={50} color={loginGlass.goldMuted} />
                 <Text style={adminStyles.noProductsText}>Nenhum produto cadastrado ainda.</Text>
                 <Pressable
                   onPress={() => router.push(routes.adminProductNew)}
@@ -247,39 +251,45 @@ export default function HomeScreen() {
             </PageContainer>
           )}
         </View>
-      </SafeAreaView>
+        </SafeAreaView>
+      </HomeShell>
     );
   }
 
   // Buyer View
   if (isLoading && products.length === 0) {
     return (
-      <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
-        <View style={styles.stickyToolbar}>
-          <PageContainer>
-            <HomeToolbar userName={displayName} isAdmin={isCurrentUserAdmin} />
-          </PageContainer>
-        </View>
-        <View style={styles.scrollArea}>
-          <PageContainer>
-            <SearchBar value="" onChangeText={() => {}} editable={false} />
-            <ProductGridSkeleton columns={2} />
-          </PageContainer>
-        </View>
-      </SafeAreaView>
+      <HomeShell>
+        <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+          <View style={styles.stickyToolbar}>
+            <PageContainer>
+              <HomeToolbar userName={displayName} isAdmin={isCurrentUserAdmin} />
+            </PageContainer>
+          </View>
+          <View style={styles.scrollArea}>
+            <PageContainer>
+              <SearchBar value="" onChangeText={() => {}} editable={false} variant="warm" />
+              <ProductGridSkeleton columns={2} />
+            </PageContainer>
+          </View>
+        </SafeAreaView>
+      </HomeShell>
     );
   }
 
   if (error && products.length === 0) {
     return (
-      <SafeAreaView style={styles.screen}>
-        <ErrorState message={error} onRetry={reload} />
-      </SafeAreaView>
+      <HomeShell>
+        <SafeAreaView style={styles.screen}>
+          <ErrorState message={error} onRetry={reload} />
+        </SafeAreaView>
+      </HomeShell>
     );
   }
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+    <HomeShell>
+      <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       {previewProduct ? (
         <ProductPreviewSheet
           product={previewProduct}
@@ -302,8 +312,8 @@ export default function HomeScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor={colors.primary}
-              colors={[colors.primary]}
+              tintColor={loginGlass.gold}
+              colors={[loginGlass.gold]}
             />
           }
           ListHeaderComponent={
@@ -313,15 +323,16 @@ export default function HomeScreen() {
                 productCount={products.length}
                 favoriteCount={favoriteCount}
               />
-              <SearchBar value={query} onChangeText={setQuery} />
-              <BannerCarousel />
+              <SearchBar value={query} onChangeText={setQuery} variant="warm" />
+              <BannerCarousel variant="warm" />
               <CategoryChips
                 categories={MOCK_CATEGORIES}
                 selectedId={categoryId}
                 onSelect={setCategoryId}
+                variant="warm"
               />
               <View style={styles.sectionHead}>
-                <Text style={textStyles.sectionTitle}>
+                <Text style={styles.sectionTitle}>
                   {categoryId ? 'Filtrados' : 'Destaques'}
                 </Text>
                 <Text style={styles.count}>{filtered.length} itens</Text>
@@ -332,6 +343,7 @@ export default function HomeScreen() {
             <ProductCard
               product={item}
               compact
+              variant="warm"
               onToggleFavorite={() => toggle(item)}
               onPress={() => setPreviewProduct(item)}
             />
@@ -339,13 +351,25 @@ export default function HomeScreen() {
         />
       </View>
     </SafeAreaView>
+    </HomeShell>
+  );
+}
+
+function HomeShell({ children }: { children: ReactNode }) {
+  return (
+    <View style={styles.root}>
+      <StatusBar style="light" />
+      <LoginGlassBackground />
+      {children}
+    </View>
   );
 }
 
 const TOOLBAR_SLOT = HOME_STICKY_TOOLBAR_HEIGHT + layout.md;
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
+  root: { flex: 1, backgroundColor: loginGlass.background },
+  screen: { flex: 1, backgroundColor: 'transparent' },
   stickyToolbar: {
     position: 'absolute',
     top: 0,
@@ -369,13 +393,19 @@ const styles = StyleSheet.create({
     marginBottom: layout.sm,
     paddingBottom: layout.xs,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: loginGlass.shellBorder,
+  },
+  sectionTitle: {
+    fontFamily: fonts.gothic,
+    fontSize: fontSizes.lg,
+    fontWeight: '700',
+    color: loginGlass.text,
   },
   count: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.sm,
     fontWeight: '600',
-    color: colors.textMuted,
+    color: loginGlass.textMuted,
   },
 });
 
@@ -388,11 +418,15 @@ const adminStyles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: colors.textMuted,
+    color: loginGlass.textMuted,
   },
   adminSectionTitle: {
     marginTop: 20,
     marginBottom: 10,
+    fontFamily: fonts.gothic,
+    fontSize: fontSizes.lg,
+    fontWeight: '700',
+    color: loginGlass.text,
   },
   noProductsContainer: {
     flex: 1,
@@ -400,25 +434,29 @@ const adminStyles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     minHeight: 200,
-    backgroundColor: colors.card,
+    backgroundColor: loginGlass.cardGlass,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: loginGlass.cardBorder,
     marginTop: 20,
   },
   noProductsText: {
     fontSize: 16,
-    color: colors.textMuted,
+    color: loginGlass.textMuted,
     textAlign: 'center',
     marginTop: 10,
     marginBottom: 20,
   },
   addProductButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: loginGlass.button,
     paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: loginGlass.shellBorder,
   },
   addProductButtonText: {
-    color: colors.white,
+    color: loginGlass.text,
     fontSize: 16,
     fontWeight: 'bold',
   },

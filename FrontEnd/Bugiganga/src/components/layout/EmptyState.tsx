@@ -1,20 +1,28 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { colors, fontSizes, fonts, radius } from '@/src/theme';
+import { fontSizes, fonts, loginGlass, radius } from '@/src/theme';
+import { colors } from '@/src/theme/colors';
 
 type EmptyStateProps = {
   icon?: keyof typeof MaterialIcons.glyphMap;
   message: string;
+  variant?: 'default' | 'warm';
 };
 
-export function EmptyState({ icon = 'inventory-2', message }: EmptyStateProps) {
+export function EmptyState({ icon = 'inventory-2', message, variant = 'default' }: EmptyStateProps) {
+  const warm = variant === 'warm';
+
   return (
     <View style={styles.wrap}>
-      <View style={styles.iconWrap}>
-        <MaterialIcons name={icon} size={40} color={colors.primary} />
+      <View style={[styles.iconWrap, warm && styles.iconWrapWarm]}>
+        <MaterialIcons
+          name={icon}
+          size={40}
+          color={warm ? loginGlass.goldLight : colors.primary}
+        />
       </View>
-      <Text style={styles.text}>{message}</Text>
+      <Text style={[styles.text, warm && styles.textWarm]}>{message}</Text>
     </View>
   );
 }
@@ -29,6 +37,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  iconWrapWarm: {
+    backgroundColor: loginGlass.cardGlass,
+    borderWidth: 1,
+    borderColor: loginGlass.cardBorder,
+  },
   text: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.md,
@@ -36,5 +49,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
     maxWidth: 280,
+  },
+  textWarm: {
+    color: loginGlass.textMuted,
   },
 });

@@ -1,7 +1,8 @@
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, fontSizes, fonts } from '@/src/theme';
+import { fontSizes, fonts } from '@/src/theme';
+import { loginGlass } from '@/src/theme/loginGlass';
 
 const BRAND = 'BUGIGANGAS';
 const TAGLINE = 'Descubra. Escolha. Leve histórias.';
@@ -14,7 +15,7 @@ type SparkleProps = {
 function Sparkle({ size, rotation = '0deg' }: SparkleProps) {
   return (
     <View style={{ transform: [{ rotate: rotation }] }}>
-      <MaterialIcons name="auto-awesome" size={size} color={colors.primary} />
+      <MaterialIcons name="auto-awesome" size={size} color={loginGlass.gold} />
     </View>
   );
 }
@@ -22,11 +23,11 @@ function Sparkle({ size, rotation = '0deg' }: SparkleProps) {
 function BugigangasLogoMark() {
   return (
     <View style={styles.mark}>
-      <MaterialCommunityIcons name="bottle-wine-outline" size={68} color={colors.text} />
+      <MaterialCommunityIcons name="bottle-wine-outline" size={68} color={loginGlass.gold} />
       <MaterialCommunityIcons
         name="heart-outline"
         size={22}
-        color={colors.text}
+        color={loginGlass.gold}
         style={styles.heart}
       />
     </View>
@@ -77,22 +78,23 @@ const styles = StyleSheet.create({
   },
   brand: {
     fontFamily: fonts.sans,
-    fontSize: fontSizes.xxl + 8,
+    fontSize: fontSizes.xxl + 6,
     fontWeight: '900',
-    color: colors.text,
+    color: loginGlass.text,
     letterSpacing: 2.5,
     textAlign: 'center',
   },
   tagline: {
-    fontFamily: fonts.sans,
+    fontFamily: fonts.gothic,
     fontSize: fontSizes.md,
-    fontWeight: '500',
-    color: colors.primary,
+    fontWeight: '400',
+    color: loginGlass.cream,
     textAlign: 'center',
-    marginTop: 6,
-    letterSpacing: 0.2,
+    marginTop: 8,
+    letterSpacing: 0.3,
+    lineHeight: 22,
   },
   bottomSparkle: {
-    marginTop: 10,
+    marginTop: 12,
   },
 });

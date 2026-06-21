@@ -1,9 +1,11 @@
+import { BlurView } from 'expo-blur';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,7 +18,8 @@ import { SecondaryButton } from '@/src/components/buttons/SecondaryButton';
 import { CustomInput } from '@/src/components/forms/CustomInput';
 import { ProfilePaper } from '@/src/components/layout/ProfilePaper';
 import { EMPTY_ADDRESS, type UserAddress } from '@/src/types/address';
-import { colors, fontSizes, layout } from '@/src/theme';
+import { fontSizes, fonts, layout, loginGlass, radius } from '@/src/theme';
+import { glassBlur } from '@/src/theme/loginGlass';
 import { formatAddressCompact, hasAddress } from '@/src/utils/formatAddress';
 import { addressSchema, type AddressFormData } from '@/src/validation/addressSchema';
 
@@ -78,10 +81,15 @@ export function CheckoutAddressModal({
     setIsEditing(false);
   });
 
+  const blurIntensity =
+    Platform.OS === 'android' ? glassBlur.android.shell : glassBlur.ios.shell;
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Fechar" />
+      <View style={styles.overlay}>
+        <BlurView intensity={blurIntensity} tint="dark" style={StyleSheet.absoluteFill} />
+        <View style={styles.dim} />
+        <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Fechar" />
 
         <ScrollView
           style={styles.scroll}
@@ -92,14 +100,13 @@ export function CheckoutAddressModal({
             <ProfilePaper
               title="Endereço de entrega"
               subtitle={
-                isEditing
-                  ? 'Preencha ou atualize o endereço'
-                  : 'Revise o endereço da entrega'
+                isEditing ? 'Preencha ou atualize o endereço' : 'Revise o endereço da entrega'
               }
               showStamp={false}
-              delay={0}>
+              delay={0}
+              variant="warm">
               <Pressable style={styles.closeBtn} onPress={onClose} hitSlop={10}>
-                <MaterialIcons name="close" size={20} color={colors.textMuted} />
+                <MaterialIcons name="close" size={20} color={loginGlass.text} />
               </Pressable>
 
               {isEditing ? (
@@ -110,6 +117,7 @@ export function CheckoutAddressModal({
                     label="CEP"
                     placeholder="00000-000"
                     keyboardType="numeric"
+                    variant="warm"
                   />
                   <CustomInput
                     control={control}
@@ -117,18 +125,21 @@ export function CheckoutAddressModal({
                     label="Rua"
                     placeholder="Nome da rua"
                     autoCapitalize="words"
+                    variant="warm"
                   />
                   <CustomInput
                     control={control}
                     name="number"
                     label="Número"
                     placeholder="123"
+                    variant="warm"
                   />
                   <CustomInput
                     control={control}
                     name="complement"
                     label="Complemento"
                     placeholder="Apto, bloco (opcional)"
+                    variant="warm"
                   />
                   <CustomInput
                     control={control}
@@ -136,6 +147,7 @@ export function CheckoutAddressModal({
                     label="Bairro"
                     placeholder="Seu bairro"
                     autoCapitalize="words"
+                    variant="warm"
                   />
                   <CustomInput
                     control={control}
@@ -143,6 +155,7 @@ export function CheckoutAddressModal({
                     label="Cidade"
                     placeholder="Sua cidade"
                     autoCapitalize="words"
+                    variant="warm"
                   />
                   <CustomInput
                     control={control}
@@ -150,11 +163,12 @@ export function CheckoutAddressModal({
                     label="Estado (UF)"
                     placeholder="RS"
                     autoCapitalize="characters"
+                    variant="warm"
                   />
                 </View>
               ) : (
                 <View style={styles.preview}>
-                  <MaterialIcons name="location-on" size={22} color={colors.cartGlassAccent} />
+                  <MaterialIcons name="location-on" size={22} color={loginGlass.goldLight} />
                   <Text style={styles.previewText}>{formatAddressCompact(address)}</Text>
                 </View>
               )}
@@ -167,11 +181,16 @@ export function CheckoutAddressModal({
                       onPress={handleSave}
                       isLoading={isSaving}
                       loadingLabel="Salvando..."
+                      variant="warm"
                     />
                     {addressReady ? (
-                      <SecondaryButton label="Cancelar" onPress={() => setIsEditing(false)} />
+                      <SecondaryButton
+                        label="Cancelar"
+                        onPress={() => setIsEditing(false)}
+                        variant="warm"
+                      />
                     ) : (
-                      <SecondaryButton label="Fechar" onPress={onClose} />
+                      <SecondaryButton label="Fechar" onPress={onClose} variant="warm" />
                     )}
                   </>
                 ) : (
@@ -179,8 +198,9 @@ export function CheckoutAddressModal({
                     <SecondaryButton
                       label="Trocar endereço"
                       onPress={() => setIsEditing(true)}
+                      variant="warm"
                     />
-                    <SecondaryButton label="Fechar" onPress={onClose} />
+                    <SecondaryButton label="Fechar" onPress={onClose} variant="warm" />
                   </>
                 )}
               </View>
@@ -193,10 +213,21 @@ export function CheckoutAddressModal({
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
+  overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
-    justifyContent: 'center',
+    ...(Platform.OS === 'web'
+      ? {
+          backdropFilter: `blur(${glassBlur.web.shell})`,
+          WebkitBackdropFilter: `blur(${glassBlur.web.shell})`,
+        }
+      : {}),
+  },
+  dim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(20, 12, 8, 0.45)',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
   },
   scroll: {
     flex: 1,
@@ -214,10 +245,10 @@ const styles = StyleSheet.create({
     zIndex: 2,
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.cartGlassLight,
+    borderRadius: radius.full,
+    backgroundColor: loginGlass.formFieldBg,
     borderWidth: 1,
-    borderColor: colors.cartGlassBorder,
+    borderColor: loginGlass.cardBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -225,18 +256,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
-    backgroundColor: colors.cartGlassLight,
-    borderRadius: 12,
+    backgroundColor: loginGlass.formFieldBg,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.cartGlassBorder,
+    borderColor: loginGlass.cardBorder,
     padding: 16,
     marginBottom: 8,
   },
   previewText: {
     flex: 1,
+    fontFamily: fonts.sans,
     fontSize: fontSizes.md,
     fontWeight: '600',
-    color: colors.text,
+    color: loginGlass.text,
     lineHeight: 22,
   },
   form: {

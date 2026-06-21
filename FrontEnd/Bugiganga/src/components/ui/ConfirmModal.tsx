@@ -5,8 +5,10 @@ import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native
 
 import { PrimaryButton } from '@/src/components/buttons/PrimaryButton';
 import { SecondaryButton } from '@/src/components/buttons/SecondaryButton';
+import { WarmGlassSurface } from '@/src/components/layout/WarmGlassSurface';
 import { useConfirmStore } from '@/src/store/confirmStore';
-import { colors, fontSizes, fonts, radius, shadows } from '@/src/theme';
+import { fontSizes, fonts, loginGlass, radius, shadows } from '@/src/theme';
+import { glassBlur } from '@/src/theme/loginGlass';
 
 export function ConfirmModal() {
   const visible = useConfirmStore((s) => s.visible);
@@ -28,40 +30,50 @@ export function ConfirmModal() {
     }
   };
 
+  const blurIntensity =
+    Platform.OS === 'android' ? glassBlur.android.shell : glassBlur.ios.shell;
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={hide}>
       <View style={styles.overlay}>
-        {Platform.OS === 'web' ? (
-          <View style={styles.webBackdrop} />
-        ) : (
-          <BlurView intensity={48} tint="dark" style={StyleSheet.absoluteFill} />
-        )}
+        <BlurView intensity={blurIntensity} tint="dark" style={StyleSheet.absoluteFill} />
         <View style={styles.dim} />
         <Pressable style={styles.backdrop} onPress={hide} accessibilityRole="button" />
 
-        <View style={styles.paper}>
-          <View style={[styles.iconBadge, destructive && styles.iconBadgeDanger]}>
-            <MaterialIcons
-              name={destructive ? 'delete-outline' : 'help-outline'}
-              size={22}
-              color={destructive ? colors.danger : colors.primary}
-            />
-          </View>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.message}>{message}</Text>
-          <View style={styles.actions}>
-            <SecondaryButton label={cancelLabel} onPress={hide} />
-            {destructive ? (
-              <Pressable
-                style={[styles.dangerButton, isLoading && styles.dangerButtonDisabled]}
-                onPress={handleConfirm}
-                disabled={isLoading}>
-                <Text style={styles.dangerButtonText}>{confirmLabel}</Text>
-              </Pressable>
-            ) : (
-              <PrimaryButton label={confirmLabel} onPress={handleConfirm} isLoading={isLoading} />
-            )}
-          </View>
+        <View style={styles.paperWrap}>
+          <WarmGlassSurface
+            level="card"
+            variant="card"
+            style={styles.paper}
+            contentStyle={styles.paperContent}>
+            <View style={[styles.iconBadge, destructive && styles.iconBadgeDanger]}>
+              <MaterialIcons
+                name={destructive ? 'delete-outline' : 'help-outline'}
+                size={22}
+                color={destructive ? '#FFB4A8' : loginGlass.goldLight}
+              />
+            </View>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.message}>{message}</Text>
+            <View style={styles.actions}>
+              <SecondaryButton label={cancelLabel} onPress={hide} variant="warm" />
+              {destructive ? (
+                <Pressable
+                  style={[styles.dangerButton, isLoading && styles.dangerButtonDisabled]}
+                  onPress={handleConfirm}
+                  disabled={isLoading}>
+                  <Text style={styles.dangerButtonText}>{confirmLabel}</Text>
+                </Pressable>
+              ) : (
+                <PrimaryButton
+                  label={confirmLabel}
+                  onPress={handleConfirm}
+                  isLoading={isLoading}
+                  variant="warm"
+                />
+              )}
+            </View>
+          </WarmGlassSurface>
         </View>
       </View>
     </Modal>
@@ -74,52 +86,58 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-  },
-  webBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(8, 10, 20, 0.55)',
+    ...(Platform.OS === 'web'
+      ? {
+          backdropFilter: `blur(${glassBlur.web.shell})`,
+          WebkitBackdropFilter: `blur(${glassBlur.web.shell})`,
+        }
+      : {}),
   },
   dim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(8, 10, 20, 0.35)',
+    backgroundColor: 'rgba(20, 12, 8, 0.45)',
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
   },
-  paper: {
+  paperWrap: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...shadows.lg,
     zIndex: 1,
+  },
+  paper: {
+    borderRadius: radius.lg,
+    ...shadows.lg,
+  },
+  paperContent: {
+    padding: 24,
   },
   iconBadge: {
     width: 44,
     height: 44,
     borderRadius: radius.md,
-    backgroundColor: colors.primaryLight,
+    backgroundColor: loginGlass.formFieldBg,
+    borderWidth: 1,
+    borderColor: loginGlass.cardBorder,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
   },
   iconBadgeDanger: {
-    backgroundColor: '#F5E0DC',
+    backgroundColor: 'rgba(120, 40, 30, 0.45)',
+    borderColor: 'rgba(255, 140, 120, 0.35)',
   },
   title: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.lg,
     fontWeight: '800',
-    color: colors.text,
+    color: loginGlass.text,
     marginBottom: 8,
   },
   message: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.sm,
-    color: colors.textMuted,
+    color: loginGlass.textMuted,
     lineHeight: 20,
     marginBottom: 20,
   },
@@ -127,11 +145,14 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   dangerButton: {
-    backgroundColor: colors.danger,
-    borderRadius: radius.md,
-    paddingVertical: 14,
+    backgroundColor: 'rgba(160, 45, 35, 0.92)',
+    borderRadius: radius.full,
+    paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 52,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 140, 120, 0.4)',
   },
   dangerButtonDisabled: {
     opacity: 0.7,
@@ -140,6 +161,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.sans,
     fontSize: fontSizes.md,
     fontWeight: '700',
-    color: colors.white,
+    color: loginGlass.text,
   },
 });

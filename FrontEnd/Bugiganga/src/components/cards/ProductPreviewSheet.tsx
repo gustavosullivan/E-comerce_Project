@@ -4,12 +4,12 @@ import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
-import { PrimaryButton } from '@/src/components/buttons/PrimaryButton';
-import { SecondaryButton } from '@/src/components/buttons/SecondaryButton';
+import { WarmGlassSurface } from '@/src/components/layout/WarmGlassSurface';
 import { snackbar } from '@/src/store/snackbarStore';
 import { useCartStore } from '@/src/store/cartStore';
 import { useCheckoutStore } from '@/src/store/checkoutStore';
-import { colors, fontSizes, fonts, radius, shadows } from '@/src/theme';
+import { fontSizes, fonts, loginGlass, radius, shadows } from '@/src/theme';
+import { glassBlur } from '@/src/theme/loginGlass';
 import type { Product } from '@/src/types/product';
 import { formatCurrency } from '@/src/utils/formatCurrency';
 
@@ -40,7 +40,7 @@ export function ProductPreviewSheet({ product, visible, onClose }: ProductPrevie
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <BlurView
-          intensity={Platform.OS === 'web' ? 24 : 48}
+          intensity={Platform.OS === 'android' ? 42 : 56}
           tint="dark"
           style={StyleSheet.absoluteFill}
         />
@@ -49,7 +49,11 @@ export function ProductPreviewSheet({ product, visible, onClose }: ProductPrevie
         <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" />
 
         <View style={styles.paperWrap}>
-          <View style={styles.paper}>
+          <WarmGlassSurface
+            level="card"
+            variant="card"
+            style={styles.paper}
+            contentStyle={styles.paperContent}>
             <View style={styles.imageWrap}>
               <Pressable
                 style={styles.closeBtn}
@@ -57,7 +61,7 @@ export function ProductPreviewSheet({ product, visible, onClose }: ProductPrevie
                 hitSlop={10}
                 accessibilityRole="button"
                 accessibilityLabel="Fechar">
-                <MaterialIcons name="close" size={20} color={colors.white} />
+                <MaterialIcons name="close" size={20} color={loginGlass.text} />
               </Pressable>
               <Image
                 source={{ uri: product.imageUrl }}
@@ -74,10 +78,21 @@ export function ProductPreviewSheet({ product, visible, onClose }: ProductPrevie
             </Text>
 
             <View style={styles.actions}>
-              <PrimaryButton label="Comprar agora" onPress={handleBuyNow} />
-              <SecondaryButton label="Adicionar ao carrinho" onPress={handleAddToCart} />
+              <Pressable
+                style={({ pressed }) => [styles.primaryBtn, pressed && styles.primaryBtnPressed]}
+                onPress={handleBuyNow}>
+                <Text style={styles.primaryBtnText}>Comprar agora</Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.secondaryBtn,
+                  pressed && styles.secondaryBtnPressed,
+                ]}
+                onPress={handleAddToCart}>
+                <Text style={styles.secondaryBtnText}>Adicionar ao carrinho</Text>
+              </Pressable>
             </View>
-          </View>
+          </WarmGlassSurface>
         </View>
       </View>
     </Modal>
@@ -89,10 +104,16 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    ...(Platform.OS === 'web'
+      ? {
+          backdropFilter: `blur(${glassBlur.web.shell})`,
+          WebkitBackdropFilter: `blur(${glassBlur.web.shell})`,
+        }
+      : {}),
   },
   dim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    backgroundColor: 'rgba(20, 12, 8, 0.55)',
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
@@ -104,12 +125,11 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   paper: {
-    backgroundColor: colors.glass,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
-    padding: 16,
+    borderRadius: radius.lg,
     ...shadows.lg,
+  },
+  paperContent: {
+    padding: 16,
   },
   imageWrap: {
     position: 'relative',
@@ -124,38 +144,83 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: radius.full,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: loginGlass.formFieldBg,
     borderWidth: 1,
-    borderColor: colors.glassBorder,
+    borderColor: loginGlass.cardBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
   image: {
     width: '100%',
     height: 200,
-    borderRadius: radius.lg,
-    backgroundColor: colors.glassImageBg,
+    borderRadius: radius.md,
+    backgroundColor: loginGlass.formFieldBg,
+    borderWidth: 1,
+    borderColor: loginGlass.cardBorder,
   },
   name: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.lg,
     fontWeight: '700',
-    color: colors.white,
+    color: loginGlass.text,
     marginBottom: 6,
   },
   price: {
+    fontFamily: fonts.sans,
     fontSize: fontSizes.xl,
     fontWeight: '800',
-    color: colors.white,
+    color: loginGlass.goldLight,
     marginBottom: 10,
   },
   description: {
+    fontFamily: fonts.sans,
     fontSize: fontSizes.sm,
     lineHeight: 20,
-    color: colors.glassMuted,
+    color: loginGlass.textMuted,
     marginBottom: 18,
   },
   actions: {
     gap: 10,
+  },
+  primaryBtn: {
+    backgroundColor: loginGlass.formButtonPrimary,
+    borderRadius: radius.full,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 52,
+    borderWidth: 1,
+    borderColor: loginGlass.formButtonPrimaryBorder,
+    ...shadows.sm,
+  },
+  primaryBtnPressed: {
+    backgroundColor: loginGlass.formButtonPrimaryPressed,
+    opacity: 0.96,
+  },
+  primaryBtnText: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.md,
+    fontWeight: '700',
+    color: loginGlass.text,
+  },
+  secondaryBtn: {
+    backgroundColor: loginGlass.formButtonSecondaryBg,
+    borderRadius: radius.full,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 52,
+    borderWidth: 1,
+    borderColor: loginGlass.cardBorder,
+  },
+  secondaryBtnPressed: {
+    backgroundColor: 'rgba(45, 30, 20, 0.72)',
+    opacity: 0.96,
+  },
+  secondaryBtnText: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.md,
+    fontWeight: '700',
+    color: loginGlass.goldLight,
   },
 });

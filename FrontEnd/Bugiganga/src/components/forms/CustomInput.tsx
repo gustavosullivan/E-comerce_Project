@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, fontSizes, fonts, radius } from '@/src/theme';
+import { colors, fontSizes, fonts, loginGlass, radius } from '@/src/theme';
 
 import { PasswordVisibilityToggle } from './PasswordVisibilityToggle';
 
@@ -23,6 +23,7 @@ type CustomInputProps<T extends FieldValues> = {
   autoCapitalize?: TextInputProps['autoCapitalize'];
   returnKeyType?: TextInputProps['returnKeyType'];
   onSubmitEditing?: () => void;
+  variant?: 'default' | 'warm';
 };
 
 export function CustomInput<T extends FieldValues>(props: CustomInputProps<T>) {
@@ -37,7 +38,9 @@ export function CustomInput<T extends FieldValues>(props: CustomInputProps<T>) {
     autoCapitalize = 'none',
     returnKeyType,
     onSubmitEditing,
+    variant = 'default',
   } = props;
+  const warm = variant === 'warm';
   const [focused, setFocused] = useState(false);
   const [visible, setVisible] = useState(false);
 
@@ -47,13 +50,14 @@ export function CustomInput<T extends FieldValues>(props: CustomInputProps<T>) {
       name={name}
       render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
         <View style={styles.group}>
-          <Text style={styles.label}>{label}</Text>
+          <Text style={[styles.label, warm && styles.labelWarm]}>{label}</Text>
           <View>
             <TextInput
               style={[
                 styles.input,
+                warm && styles.inputWarm,
                 showToggle && styles.inputToggle,
-                focused && styles.focused,
+                focused && (warm ? styles.focusedWarm : styles.focused),
                 error && styles.errorBorder,
               ]}
               value={value}
@@ -64,7 +68,7 @@ export function CustomInput<T extends FieldValues>(props: CustomInputProps<T>) {
               }}
               onFocus={() => setFocused(true)}
               placeholder={placeholder}
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={warm ? loginGlass.textMuted : colors.textMuted}
               secureTextEntry={secureTextEntry && !visible}
               keyboardType={keyboardType}
               autoCapitalize={autoCapitalize}
@@ -92,6 +96,9 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 8,
   },
+  labelWarm: {
+    color: loginGlass.formLabel,
+  },
   input: {
     backgroundColor: colors.inputBg,
     borderWidth: 1.5,
@@ -102,8 +109,18 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.md,
     color: colors.text,
   },
+  inputWarm: {
+    backgroundColor: loginGlass.formFieldBg,
+    borderColor: loginGlass.formFieldBorder,
+    borderRadius: radius.full,
+    color: loginGlass.text,
+  },
   inputToggle: { paddingRight: 72 },
   focused: { borderColor: colors.borderFocus, backgroundColor: colors.white },
+  focusedWarm: {
+    borderColor: loginGlass.goldLight,
+    backgroundColor: loginGlass.formFieldBg,
+  },
   errorBorder: { borderColor: colors.danger },
   error: { fontSize: fontSizes.xs, color: colors.danger, marginTop: 6 },
 });

@@ -11,6 +11,7 @@ import { CheckoutAddressModal } from '@/src/components/checkout/CheckoutAddressM
 import { EmptyState } from '@/src/components/layout/EmptyState';
 import { PageContainer } from '@/src/components/layout/PageContainer';
 import { ScreenHeader } from '@/src/components/layout/ScreenHeader';
+import { WarmAppShell } from '@/src/components/layout/WarmAppShell';
 import { useAddress } from '@/src/hooks/useAddress';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useWallet } from '@/src/hooks/useWallet';
@@ -23,7 +24,7 @@ import { useCartStore } from '@/src/store/cartStore';
 import { isBuyer } from '@/src/types/auth';
 import type { UserAddress } from '@/src/types/address';
 import { InsufficientBalanceError } from '@/src/types/wallet';
-import { colors, fontSizes, fonts, layout, radius } from '@/src/theme';
+import { fontSizes, fonts, layout, loginGlass, radius } from '@/src/theme';
 
 export default function CheckoutScreen() {
   const { user } = useAuth();
@@ -40,6 +41,14 @@ export default function CheckoutScreen() {
   const [isSavingAddress, setIsSavingAddress] = useState(false);
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace(routes.cart);
+  };
 
   const handleSaveAddress = async (nextAddress: UserAddress) => {
     setIsSavingAddress(true);
@@ -110,85 +119,95 @@ export default function CheckoutScreen() {
 
   if (items.length === 0) {
     return (
-      <SafeAreaView style={styles.screen}>
-        <EmptyState icon="shopping-bag" message="Nenhum item para finalizar." />
-        <View style={styles.emptyAction}>
-          <PrimaryButton label="Voltar à home" onPress={() => router.replace('/(tabs)')} />
-        </View>
-      </SafeAreaView>
+      <WarmAppShell>
+        <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+          <EmptyState icon="shopping-bag" message="Nenhum item para finalizar." variant="warm" />
+          <View style={styles.emptyAction}>
+            <PrimaryButton
+              label="Voltar à home"
+              onPress={() => router.replace('/(tabs)')}
+              variant="warm"
+            />
+          </View>
+        </SafeAreaView>
+      </WarmAppShell>
     );
   }
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
-      <View style={styles.content}>
-        <PageContainer>
-          <Pressable style={styles.back} onPress={() => router.back()}>
-            <MaterialIcons name="arrow-back" size={20} color={colors.primary} />
-            <Text style={styles.backText}>Voltar</Text>
-          </Pressable>
+    <WarmAppShell>
+      <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+        <View style={styles.content}>
+          <PageContainer>
+            <Pressable style={styles.back} onPress={handleBack} hitSlop={12}>
+              <MaterialIcons name="arrow-back" size={20} color={loginGlass.goldLight} />
+              <Text style={styles.backText}>Voltar</Text>
+            </Pressable>
 
-          <ScreenHeader
-            title="Confirmar compra"
-            icon="shopping-bag"
-            subtitle={`${itemCount} unidade(s) · ${items.length} produto(s)`}
-          />
-        </PageContainer>
+            <ScreenHeader
+              title="Confirmar compra"
+              icon="shopping-bag"
+              subtitle={`${itemCount} unidade(s) · ${items.length} produto(s)`}
+              variant="warm"
+            />
+          </PageContainer>
 
-        <View style={styles.body}>
-          <FlatList
-            style={styles.listFlex}
-            data={items}
-            keyExtractor={(item) => String(item.product.id)}
-            contentContainerStyle={styles.list}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => (
+          <View style={styles.body}>
+            <FlatList
+              style={styles.listFlex}
+              data={items}
+              keyExtractor={(item) => String(item.product.id)}
+              contentContainerStyle={styles.list}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => (
+                <PageContainer>
+                  <CartGlassItem item={item} readOnly variant="warm" />
+                </PageContainer>
+              )}
+            />
+
+            <View style={styles.summaryDock}>
               <PageContainer>
-                <CartGlassItem item={item} readOnly />
+                {buyer ? (
+                  <Pressable
+                    style={({ pressed }) => [styles.addressBtn, pressed && styles.addressBtnPressed]}
+                    onPress={() => setAddressModalOpen(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Ver endereço de entrega">
+                    <MaterialIcons name="location-on" size={14} color={loginGlass.goldLight} />
+                    <Text style={styles.addressBtnLabel}>Endereço</Text>
+                  </Pressable>
+                ) : null}
+
+                <CartSummaryGlass
+                  subtotal={total}
+                  total={total}
+                  balance={buyer ? balance : undefined}
+                  actionLabel="Confirmar compra"
+                  isLoading={isConfirming}
+                  loadingLabel="Finalizando..."
+                  onCheckout={handleConfirm}
+                  variant="warm"
+                />
               </PageContainer>
-            )}
-          />
-
-          <View style={styles.summaryDock}>
-            <PageContainer>
-              {buyer ? (
-                <Pressable
-                  style={({ pressed }) => [styles.addressBtn, pressed && styles.addressBtnPressed]}
-                  onPress={() => setAddressModalOpen(true)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Ver endereço de entrega">
-                  <MaterialIcons name="location-on" size={14} color={colors.cartGlassAccent} />
-                  <Text style={styles.addressBtnLabel}>Endereço</Text>
-                </Pressable>
-              ) : null}
-
-              <CartSummaryGlass
-                subtotal={total}
-                total={total}
-                balance={buyer ? balance : undefined}
-                actionLabel="Confirmar compra"
-                isLoading={isConfirming}
-                loadingLabel="Finalizando..."
-                onCheckout={handleConfirm}
-              />
-            </PageContainer>
+            </View>
           </View>
         </View>
-      </View>
 
-      <CheckoutAddressModal
-        visible={addressModalOpen}
-        address={address}
-        isSaving={isSavingAddress}
-        onClose={() => setAddressModalOpen(false)}
-        onSave={handleSaveAddress}
-      />
-    </SafeAreaView>
+        <CheckoutAddressModal
+          visible={addressModalOpen}
+          address={address}
+          isSaving={isSavingAddress}
+          onClose={() => setAddressModalOpen(false)}
+          onSave={handleSaveAddress}
+        />
+      </SafeAreaView>
+    </WarmAppShell>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
+  screen: { flex: 1, backgroundColor: 'transparent' },
   content: { flex: 1 },
   emptyAction: { padding: 16 },
   back: {
@@ -198,8 +217,9 @@ const styles = StyleSheet.create({
     marginBottom: layout.sm,
   },
   backText: {
+    fontFamily: fonts.sans,
     fontSize: fontSizes.md,
-    color: colors.primary,
+    color: loginGlass.goldLight,
     fontWeight: '600',
   },
   body: { flex: 1 },
@@ -223,9 +243,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: radius.full,
-    backgroundColor: colors.cartGlassLight,
+    backgroundColor: loginGlass.formFieldBg,
     borderWidth: 1,
-    borderColor: colors.cartGlassBorder,
+    borderColor: loginGlass.cardBorder,
   },
   addressBtnPressed: {
     opacity: 0.88,
@@ -235,6 +255,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.sans,
     fontSize: fontSizes.xs,
     fontWeight: '700',
-    color: colors.cartGlassAccent,
+    color: loginGlass.goldLight,
   },
 });

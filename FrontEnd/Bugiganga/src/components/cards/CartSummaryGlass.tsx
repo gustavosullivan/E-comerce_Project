@@ -1,7 +1,8 @@
 import { BlurView } from 'expo-blur';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, fontSizes, fonts, radius, shadows } from '@/src/theme';
+import { colors, fontSizes, fonts, loginGlass, radius, shadows } from '@/src/theme';
+import { glassBlur } from '@/src/theme/loginGlass';
 import { formatCurrency } from '@/src/utils/formatCurrency';
 
 type CartSummaryGlassProps = {
@@ -12,6 +13,7 @@ type CartSummaryGlassProps = {
   isLoading?: boolean;
   loadingLabel?: string;
   onCheckout: () => void;
+  variant?: 'default' | 'warm';
 };
 
 export function CartSummaryGlass({
@@ -22,7 +24,11 @@ export function CartSummaryGlass({
   isLoading = false,
   loadingLabel = 'Processando...',
   onCheckout,
+  variant = 'default',
 }: CartSummaryGlassProps) {
+  const warm = variant === 'warm';
+  const blurIntensity =
+    Platform.OS === 'android' ? glassBlur.android.card : glassBlur.ios.card;
   const showWallet = balance != null;
   const hasEnoughBalance = !showWallet || balance >= total;
   const balanceAfter = showWallet ? Math.max(0, balance - total) : 0;
@@ -30,45 +36,77 @@ export function CartSummaryGlass({
 
   return (
     <View style={styles.shell}>
-      <View style={styles.glass}>
-        <BlurView
-          intensity={Platform.OS === 'web' ? 18 : Platform.OS === 'android' ? 28 : 34}
-          tint="light"
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={styles.tint} />
-        <View style={styles.highlight} />
+      <View
+        style={[
+          styles.glass,
+          warm && styles.glassWarm,
+          warm &&
+            Platform.OS === 'web' && {
+              backdropFilter: `blur(${glassBlur.web.card})`,
+              WebkitBackdropFilter: `blur(${glassBlur.web.card})`,
+            },
+        ]}>
+        {Platform.OS === 'web' ? (
+          <View style={[styles.webFill, warm && styles.webFillWarm]} />
+        ) : (
+          <BlurView
+            intensity={warm ? blurIntensity : Platform.OS === 'android' ? 28 : 34}
+            tint={warm ? 'dark' : 'light'}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+        <View style={[styles.tint, warm && styles.tintWarm]} />
+        <View style={[styles.highlight, warm && styles.highlightWarm]} />
 
         <View style={styles.content}>
           <View style={styles.totals}>
             {showWallet ? (
               <>
                 <View style={styles.row}>
-                  <Text style={styles.summaryLabel}>Saldo disponível</Text>
-                  <Text style={[styles.summaryValue, styles.balanceValue]}>
+                  <Text style={[styles.summaryLabel, warm && styles.summaryLabelWarm]}>
+                    Saldo disponível
+                  </Text>
+                  <Text
+                    style={[
+                      styles.summaryValue,
+                      styles.balanceValue,
+                      warm && styles.balanceValueWarm,
+                    ]}>
                     {formatCurrency(balance)}
                   </Text>
                 </View>
-                <View style={styles.divider} />
+                <View style={[styles.divider, warm && styles.dividerWarm]} />
               </>
             ) : null}
             {!showWallet ? (
               <View style={styles.row}>
-                <Text style={styles.summaryLabel}>Resumo de compra</Text>
-                <Text style={styles.summaryValue}>{formatCurrency(subtotal)}</Text>
+                <Text style={[styles.summaryLabel, warm && styles.summaryLabelWarm]}>
+                  Resumo de compra
+                </Text>
+                <Text style={[styles.summaryValue, warm && styles.summaryValueWarm]}>
+                  {formatCurrency(subtotal)}
+                </Text>
               </View>
             ) : null}
             <View style={styles.row}>
-              <Text style={styles.labelTotal}>Total da compra</Text>
-              <Text style={styles.valueTotal}>{formatCurrency(total)}</Text>
+              <Text style={[styles.labelTotal, warm && styles.labelTotalWarm]}>
+                Total da compra
+              </Text>
+              <Text style={[styles.valueTotal, warm && styles.valueTotalWarm]}>
+                {formatCurrency(total)}
+              </Text>
             </View>
             {showWallet ? (
               <View style={styles.row}>
-                <Text style={styles.labelRemaining}>Saldo após compra</Text>
+                <Text style={[styles.labelRemaining, warm && styles.labelRemainingWarm]}>
+                  Saldo após compra
+                </Text>
                 <Text
                   style={[
                     styles.valueRemaining,
                     hasEnoughBalance ? styles.valueRemainingOk : styles.valueRemainingWarn,
+                    warm && hasEnoughBalance && styles.valueRemainingOkWarm,
+                    warm && !hasEnoughBalance && styles.valueRemainingWarnWarm,
                   ]}>
                   {formatCurrency(balanceAfter)}
                 </Text>
@@ -77,12 +115,15 @@ export function CartSummaryGlass({
           </View>
 
           {showWallet && !hasEnoughBalance ? (
-            <Text style={styles.walletWarning}>Sem saldo suficiente para realizar compra</Text>
+            <Text style={[styles.walletWarning, warm && styles.walletWarningWarm]}>
+              Sem saldo suficiente para realizar compra
+            </Text>
           ) : null}
 
           <Pressable
             style={({ pressed }) => [
               styles.checkoutBtn,
+              warm && styles.checkoutBtnWarm,
               actionDisabled && styles.checkoutBtnDisabled,
               pressed && !actionDisabled && styles.checkoutBtnPressed,
             ]}
@@ -117,9 +158,23 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cartGlass,
     ...shadows.md,
   },
+  glassWarm: {
+    backgroundColor: loginGlass.cardGlass,
+    borderColor: loginGlass.cardBorder,
+  },
+  webFill: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.cartGlass,
+  },
+  webFillWarm: {
+    backgroundColor: loginGlass.glassWebFill,
+  },
   tint: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: colors.cartGlassTint,
+  },
+  tintWarm: {
+    backgroundColor: loginGlass.cardTint,
   },
   highlight: {
     position: 'absolute',
@@ -128,6 +183,9 @@ const styles = StyleSheet.create({
     right: 14,
     height: 1,
     backgroundColor: colors.cartGlassHighlight,
+  },
+  highlightWarm: {
+    backgroundColor: loginGlass.shellHighlight,
   },
   content: {
     paddingHorizontal: 14,
@@ -142,6 +200,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cartGlassDivider,
     marginVertical: 2,
   },
+  dividerWarm: {
+    backgroundColor: loginGlass.cardBorder,
+  },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -153,15 +214,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
+  summaryLabelWarm: {
+    color: loginGlass.text,
+  },
   summaryValue: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.sm,
     fontWeight: '600',
     color: colors.textMuted,
   },
+  summaryValueWarm: {
+    color: loginGlass.textMuted,
+  },
   balanceValue: {
     fontWeight: '800',
     color: colors.success,
+  },
+  balanceValueWarm: {
+    color: loginGlass.goldLight,
   },
   labelTotal: {
     fontFamily: fonts.sans,
@@ -169,17 +239,26 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
   },
+  labelTotalWarm: {
+    color: loginGlass.text,
+  },
   valueTotal: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.md,
     fontWeight: '800',
     color: colors.cartGlassAccent,
   },
+  valueTotalWarm: {
+    color: loginGlass.goldLight,
+  },
   labelRemaining: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.sm,
     fontWeight: '700',
     color: colors.text,
+  },
+  labelRemainingWarm: {
+    color: loginGlass.text,
   },
   valueRemaining: {
     fontFamily: fonts.sans,
@@ -192,11 +271,20 @@ const styles = StyleSheet.create({
   valueRemainingWarn: {
     color: colors.danger,
   },
+  valueRemainingOkWarm: {
+    color: loginGlass.goldLight,
+  },
+  valueRemainingWarnWarm: {
+    color: '#FCA5A5',
+  },
   walletWarning: {
     fontSize: fontSizes.xs,
     fontWeight: '700',
     color: colors.danger,
     textAlign: 'center',
+  },
+  walletWarningWarm: {
+    color: '#FCA5A5',
   },
   checkoutBtn: {
     backgroundColor: colors.primary,
@@ -204,6 +292,12 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     alignItems: 'center',
     ...shadows.sm,
+  },
+  checkoutBtnWarm: {
+    backgroundColor: loginGlass.button,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: loginGlass.formButtonPrimaryBorder,
   },
   checkoutBtnPressed: {
     opacity: 0.92,

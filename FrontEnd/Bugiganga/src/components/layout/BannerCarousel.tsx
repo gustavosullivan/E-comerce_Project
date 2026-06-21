@@ -2,18 +2,24 @@ import { Image } from 'expo-image';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 
 import { MOCK_BANNERS } from '@/src/mocks/banners';
-import { colors, fonts } from '@/src/theme';
+import { colors, fonts, layout, loginGlass, radius } from '@/src/theme';
 
-export function BannerCarousel() {
+type BannerCarouselProps = {
+  variant?: 'default' | 'warm';
+};
+
+export function BannerCarousel({ variant = 'default' }: BannerCarouselProps) {
+  const warm = variant === 'warm';
+
   return (
     <FlatList
       horizontal
       data={MOCK_BANNERS}
       keyExtractor={(item) => String(item.id)}
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.list}
+      contentContainerStyle={[styles.list, warm && styles.listWarm]}
       renderItem={({ item }) => (
-        <View style={styles.banner}>
+        <View style={[styles.banner, warm && styles.bannerWarm]}>
           <Image source={{ uri: item.imageUrl }} style={styles.image} contentFit="cover" />
           <View style={styles.overlay}>
             <Text style={styles.title}>{item.title}</Text>
@@ -27,14 +33,19 @@ export function BannerCarousel() {
 
 const styles = StyleSheet.create({
   list: { paddingBottom: 8 },
+  listWarm: { paddingTop: layout.sm },
   banner: {
     width: 280,
     height: 140,
     marginRight: 12,
-    borderRadius: 4,
+    borderRadius: radius.md,
     overflow: 'hidden',
     borderWidth: 1.5,
     borderColor: colors.border,
+  },
+  bannerWarm: {
+    borderRadius: radius.lg,
+    borderColor: loginGlass.cardBorder,
   },
   image: { width: '100%', height: '100%' },
   overlay: {
@@ -49,5 +60,5 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.white,
   },
-  subtitle: { fontSize: 12, color: colors.background, marginTop: 4 },
+  subtitle: { fontSize: 12, color: loginGlass.cream, marginTop: 4 },
 });

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { type Control, Controller, type FieldPath, type FieldValues } from 'react-hook-form';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { colors, inputStyles, textStyles } from '@/src/theme';
+import { colors, inputStyles, loginGlass, radius, textStyles } from '@/src/theme';
 
 type PasswordFieldProps<T extends FieldValues> = {
   control: Control<T>;
@@ -11,6 +11,7 @@ type PasswordFieldProps<T extends FieldValues> = {
   label: string;
   placeholder?: string;
   onSubmitEditing?: () => void;
+  variant?: 'default' | 'warm';
 };
 
 export function PasswordField<T extends FieldValues>({
@@ -19,13 +20,15 @@ export function PasswordField<T extends FieldValues>({
   label,
   placeholder = 'Sua senha',
   onSubmitEditing,
+  variant = 'default',
 }: PasswordFieldProps<T>) {
+  const warm = variant === 'warm';
   const [show, setShow] = useState(false);
   const [focused, setFocused] = useState(false);
 
   return (
     <View style={styles.group}>
-      <Text style={textStyles.label}>{label}</Text>
+      <Text style={[textStyles.label, warm && styles.labelWarm]}>{label}</Text>
       <View>
         <Controller
           control={control}
@@ -35,7 +38,8 @@ export function PasswordField<T extends FieldValues>({
               <TextInput
                 style={[
                   inputStyles.field,
-                  focused && inputStyles.fieldFocused,
+                  warm && styles.fieldWarm,
+                  focused && (warm ? styles.fieldFocusedWarm : inputStyles.fieldFocused),
                   error && inputStyles.fieldError,
                 ]}
                 value={value}
@@ -46,7 +50,7 @@ export function PasswordField<T extends FieldValues>({
                 }}
                 onFocus={() => setFocused(true)}
                 placeholder={placeholder}
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={warm ? loginGlass.textMuted : colors.textMuted}
                 secureTextEntry={!show}
                 onSubmitEditing={onSubmitEditing}
                 autoCapitalize="none"
@@ -64,7 +68,7 @@ export function PasswordField<T extends FieldValues>({
           <MaterialIcons
             name={show ? 'visibility-off' : 'visibility'}
             size={22}
-            color={colors.primary}
+            color={warm ? loginGlass.goldLight : colors.primary}
           />
         </Pressable>
       </View>
@@ -74,5 +78,15 @@ export function PasswordField<T extends FieldValues>({
 
 const styles = StyleSheet.create({
   group: { marginBottom: 16 },
+  labelWarm: { color: loginGlass.formLabel },
+  fieldWarm: {
+    backgroundColor: loginGlass.formFieldBg,
+    borderColor: loginGlass.formFieldBorder,
+    borderRadius: radius.full,
+    color: loginGlass.text,
+  },
+  fieldFocusedWarm: {
+    borderColor: loginGlass.goldLight,
+  },
   error: { fontSize: 12, color: colors.danger, marginTop: 4 },
 });

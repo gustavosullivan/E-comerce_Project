@@ -6,7 +6,7 @@ import { GlassTabBar } from '@/src/components/layout/GlassTabBar';
 import { TAB_BAR_HEIGHT } from '@/src/hooks/useTabBarInset';
 import { useCartStore } from '@/src/store/cartStore';
 import { useAuthStore } from '@/src/store/authStore';
-import { colors, fontSizes, fonts } from '@/src/theme';
+import { fontSizes, fonts, loginGlass } from '@/src/theme';
 import { isAdmin } from '@/src/types/auth';
 
 export default function TabLayout() {
@@ -21,8 +21,8 @@ export default function TabLayout() {
       tabBar={(props) => <GlassTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.white,
-        tabBarInactiveTintColor: colors.tabBarInactive,
+        tabBarActiveTintColor: loginGlass.text,
+        tabBarInactiveTintColor: loginGlass.textMuted,
         tabBarStyle: styles.tabBarMetrics,
         tabBarLabelStyle: styles.tabLabel,
       }}>

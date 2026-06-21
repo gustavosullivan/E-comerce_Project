@@ -2,40 +2,69 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ScalePressable } from '@/src/components/ui/ScalePressable';
 import { selectionFeedback } from '@/src/utils/haptics';
-import { colors, fonts, radii, shadow } from '@/src/theme';
+import { colors, fonts, loginGlass, radii, radius, shadow } from '@/src/theme';
 import type { Category } from '@/src/types/product';
 
 type CategoryChipsProps = {
   categories: Category[];
   selectedId: number | null;
   onSelect: (id: number | null) => void;
+  variant?: 'default' | 'warm';
 };
 
-export function CategoryChips({ categories, selectedId, onSelect }: CategoryChipsProps) {
+export function CategoryChips({
+  categories,
+  selectedId,
+  onSelect,
+  variant = 'default',
+}: CategoryChipsProps) {
+  const warm = variant === 'warm';
+
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.list}>
       <ScalePressable
-        style={[styles.chip, selectedId === null && styles.chipActive]}
+        style={[
+          styles.chip,
+          warm && styles.chipWarm,
+          selectedId === null && (warm ? styles.chipWarmActive : styles.chipActive),
+        ]}
         onPress={() => {
           selectionFeedback();
           onSelect(null);
         }}>
-        <Text style={[styles.label, selectedId === null && styles.labelActive]}>Todos</Text>
+        <Text
+          style={[
+            styles.label,
+            warm && styles.labelWarm,
+            selectedId === null && (warm ? styles.labelWarmActive : styles.labelActive),
+          ]}>
+          Todos
+        </Text>
       </ScalePressable>
       {categories.map((cat) => {
         const active = selectedId === cat.id;
         return (
           <ScalePressable
             key={cat.id}
-            style={[styles.chip, active && styles.chipActive]}
+            style={[
+              styles.chip,
+              warm && styles.chipWarm,
+              active && (warm ? styles.chipWarmActive : styles.chipActive),
+            ]}
             onPress={() => {
               selectionFeedback();
               onSelect(active ? null : cat.id);
             }}>
-            <Text style={[styles.label, active && styles.labelActive]} numberOfLines={1}>
+            <Text
+              style={[
+                styles.label,
+                warm && styles.labelWarm,
+                active && (warm ? styles.labelWarmActive : styles.labelActive),
+              ]}
+              numberOfLines={1}>
               {cat.name}
             </Text>
           </ScalePressable>
@@ -61,10 +90,19 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.inputBg,
   },
+  chipWarm: {
+    borderRadius: radius.full,
+    borderColor: loginGlass.chipBorder,
+    backgroundColor: loginGlass.chipBg,
+  },
   chipActive: {
     backgroundColor: colors.primary,
     borderColor: colors.text,
     ...shadow.lift,
+  },
+  chipWarmActive: {
+    backgroundColor: loginGlass.chipActiveBg,
+    borderColor: loginGlass.chipActiveBorder,
   },
   label: {
     fontFamily: fonts.serif,
@@ -73,8 +111,16 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     maxWidth: 140,
   },
+  labelWarm: {
+    fontFamily: fonts.sans,
+    color: loginGlass.textMuted,
+  },
   labelActive: {
     color: colors.white,
+    fontWeight: '700',
+  },
+  labelWarmActive: {
+    color: loginGlass.text,
     fontWeight: '700',
   },
 });

@@ -1,16 +1,29 @@
 import { BlurView } from 'expo-blur';
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { colors } from '@/src/theme';
+import { glassBlur, loginGlass } from '@/src/theme/loginGlass';
 
 export function GlassTabBarBackground() {
+  const intensity =
+    Platform.OS === 'android' ? glassBlur.android.tabBar : glassBlur.ios.tabBar;
+  const webBlur = glassBlur.web.tabBar;
+
   return (
-    <View style={styles.wrap}>
+    <View
+      style={[
+        styles.wrap,
+        Platform.OS === 'web'
+          ? {
+              backdropFilter: `blur(${webBlur})`,
+              WebkitBackdropFilter: `blur(${webBlur})`,
+            }
+          : null,
+      ]}>
       {Platform.OS === 'web' ? (
         <View style={styles.webFill} />
       ) : (
         <BlurView
-          intensity={Platform.OS === 'android' ? 42 : 56}
+          intensity={intensity}
           tint="dark"
           style={StyleSheet.absoluteFill}
         />
@@ -25,15 +38,15 @@ const styles = StyleSheet.create({
   wrap: {
     ...StyleSheet.absoluteFillObject,
     overflow: 'hidden',
-    backgroundColor: colors.tabBarGlass,
+    backgroundColor: loginGlass.tabBarGlass,
   },
   webFill: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.tabBarGlass,
+    backgroundColor: loginGlass.glassWebFill,
   },
   tint: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(8, 10, 20, 0.22)',
+    backgroundColor: loginGlass.tabBarTint,
   },
   topBorder: {
     position: 'absolute',
@@ -41,6 +54,6 @@ const styles = StyleSheet.create({
     left: 16,
     right: 16,
     height: 1,
-    backgroundColor: colors.tabBarGlassBorder,
+    backgroundColor: loginGlass.shellHighlight,
   },
 });

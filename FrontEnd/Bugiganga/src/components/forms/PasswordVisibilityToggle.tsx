@@ -6,9 +6,14 @@ import { colors } from '@/src/theme';
 type PasswordVisibilityToggleProps = {
   visible: boolean;
   onToggle: () => void;
+  iconColor?: string;
 };
 
-export function PasswordVisibilityToggle({ visible, onToggle }: PasswordVisibilityToggleProps) {
+export function PasswordVisibilityToggle({
+  visible,
+  onToggle,
+  iconColor = colors.textMuted,
+}: PasswordVisibilityToggleProps) {
   return (
     <Pressable
       style={styles.toggle}
@@ -18,7 +23,7 @@ export function PasswordVisibilityToggle({ visible, onToggle }: PasswordVisibili
       <MaterialIcons
         name={visible ? 'visibility' : 'visibility-off'}
         size={22}
-        color={colors.textMuted}
+        color={iconColor}
       />
     </Pressable>
   );

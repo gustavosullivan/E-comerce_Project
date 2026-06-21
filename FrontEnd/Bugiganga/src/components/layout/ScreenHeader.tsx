@@ -2,7 +2,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { colors, fontSizes, fonts, motion, radius } from '@/src/theme';
+import { fontSizes, fonts, loginGlass, motion, radius } from '@/src/theme';
+import { colors } from '@/src/theme/colors';
 import { layout } from '@/src/theme/layout';
 
 type ScreenHeaderProps = {
@@ -11,6 +12,7 @@ type ScreenHeaderProps = {
   icon?: keyof typeof MaterialIcons.glyphMap;
   centered?: boolean;
   style?: StyleProp<ViewStyle>;
+  variant?: 'default' | 'warm';
 };
 
 export function ScreenHeader({
@@ -19,21 +21,33 @@ export function ScreenHeader({
   icon,
   centered = false,
   style,
+  variant = 'default',
 }: ScreenHeaderProps) {
+  const warm = variant === 'warm';
+
   return (
     <Animated.View
       entering={FadeInDown.duration(motion.normal).springify()}
       style={[styles.wrap, centered && styles.centered, style]}>
       {icon ? (
-        <View style={styles.iconBadge}>
-          <MaterialIcons name={icon} size={18} color={colors.cartGlassAccent} />
+        <View style={[styles.iconBadge, warm && styles.iconBadgeWarm]}>
+          <MaterialIcons
+            name={icon}
+            size={18}
+            color={warm ? loginGlass.goldLight : colors.cartGlassAccent}
+          />
         </View>
       ) : null}
-      <Text style={[styles.title, centered && styles.textCenter]}>{title}</Text>
+      <Text style={[styles.title, warm && styles.titleWarm, centered && styles.textCenter]}>
+        {title}
+      </Text>
       {subtitle ? (
-        <Text style={[styles.subtitle, centered && styles.textCenter]}>{subtitle}</Text>
+        <Text
+          style={[styles.subtitle, warm && styles.subtitleWarm, centered && styles.textCenter]}>
+          {subtitle}
+        </Text>
       ) : null}
-      <View style={[styles.rule, centered && styles.ruleCentered]} />
+      <View style={[styles.rule, warm && styles.ruleWarm, centered && styles.ruleCentered]} />
     </Animated.View>
   );
 }
@@ -59,11 +73,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 4,
   },
+  iconBadgeWarm: {
+    backgroundColor: loginGlass.formFieldBg,
+    borderColor: loginGlass.cardBorder,
+  },
   title: {
     fontFamily: fonts.gothic,
     fontSize: fontSizes.xl + 2,
     color: colors.text,
     lineHeight: 30,
+  },
+  titleWarm: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xl,
+    fontWeight: '800',
+    color: loginGlass.text,
+    letterSpacing: -0.3,
   },
   subtitle: {
     fontFamily: fonts.sans,
@@ -71,6 +96,9 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     lineHeight: 20,
     maxWidth: 320,
+  },
+  subtitleWarm: {
+    color: loginGlass.textMuted,
   },
   textCenter: {
     textAlign: 'center',
@@ -83,6 +111,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     backgroundColor: colors.accent,
     opacity: 0.75,
+  },
+  ruleWarm: {
+    backgroundColor: loginGlass.goldLight,
+    opacity: 1,
   },
   ruleCentered: {
     alignSelf: 'center',

@@ -9,16 +9,20 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
-import { colors, fontSizes, fonts, motion, radius } from '@/src/theme';
+import { colors, fontSizes, fonts, loginGlass, motion, radius } from '@/src/theme';
 
 const BUTTON_SIZE = 44;
+
+type Tone = 'default' | 'warm';
 
 type HeaderCartButtonProps = {
   count: number;
   onPress: () => void;
+  tone?: Tone;
 };
 
-export function HeaderCartButton({ count, onPress }: HeaderCartButtonProps) {
+export function HeaderCartButton({ count, onPress, tone = 'default' }: HeaderCartButtonProps) {
+  const warm = tone === 'warm';
   const scale = useSharedValue(1);
   const badgeScale = useSharedValue(count > 0 ? 1 : 0);
   const rotate = useSharedValue(0);
@@ -55,10 +59,14 @@ export function HeaderCartButton({ count, onPress }: HeaderCartButtonProps) {
       accessibilityRole="button"
       accessibilityLabel="Carrinho"
       style={({ pressed }) => [styles.hitArea, pressed && styles.pressed]}>
-      <Animated.View style={[styles.button, buttonStyle]}>
-        <MaterialIcons name="shopping-bag" size={22} color={colors.glassText} />
+      <Animated.View style={[styles.button, warm && styles.buttonWarm, buttonStyle]}>
+        <MaterialIcons
+          name="shopping-bag"
+          size={22}
+          color={warm ? loginGlass.goldLight : colors.glassText}
+        />
         {count > 0 ? (
-          <Animated.View style={[styles.badge, badgeStyle]}>
+          <Animated.View style={[styles.badge, warm && styles.badgeWarm, badgeStyle]}>
             <Text style={styles.badgeText}>{count > 9 ? '9+' : count}</Text>
           </Animated.View>
         ) : null}
@@ -69,17 +77,24 @@ export function HeaderCartButton({ count, onPress }: HeaderCartButtonProps) {
 
 type HeaderSettingsButtonProps = {
   onPress: () => void;
+  tone?: Tone;
 };
 
-export function HeaderSettingsButton({ onPress }: HeaderSettingsButtonProps) {
+export function HeaderSettingsButton({ onPress, tone = 'default' }: HeaderSettingsButtonProps) {
+  const warm = tone === 'warm';
+
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel="Configurações"
       style={({ pressed }) => [styles.hitArea, pressed && styles.pressed]}>
-      <View style={styles.button}>
-        <MaterialIcons name="settings" size={22} color={colors.glassText} />
+      <View style={[styles.button, warm && styles.buttonWarm]}>
+        <MaterialIcons
+          name="settings"
+          size={22}
+          color={warm ? loginGlass.goldLight : colors.glassText}
+        />
       </View>
     </Pressable>
   );
@@ -90,6 +105,7 @@ type HeaderProfileChipProps = {
   initials: string;
   imageUri?: string | null;
   onPress: () => void;
+  tone?: Tone;
 };
 
 export function HeaderProfileChip({
@@ -97,7 +113,9 @@ export function HeaderProfileChip({
   initials,
   imageUri,
   onPress,
+  tone = 'default',
 }: HeaderProfileChipProps) {
+  const warm = tone === 'warm';
   const displayName = name.trim() || 'Visitante';
   const firstName = displayName.split(' ')[0] ?? displayName;
 
@@ -106,7 +124,7 @@ export function HeaderProfileChip({
       onPress={onPress}
       accessibilityRole="button"
       style={({ pressed }) => [styles.profileChip, pressed && styles.pressed]}>
-      <View style={styles.avatarWrap}>
+      <View style={[styles.avatarWrap, warm && styles.avatarWrapWarm]}>
         {imageUri ? (
           <Image source={{ uri: imageUri }} style={styles.avatarImage} contentFit="cover" />
         ) : (
@@ -114,11 +132,11 @@ export function HeaderProfileChip({
         )}
       </View>
       <View style={styles.nameWrap}>
-        <Text style={styles.userName} numberOfLines={1}>
+        <Text style={[styles.userName, warm && styles.userNameWarm]} numberOfLines={1}>
           {firstName}
         </Text>
         {displayName !== firstName ? (
-          <Text style={styles.userFullName} numberOfLines={1}>
+          <Text style={[styles.userFullName, warm && styles.userFullNameWarm]} numberOfLines={1}>
             {displayName}
           </Text>
         ) : null}
@@ -138,13 +156,17 @@ const styles = StyleSheet.create({
   button: {
     width: BUTTON_SIZE,
     height: BUTTON_SIZE,
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
     backgroundColor: colors.glassImageBg,
     borderWidth: 1,
     borderColor: colors.glassBorder,
+  },
+  buttonWarm: {
+    backgroundColor: loginGlass.inputBg,
+    borderColor: loginGlass.shellBorder,
   },
   badge: {
     position: 'absolute',
@@ -159,6 +181,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     borderWidth: 2,
     borderColor: colors.tabBarGlass,
+  },
+  badgeWarm: {
+    backgroundColor: loginGlass.gold,
+    borderColor: loginGlass.tabBarGlass,
   },
   badgeText: {
     fontSize: 10,
@@ -176,13 +202,17 @@ const styles = StyleSheet.create({
   avatarWrap: {
     width: 42,
     height: 42,
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
     overflow: 'hidden',
     backgroundColor: colors.primary,
     borderWidth: 1.5,
     borderColor: colors.glassBorder,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  avatarWrapWarm: {
+    backgroundColor: loginGlass.button,
+    borderColor: loginGlass.goldMuted,
   },
   avatarImage: {
     width: '100%',
@@ -205,10 +235,16 @@ const styles = StyleSheet.create({
     color: colors.glassText,
     letterSpacing: -0.2,
   },
+  userNameWarm: {
+    color: loginGlass.text,
+  },
   userFullName: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.xs,
     color: colors.glassMuted,
     marginTop: 1,
+  },
+  userFullNameWarm: {
+    color: loginGlass.textMuted,
   },
 });
