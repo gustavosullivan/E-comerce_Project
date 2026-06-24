@@ -38,6 +38,12 @@ yarn-error.*
 
 app-example
 
+# Playwright artifacts
+test-results/
+playwright-report/
+tests/debug-*.png
+*.web
+
 # generated native folders
 /ios
 /android

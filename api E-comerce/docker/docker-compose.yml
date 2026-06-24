@@ -5,9 +5,9 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: "123"
+      POSTGRES_PASSWORD: "2755"
     ports:
-      - "55432:5432"
+      - "5432:5432"
     volumes:
       - bugiganga_pgdata:/var/lib/postgresql/data
       - ./init-databases.sql:/docker-entrypoint-initdb.d/01-init-databases.sql:ro
