@@ -1,4 +1,9 @@
-import { API_ENDPOINTS, USE_MOCK } from '@/src/config/api';
+import {
+  API_ENDPOINTS,
+  USE_MOCK,
+  USE_REAL_PRODUCT_DETAILS,
+  USE_REAL_PRODUCT_LIST,
+} from '@/src/config/api';
 import { MOCK_CATEGORIES } from '@/src/mocks/categories';
 import type { ProductFormData } from '@/src/schemas/productSchema';
 import { apiClient, throwServiceError } from '@/src/services/api/client';
@@ -9,6 +14,37 @@ import type { User } from '@/src/types/auth';
 import type { Product, ProductInput } from '@/src/types/product';
 import type { ImagePickerAsset } from 'expo-image-picker';
 import type { parseProductForm } from '@/src/validation/productSchema';
+
+interface ApiProduct {
+  id: number;
+  description: string;
+  brand: string;
+  model: string;
+  currency: string;
+  price: number;
+  stock: number;
+  convertedPrice?: number;
+  requestCurrency?: string;
+}
+
+function mapApiProduct(product: ApiProduct): Product {
+  const displayName = [product.brand, product.model].filter(Boolean).join(' ').trim();
+
+  return {
+    id: product.id,
+    name: displayName || product.description,
+    description: product.description,
+    price: product.convertedPrice ?? product.price,
+    stock: product.stock,
+    imageUrl: `https://picsum.photos/seed/api-product-${product.id}/600/600`,
+    categoryId: 1,
+    categoryName: 'Celulares',
+    userId: 1,
+    isFeatured: product.id <= 4,
+    isNew: product.id > 8,
+    isBestseller: product.stock >= 15,
+  };
+}
 
 function resolveCategoryId(categoryName: string): number {
   const normalized = categoryName.trim().toLowerCase();
@@ -96,7 +132,7 @@ async function resolveProductImageUrl(
 export const productService = {
   async list(): Promise<Product[]> {
     try {
-      if (USE_MOCK) return await productMock.list();
+      if (!USE_REAL_PRODUCT_LIST && USE_MOCK) return await productMock.list();
       const response = await apiClient.get<Product[]>(API_ENDPOINTS.products.list);
       return response.data;
     } catch (error) {
@@ -106,9 +142,11 @@ export const productService = {
 
   async getById(id: number): Promise<Product> {
     try {
-      if (USE_MOCK) return await productMock.getById(id);
-      const response = await apiClient.get<Product>(API_ENDPOINTS.products.byId(id));
-      return response.data;
+      if (!USE_REAL_PRODUCT_DETAILS && USE_MOCK) return await productMock.getById(id);
+      const response = await apiClient.get<ApiProduct>(API_ENDPOINTS.products.byId(id), {
+        params: { targetCurrency: 'BRL' },
+      });
+      return mapApiProduct(response.data);
     } catch (error) {
       throwServiceError(error);
     }
@@ -116,7 +154,7 @@ export const productService = {
 
   async search(query: string): Promise<Product[]> {
     try {
-      if (USE_MOCK) return await productMock.search(query);
+      if (!USE_REAL_PRODUCT_LIST && USE_MOCK) return await productMock.search(query);
       const response = await apiClient.get<Product[]>(API_ENDPOINTS.products.list, {
         params: { q: query },
       });

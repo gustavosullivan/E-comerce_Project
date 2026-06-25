@@ -1,6 +1,7 @@
-import { API_ENDPOINTS, USE_MOCK } from '@/src/config/api';
+import { API_ENDPOINTS, USE_MOCK, USE_REAL_AUTH } from '@/src/config/api';
 import { apiClient, mapAxiosError } from '@/src/services/api/client';
 import { authMock } from '@/src/services/mocks/authMock';
+import { useAuthStore } from '@/src/store/authStore';
 import type {
   AuthResponse,
   ChangePasswordRequest,
@@ -10,12 +11,46 @@ import type {
   User,
 } from '@/src/types/auth';
 
+type ApiUserType = 'Admin' | 'Common' | number;
+
+interface ApiUser {
+  id: number;
+  name: string;
+  email: string;
+  username?: string;
+  type?: ApiUserType;
+}
+
+interface ApiAuthResponse {
+  token: string;
+  user: ApiUser;
+}
+
+function mapApiUser(user: ApiUser): User {
+  const role = user.type === 'Admin' || user.type === 0 ? 'ADMIN' : 'BUYER';
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    username: user.username ?? user.email,
+    role,
+  };
+}
+
+function mapApiAuthResponse(response: ApiAuthResponse): AuthResponse {
+  return {
+    token: response.token,
+    user: mapApiUser(response.user),
+  };
+}
+
 export const authService = {
   async login(data: LoginRequest): Promise<AuthResponse> {
     try {
-      if (USE_MOCK) return await authMock.login(data);
-      const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.auth.login, data);
-      return response.data;
+      if (!USE_REAL_AUTH && USE_MOCK) return await authMock.login(data);
+      const response = await apiClient.post<ApiAuthResponse>(API_ENDPOINTS.auth.login, data);
+      return mapApiAuthResponse(response.data);
     } catch (error) {
       throw mapAxiosError(error);
     }
@@ -23,9 +58,13 @@ export const authService = {
 
   async register(data: RegisterRequest): Promise<AuthResponse> {
     try {
-      if (USE_MOCK) return await authMock.register(data);
-      const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.auth.register, data);
-      return response.data;
+      if (!USE_REAL_AUTH && USE_MOCK) return await authMock.register(data);
+      await apiClient.post<ApiUser>(API_ENDPOINTS.auth.register, {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+      });
+      return await authService.login({ email: data.email, password: data.password });
     } catch (error) {
       throw mapAxiosError(error);
     }
@@ -33,9 +72,10 @@ export const authService = {
 
   async getMe(): Promise<User> {
     try {
-      if (USE_MOCK) return await authMock.getMe();
-      const response = await apiClient.get<User>(API_ENDPOINTS.auth.me);
-      return response.data;
+      if (!USE_REAL_AUTH && USE_MOCK) return await authMock.getMe();
+      const user = useAuthStore.getState().user;
+      if (!user) throw new Error('Usuario nao autenticado');
+      return user;
     } catch (error) {
       throw mapAxiosError(error);
     }

@@ -25,10 +25,10 @@ try {
 
   Write-Host ""
   Write-Host "PostgreSQL pronto!" -ForegroundColor Green
-  Write-Host "Host: localhost:5432"
+  Write-Host "Host: localhost:55432"
   Write-Host "Usuario: postgres"
   Write-Host "Senha: 123"
-  Write-Host "Bancos: db_user | db_product | db_currency"
+  Write-Host "Bancos: db_user | db_product | db_currency | db_order"
   Write-Host ""
   Write-Host "Proximo passo: suba os microservicos (auth, product, currency...)." -ForegroundColor Cyan
   Write-Host "O Flyway cria tabelas e dados iniciais na primeira execucao de cada servico."

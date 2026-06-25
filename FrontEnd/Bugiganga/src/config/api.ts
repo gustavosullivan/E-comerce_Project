@@ -1,20 +1,35 @@
-/** Troque para false quando o backend Spring Boot estiver disponível */
+/** Mantem mocks nas areas que a API Spring ainda nao cobre. */
 export const USE_MOCK = true;
 
+const parseBooleanEnv = (value: string | undefined, fallback: boolean) => {
+  if (value == null) return fallback;
+  return value.toLowerCase() === 'true';
+};
+
+export const USE_REAL_AUTH = parseBooleanEnv(process.env.EXPO_PUBLIC_USE_REAL_AUTH, true);
+export const USE_REAL_PRODUCT_DETAILS = parseBooleanEnv(
+  process.env.EXPO_PUBLIC_USE_REAL_PRODUCT_DETAILS,
+  true,
+);
+export const USE_REAL_PRODUCT_LIST = parseBooleanEnv(
+  process.env.EXPO_PUBLIC_USE_REAL_PRODUCT_LIST,
+  false,
+);
+
 export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8080';
+  process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8765';
 
 export const API_ENDPOINTS = {
   auth: {
-    login: '/api/auth/login',
-    register: '/api/auth/register',
-    me: '/api/auth/me',
+    login: '/auth/signin',
+    register: '/auth/signup',
+    me: '/auth/me',
     forgotPassword: '/api/auth/forgot-password',
     changePassword: '/api/auth/change-password',
   },
   products: {
-    list: '/api/products',
-    byId: (id: number) => `/api/products/${id}`,
+    list: '/products',
+    byId: (id: number) => `/products/${id}`,
   },
   cart: '/api/cart',
   orders: '/api/orders',

@@ -68,7 +68,7 @@ docker compose up -d
 | Host | `localhost:55432` |
 | Usuario | `postgres` |
 | Senha | `123` |
-| Bancos | `db_user`, `db_product`, `db_currency` |
+| Bancos | `db_user`, `db_product`, `db_currency`, `db_order` |
 
 > A porta externa e `55432` porque a `5432` pode estar ocupada por outro PostgreSQL instalado no Windows.
 
@@ -82,6 +82,7 @@ No pgAdmin ou psql:
 CREATE DATABASE db_user;
 CREATE DATABASE db_product;
 CREATE DATABASE db_currency;
+CREATE DATABASE db_order;
 ```
 
 Use usuario `postgres` e senha `123` (ou altere nos `application.properties` de cada servico).
@@ -162,6 +163,8 @@ Resumo das portas:
 | auth-service | `tb_user` | admin `admin@admin.dev` |
 | product-service | `tb_product` | 12 smartphones |
 | currency-service | `tb_currency` | taxas USD → BRL, EUR, etc. |
+
+> `db_order` ja e criado pelo Docker para preparar a futura API de pedidos. Hoje ainda nao existe `order-service` neste backend.
 
 ---
 
