@@ -1,0 +1,9 @@
+br\edu\atitus\productservice\entities\ProductEntity.class
+br\edu\atitus\productservice\repositories\ProductRepository.class
+br\edu\atitus\productservice\clients\CurrencyClient.class
+br\edu\atitus\productservice\clients\CurrencyResponse.class
+br\edu\atitus\productservice\controllers\ProductController.class
+br\edu\atitus\productservice\dtos\ProductDTO.class
+br\edu\atitus\productservice\clients\CurrencyClientFallback.class
+br\edu\atitus\productservice\dtos\ProductRequestDTO.class
+br\edu\atitus\productservice\ProductServiceApplication.class

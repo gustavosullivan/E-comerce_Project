@@ -1,0 +1,9 @@
+br\edu\atitus\currencyservice\clients\BCBResponse.class
+br\edu\atitus\currencyservice\entities\CurrencyEntity.class
+br\edu\atitus\currencyservice\clients\BCBResponse$BCBValue.class
+br\edu\atitus\currencyservice\controllers\CurrencyController.class
+br\edu\atitus\currencyservice\dtos\CurrencyDTO.class
+br\edu\atitus\currencyservice\clients\BCBClient.class
+br\edu\atitus\currencyservice\clients\BCBClientFallback.class
+br\edu\atitus\currencyservice\CurrencyServiceApplication.class
+br\edu\atitus\currencyservice\repositories\CurrencyRepository.class

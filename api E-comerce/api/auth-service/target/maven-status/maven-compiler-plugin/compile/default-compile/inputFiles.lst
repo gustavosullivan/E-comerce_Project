@@ -1,0 +1,13 @@
+C:\Users\Gustavo\Desktop\E-comerce Project\api E-comerce\api\auth-service\src\main\java\br\edu\atitus\authservice\AuthServiceApplication.java
+C:\Users\Gustavo\Desktop\E-comerce Project\api E-comerce\api\auth-service\src\main\java\br\edu\atitus\authservice\components\AuthTokenFilter.java
+C:\Users\Gustavo\Desktop\E-comerce Project\api E-comerce\api\auth-service\src\main\java\br\edu\atitus\authservice\components\JwtUtil.java
+C:\Users\Gustavo\Desktop\E-comerce Project\api E-comerce\api\auth-service\src\main\java\br\edu\atitus\authservice\components\Validator.java
+C:\Users\Gustavo\Desktop\E-comerce Project\api E-comerce\api\auth-service\src\main\java\br\edu\atitus\authservice\configs\ConfigSecurity.java
+C:\Users\Gustavo\Desktop\E-comerce Project\api E-comerce\api\auth-service\src\main\java\br\edu\atitus\authservice\controllers\AuthController.java
+C:\Users\Gustavo\Desktop\E-comerce Project\api E-comerce\api\auth-service\src\main\java\br\edu\atitus\authservice\dtos\SigninDTO.java
+C:\Users\Gustavo\Desktop\E-comerce Project\api E-comerce\api\auth-service\src\main\java\br\edu\atitus\authservice\dtos\SigninResponseDTO.java
+C:\Users\Gustavo\Desktop\E-comerce Project\api E-comerce\api\auth-service\src\main\java\br\edu\atitus\authservice\dtos\SignupDTO.java
+C:\Users\Gustavo\Desktop\E-comerce Project\api E-comerce\api\auth-service\src\main\java\br\edu\atitus\authservice\entities\UserEntity.java
+C:\Users\Gustavo\Desktop\E-comerce Project\api E-comerce\api\auth-service\src\main\java\br\edu\atitus\authservice\entities\UserType.java
+C:\Users\Gustavo\Desktop\E-comerce Project\api E-comerce\api\auth-service\src\main\java\br\edu\atitus\authservice\repositories\UserRepository.java
+C:\Users\Gustavo\Desktop\E-comerce Project\api E-comerce\api\auth-service\src\main\java\br\edu\atitus\authservice\services\UserService.java

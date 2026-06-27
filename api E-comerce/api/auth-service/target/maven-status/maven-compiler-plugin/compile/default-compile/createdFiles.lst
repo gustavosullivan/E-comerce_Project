@@ -1,0 +1,14 @@
+br\edu\atitus\authservice\controllers\AuthController.class
+br\edu\atitus\authservice\dtos\SigninResponseDTO.class
+br\edu\atitus\authservice\services\UserService.class
+br\edu\atitus\authservice\AuthServiceApplication.class
+br\edu\atitus\authservice\entities\UserEntity.class
+br\edu\atitus\authservice\entities\UserType.class
+br\edu\atitus\authservice\components\JwtUtil.class
+br\edu\atitus\authservice\dtos\SigninDTO.class
+br\edu\atitus\authservice\dtos\SignupDTO.class
+br\edu\atitus\authservice\configs\ConfigSecurity$1.class
+br\edu\atitus\authservice\components\AuthTokenFilter.class
+br\edu\atitus\authservice\configs\ConfigSecurity.class
+br\edu\atitus\authservice\repositories\UserRepository.class
+br\edu\atitus\authservice\components\Validator.class
