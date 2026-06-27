@@ -19,6 +19,8 @@ interface ApiUser {
   email: string;
   username?: string;
   type?: ApiUserType;
+  buyerProfile?: boolean;
+  sellerProfile?: boolean;
 }
 
 interface ApiAuthResponse {
@@ -34,6 +36,8 @@ function mapApiUser(user: ApiUser): User {
     name: user.name,
     email: user.email,
     username: user.username ?? user.email,
+    buyerProfile: user.buyerProfile ?? true,
+    sellerProfile: user.sellerProfile ?? true,
     role,
   };
 }

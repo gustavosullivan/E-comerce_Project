@@ -19,10 +19,6 @@ import { PageContainer } from '@/src/components/layout/PageContainer';
 import { ProfilePaper } from '@/src/components/layout/ProfilePaper';
 import { ScreenHeader } from '@/src/components/layout/ScreenHeader';
 import { WarmAppShell } from '@/src/components/layout/WarmAppShell';
-import {
-  DEV_BUYER_CREDENTIALS,
-  DEV_SELLER_CREDENTIALS,
-} from '@/src/config/devCredentials';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useTabBarInset } from '@/src/hooks/useTabBarInset';
 import { useWallet } from '@/src/hooks/useWallet';
@@ -35,7 +31,7 @@ import { useOrderHistoryStore } from '@/src/store/orderHistoryStore';
 import { snackbar } from '@/src/store/snackbarStore';
 import { useAuthStore } from '@/src/store/authStore';
 import { fontSizes, fonts, layout, loginGlass, radius } from '@/src/theme';
-import { isBuyer, isAdmin } from '@/src/types/auth';
+import { getRoleLabel, hasBuyerProfile, hasSellerProfile, isAdmin } from '@/src/types/auth';
 import { formatCurrency } from '@/src/utils/formatCurrency';
 import { confirmAction } from '@/src/utils/confirm';
 
@@ -86,14 +82,17 @@ function SummaryChip({
 export default function SettingsScreen() {
   const { user, logout } = useAuth();
   const token = useAuthStore((s) => s.token);
+  const setActiveRole = useAuthStore((s) => s.setActiveRole);
   const admin = isAdmin(user);
-  const buyer = isBuyer(user);
+  const buyer = user?.role === 'BUYER';
+  const canBuy = hasBuyerProfile(user);
+  const canSell = hasSellerProfile(user);
   const cartCount = useCartStore((s) => s.getItemCount());
   const favoriteCount = useFavoritesStore((s) => s.items.length);
   const orderCount = useOrderHistoryStore((s) =>
     user?.id ? s.orders.filter((o) => o.userId === user.id).length : 0,
   );
-  const { balance } = useWallet(user?.id, buyer);
+  const { balance } = useWallet(user?.id, canBuy);
   const { contentBottomInset } = useTabBarInset();
   const [productCount, setProductCount] = useState(0);
   const [salesTotal, setSalesTotal] = useState(0);
@@ -107,7 +106,7 @@ export default function SettingsScreen() {
   };
 
   useEffect(() => {
-    if (!admin || !user?.id) return;
+    if (!canSell || !user?.id) return;
 
     let active = true;
 
@@ -130,7 +129,7 @@ export default function SettingsScreen() {
     return () => {
       active = false;
     };
-  }, [admin, user?.id]);
+  }, [canSell, user?.id]);
 
   if (!token) {
     return <Redirect href="/login" />;
@@ -145,7 +144,7 @@ export default function SettingsScreen() {
     },
   ];
 
-  if (buyer) {
+  if (canBuy) {
     shortcutItems.push(
       {
         icon: 'favorite-border',
@@ -168,19 +167,25 @@ export default function SettingsScreen() {
     );
   }
 
-  if (admin) {
+  if (canSell) {
     shortcutItems.push(
       {
         icon: 'storefront',
         label: 'Painel do vendedor',
-        hint: 'Gerenciar catálogo',
-        onPress: () => router.replace(routes.home),
+        hint: admin ? 'Gerenciar catálogo' : 'Ativar perfil vendedor',
+        onPress: () => {
+          setActiveRole('ADMIN');
+          router.replace(routes.home);
+        },
       },
       {
         icon: 'add-box',
         label: 'Cadastrar produto',
         hint: 'Novo achado à venda',
-        onPress: () => router.push(routes.adminProductNew),
+        onPress: () => {
+          setActiveRole('ADMIN');
+          router.push(routes.adminProductNew);
+        },
       },
     );
   }
@@ -209,12 +214,12 @@ export default function SettingsScreen() {
 
               <ProfilePaper
                 title="Resumo"
-                subtitle="Sua atividade no marketplace"
+                subtitle={`Perfil ativo: ${getRoleLabel(user?.role)}`}
                 delay={0}
                 showStamp={false}
                 variant="warm">
                 <View style={styles.summaryRow}>
-                  {buyer ? (
+                  {canBuy ? (
                     <>
                       <SummaryChip icon="favorite" value={favoriteCount} label="Favoritos" />
                       <SummaryChip icon="shopping-bag" value={cartCount} label="Carrinho" />
@@ -224,7 +229,8 @@ export default function SettingsScreen() {
                         label="Saldo"
                       />
                     </>
-                  ) : (
+                  ) : null}
+                  {canSell ? (
                     <>
                       <SummaryChip icon="inventory-2" value={productCount} label="Produtos" />
                       <SummaryChip
@@ -233,7 +239,61 @@ export default function SettingsScreen() {
                         label="Vendas"
                       />
                     </>
-                  )}
+                  ) : null}
+                </View>
+              </ProfilePaper>
+
+              <ProfilePaper
+                title="Perfis da conta"
+                subtitle="Use a mesma conta para comprar e vender"
+                delay={20}
+                showStamp={false}
+                variant="warm">
+                <Text style={styles.helper}>
+                  Toda conta Bugiganga possui os perfis de comprador e vendedor. Escolha abaixo qual
+                  área você quer usar agora.
+                </Text>
+                <View style={styles.profileSwitchRow}>
+                  <Pressable
+                    style={[
+                      styles.profileSwitchButton,
+                      buyer && styles.profileSwitchButtonActive,
+                    ]}
+                    onPress={() => setActiveRole('BUYER')}
+                    disabled={!canBuy}>
+                    <MaterialIcons
+                      name="shopping-bag"
+                      size={18}
+                      color={buyer ? loginGlass.text : loginGlass.goldMuted}
+                    />
+                    <Text
+                      style={[
+                        styles.profileSwitchText,
+                        buyer && styles.profileSwitchTextActive,
+                      ]}>
+                      Comprador
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    style={[
+                      styles.profileSwitchButton,
+                      admin && styles.profileSwitchButtonActive,
+                    ]}
+                    onPress={() => setActiveRole('ADMIN')}
+                    disabled={!canSell}>
+                    <MaterialIcons
+                      name="storefront"
+                      size={18}
+                      color={admin ? loginGlass.text : loginGlass.goldMuted}
+                    />
+                    <Text
+                      style={[
+                        styles.profileSwitchText,
+                        admin && styles.profileSwitchTextActive,
+                      ]}>
+                      Vendedor
+                    </Text>
+                  </Pressable>
                 </View>
               </ProfilePaper>
 
@@ -250,10 +310,10 @@ export default function SettingsScreen() {
                 </View>
               </ProfilePaper>
 
-              {admin ? (
+              {canSell ? (
                 <ProfilePaper
                   title="Área do vendedor"
-                  subtitle="Cadastre produtos, legendas e preços"
+                  subtitle={admin ? 'Perfil vendedor ativo' : 'Ative para vender'}
                   delay={80}
                   showStamp={false}
                   variant="warm">
@@ -263,37 +323,46 @@ export default function SettingsScreen() {
                   </Text>
                   <View style={styles.adminActions}>
                     <PrimaryButton
-                      label="Gerenciar produtos"
-                      onPress={() => router.replace(routes.home)}
+                      label={admin ? 'Gerenciar produtos' : 'Usar como vendedor'}
+                      onPress={() => {
+                        setActiveRole('ADMIN');
+                        router.replace(routes.home);
+                      }}
                       variant="warm"
                     />
                     <SecondaryButton
                       label="Cadastrar novo produto"
-                      onPress={() => router.push(routes.adminProductNew)}
+                      onPress={() => {
+                        setActiveRole('ADMIN');
+                        router.push(routes.adminProductNew);
+                      }}
                       variant="warm"
                     />
                   </View>
                 </ProfilePaper>
-              ) : (
+              ) : null}
+
+              {canBuy ? (
                 <ProfilePaper
                   title="Área do comprador"
-                  subtitle="Você compra e explora achados"
+                  subtitle={buyer ? 'Perfil comprador ativo' : 'Ative para comprar'}
                   delay={80}
                   showStamp={false}
                   variant="warm">
                   <Text style={styles.helper}>
-                    Esta conta é de quem compra. Para cadastrar produtos à venda, saia e entre com a
-                    conta de vendedor.
+                    Explore achados, favorite produtos, use o carrinho e acompanhe suas compras com a
+                    mesma conta.
                   </Text>
-                  <View style={styles.credentialsBox}>
-                    <Text style={styles.credentialsTitle}>Conta vendedor (demo)</Text>
-                    <Text style={styles.credentialsLine}>{DEV_SELLER_CREDENTIALS.email}</Text>
-                    <Text style={styles.credentialsLine}>
-                      Senha: {DEV_SELLER_CREDENTIALS.password}
-                    </Text>
-                  </View>
+                  <SecondaryButton
+                    label={buyer ? 'Continuar como comprador' : 'Usar como comprador'}
+                    onPress={() => {
+                      setActiveRole('BUYER');
+                      router.push(routes.home);
+                    }}
+                    variant="warm"
+                  />
                 </ProfilePaper>
-              )}
+              ) : null}
 
               <ProfilePaper
                 title="Sobre o Bugiganga"
@@ -318,26 +387,6 @@ export default function SettingsScreen() {
                   <Text style={styles.supportText}>Ajuda e suporte</Text>
                 </Pressable>
               </ProfilePaper>
-
-              {admin ? (
-                <ProfilePaper
-                  title="Trocar de conta"
-                  subtitle="Entrar como comprador"
-                  delay={160}
-                  showStamp={false}
-                  variant="warm">
-                  <Text style={styles.helper}>
-                    Para comprar como cliente, saia e use a conta comprador.
-                  </Text>
-                  <View style={styles.credentialsBox}>
-                    <Text style={styles.credentialsTitle}>Conta comprador (demo)</Text>
-                    <Text style={styles.credentialsLine}>{DEV_BUYER_CREDENTIALS.email}</Text>
-                    <Text style={styles.credentialsLine}>
-                      Senha: {DEV_BUYER_CREDENTIALS.password}
-                    </Text>
-                  </View>
-                </ProfilePaper>
-              ) : null}
 
               <ProfilePaper
                 title="Sessão"
@@ -386,10 +435,12 @@ const styles = StyleSheet.create({
   },
   summaryRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
   },
   summaryChip: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: '30%',
     alignItems: 'center',
     backgroundColor: loginGlass.formFieldBg,
     borderRadius: radius.md,
@@ -461,6 +512,37 @@ const styles = StyleSheet.create({
     color: loginGlass.textMuted,
     lineHeight: 20,
     marginBottom: 16,
+  },
+  profileSwitchRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  profileSwitchButton: {
+    flex: 1,
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 10,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: loginGlass.cardBorder,
+    backgroundColor: loginGlass.formTrackBg,
+  },
+  profileSwitchButtonActive: {
+    borderColor: loginGlass.chipActiveBorder,
+    backgroundColor: loginGlass.chipActiveBg,
+  },
+  profileSwitchText: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    fontWeight: '700',
+    color: loginGlass.textMuted,
+  },
+  profileSwitchTextActive: {
+    color: loginGlass.text,
+    fontWeight: '800',
   },
   adminActions: {
     gap: 10,

@@ -55,16 +55,12 @@ export default function LoginScreen() {
   const onSubmit = handleSubmit((data) => {
     clearError();
     save(data);
-    login(data);
+    login(data, role === 'seller' ? 'ADMIN' : 'BUYER');
   });
 
   const selectRole = (nextRole: UserRole) => {
     clearError();
     setRole(nextRole);
-    const credentials =
-      nextRole === 'seller' ? DEV_SELLER_LOGIN_FORM : DEV_BUYER_LOGIN_FORM;
-    reset(credentials);
-    save(credentials);
   };
 
   return (
@@ -156,7 +152,7 @@ export default function LoginScreen() {
                         numberOfLines={1}
                         adjustsFontSizeToFit
                         minimumFontScale={0.82}>
-                        Sou comprador
+                        Entrar como comprador
                       </Text>
                     </Pressable>
                     <Pressable
@@ -179,7 +175,7 @@ export default function LoginScreen() {
                         numberOfLines={1}
                         adjustsFontSizeToFit
                         minimumFontScale={0.82}>
-                        Sou vendedor
+                        Entrar como vendedor
                       </Text>
                     </Pressable>
                   </View>
@@ -265,7 +261,7 @@ function PasswordField({
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
-                placeholder="••••••••"
+                placeholder=""
                 placeholderTextColor={loginGlass.textMuted}
                 secureTextEntry={!show}
                 onSubmitEditing={onSubmit}

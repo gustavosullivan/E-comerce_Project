@@ -3,6 +3,7 @@ import {
   USE_MOCK,
   USE_REAL_PRODUCT_DETAILS,
   USE_REAL_PRODUCT_LIST,
+  USE_REAL_PRODUCT_MUTATIONS,
 } from '@/src/config/api';
 import { MOCK_CATEGORIES } from '@/src/mocks/categories';
 import type { ProductFormData } from '@/src/schemas/productSchema';
@@ -27,6 +28,16 @@ interface ApiProduct {
   requestCurrency?: string;
 }
 
+interface ApiProductRequest {
+  name?: string;
+  description?: string;
+  brand?: string;
+  model?: string;
+  currency?: string;
+  price?: number;
+  stock?: number;
+}
+
 function mapApiProduct(product: ApiProduct): Product {
   const displayName = [product.brand, product.model].filter(Boolean).join(' ').trim();
 
@@ -43,6 +54,18 @@ function mapApiProduct(product: ApiProduct): Product {
     isFeatured: product.id <= 4,
     isNew: product.id > 8,
     isBestseller: product.stock >= 15,
+  };
+}
+
+function productInputToApiRequest(data: Partial<ProductInput>): ApiProductRequest {
+  return {
+    name: data.name,
+    description: data.description ?? data.name,
+    brand: data.name,
+    model: data.name,
+    currency: 'BRL',
+    price: data.price,
+    stock: data.stock,
   };
 }
 
@@ -133,8 +156,10 @@ export const productService = {
   async list(): Promise<Product[]> {
     try {
       if (!USE_REAL_PRODUCT_LIST && USE_MOCK) return await productMock.list();
-      const response = await apiClient.get<Product[]>(API_ENDPOINTS.products.list);
-      return response.data;
+      const response = await apiClient.get<ApiProduct[]>(API_ENDPOINTS.products.list, {
+        params: { targetCurrency: 'BRL' },
+      });
+      return response.data.map(mapApiProduct);
     } catch (error) {
       throwServiceError(error);
     }
@@ -155,10 +180,18 @@ export const productService = {
   async search(query: string): Promise<Product[]> {
     try {
       if (!USE_REAL_PRODUCT_LIST && USE_MOCK) return await productMock.search(query);
-      const response = await apiClient.get<Product[]>(API_ENDPOINTS.products.list, {
-        params: { q: query },
+      const response = await apiClient.get<ApiProduct[]>(API_ENDPOINTS.products.list, {
+        params: { targetCurrency: 'BRL' },
       });
-      return response.data;
+      const normalizedQuery = query.trim().toLowerCase();
+      return response.data
+        .map(mapApiProduct)
+        .filter((product) =>
+          [product.name, product.description, product.categoryName]
+            .join(' ')
+            .toLowerCase()
+            .includes(normalizedQuery),
+        );
     } catch (error) {
       throwServiceError(error);
     }
@@ -166,9 +199,12 @@ export const productService = {
 
   async create(data: ProductInput): Promise<Product> {
     try {
-      if (USE_MOCK) return await productMock.create(data);
-      const response = await apiClient.post<Product>(API_ENDPOINTS.products.list, data);
-      return response.data;
+      if (!USE_REAL_PRODUCT_MUTATIONS && USE_MOCK) return await productMock.create(data);
+      const response = await apiClient.post<ApiProduct>(
+        API_ENDPOINTS.products.list,
+        productInputToApiRequest(data),
+      );
+      return mapApiProduct(response.data);
     } catch (error) {
       throwServiceError(error);
     }
@@ -176,9 +212,12 @@ export const productService = {
 
   async update(id: number, data: Partial<ProductInput>): Promise<Product> {
     try {
-      if (USE_MOCK) return await productMock.update(id, data);
-      const response = await apiClient.put<Product>(API_ENDPOINTS.products.byId(id), data);
-      return response.data;
+      if (!USE_REAL_PRODUCT_MUTATIONS && USE_MOCK) return await productMock.update(id, data);
+      const response = await apiClient.put<ApiProduct>(
+        API_ENDPOINTS.products.byId(id),
+        productInputToApiRequest(data),
+      );
+      return mapApiProduct(response.data);
     } catch (error) {
       throwServiceError(error);
     }
@@ -186,7 +225,7 @@ export const productService = {
 
   async remove(id: number): Promise<void> {
     try {
-      if (USE_MOCK) return await productMock.remove(id);
+      if (!USE_REAL_PRODUCT_MUTATIONS && USE_MOCK) return await productMock.remove(id);
       await apiClient.delete(API_ENDPOINTS.products.byId(id));
     } catch (error) {
       throwServiceError(error);
@@ -195,13 +234,15 @@ export const productService = {
 
   async createProduct(userId: User['id'], productData: ProductFormData): Promise<Product> {
     try {
-      if (USE_MOCK) {
+      const input = formDataToProductInput(productData, userId);
+      if (!USE_REAL_PRODUCT_MUTATIONS && USE_MOCK) {
         return useProductCatalogStore.getState().addProduct(formDataToProductInput(productData, userId));
       }
-      const response = await apiClient.post<Product>(API_ENDPOINTS.products.list, {
-        ...formDataToProductInput(productData, userId),
-      });
-      return response.data;
+      const response = await apiClient.post<ApiProduct>(
+        API_ENDPOINTS.products.list,
+        productInputToApiRequest(input),
+      );
+      return mapApiProduct(response.data);
     } catch (error) {
       throwServiceError(error);
     }
@@ -209,14 +250,14 @@ export const productService = {
 
   async getAdminProducts(adminId: User['id']): Promise<Product[]> {
     try {
-      if (USE_MOCK) {
+      if (!USE_REAL_PRODUCT_LIST && USE_MOCK) {
         await productMock.list();
         return getCatalogProducts().filter((product) => product.userId === adminId);
       }
-      const response = await apiClient.get<Product[]>(API_ENDPOINTS.products.list, {
-        params: { sellerId: adminId },
+      const response = await apiClient.get<ApiProduct[]>(API_ENDPOINTS.products.list, {
+        params: { targetCurrency: 'BRL' },
       });
-      return response.data;
+      return response.data.map(mapApiProduct);
     } catch (error) {
       throwServiceError(error);
     }
@@ -224,14 +265,15 @@ export const productService = {
 
   async updateProduct(productId: Product['id'], updatedData: Partial<ProductFormData>): Promise<Product> {
     try {
-      if (USE_MOCK) {
+      const input = formDataToPartialInput(updatedData);
+      if (!USE_REAL_PRODUCT_MUTATIONS && USE_MOCK) {
         return useProductCatalogStore.getState().updateProduct(productId, formDataToPartialInput(updatedData));
       }
-      const response = await apiClient.put<Product>(
+      const response = await apiClient.put<ApiProduct>(
         API_ENDPOINTS.products.byId(productId),
-        formDataToPartialInput(updatedData),
+        productInputToApiRequest(input),
       );
-      return response.data;
+      return mapApiProduct(response.data);
     } catch (error) {
       throwServiceError(error);
     }
@@ -239,7 +281,7 @@ export const productService = {
 
   async deleteProduct(productId: Product['id']): Promise<void> {
     try {
-      if (USE_MOCK) {
+      if (!USE_REAL_PRODUCT_MUTATIONS && USE_MOCK) {
         useProductCatalogStore.getState().removeProduct(productId);
         return;
       }
@@ -258,12 +300,15 @@ export const productService = {
 
       const input = adminFormToProductInput(submit.data, userId, imageUrl);
 
-      if (USE_MOCK) {
+      if (!USE_REAL_PRODUCT_MUTATIONS && USE_MOCK) {
         return useProductCatalogStore.getState().addProduct(input);
       }
 
-      const response = await apiClient.post<Product>(API_ENDPOINTS.products.list, input);
-      return response.data;
+      const response = await apiClient.post<ApiProduct>(
+        API_ENDPOINTS.products.list,
+        productInputToApiRequest(input),
+      );
+      return mapApiProduct(response.data);
     } catch (error) {
       throwServiceError(error);
     }
@@ -281,15 +326,15 @@ export const productService = {
 
       const input = adminFormToPartialInput(submit.data, imageUrl);
 
-      if (USE_MOCK) {
+      if (!USE_REAL_PRODUCT_MUTATIONS && USE_MOCK) {
         return useProductCatalogStore.getState().updateProduct(productId, input);
       }
 
-      const response = await apiClient.put<Product>(
+      const response = await apiClient.put<ApiProduct>(
         API_ENDPOINTS.products.byId(productId),
-        input,
+        productInputToApiRequest(input),
       );
-      return response.data;
+      return mapApiProduct(response.data);
     } catch (error) {
       throwServiceError(error);
     }

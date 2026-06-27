@@ -20,6 +20,8 @@ const MOCK_BUYER: User = {
   name: 'Maria Compradora',
   email: DEV_BUYER_CREDENTIALS.email,
   username: DEV_BUYER_CREDENTIALS.login,
+  buyerProfile: true,
+  sellerProfile: true,
   role: 'BUYER',
 };
 
@@ -28,6 +30,8 @@ const MOCK_ADMIN: User = {
   name: 'João Vendedor',
   email: DEV_SELLER_CREDENTIALS.email,
   username: DEV_SELLER_CREDENTIALS.login,
+  buyerProfile: true,
+  sellerProfile: true,
   role: 'ADMIN',
 };
 
@@ -91,6 +95,8 @@ export const authMock = {
       name: data.name,
       email: data.email,
       username: data.username,
+      buyerProfile: true,
+      sellerProfile: true,
       role: 'BUYER',
     };
 

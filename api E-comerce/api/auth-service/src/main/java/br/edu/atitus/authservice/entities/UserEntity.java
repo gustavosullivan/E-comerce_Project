@@ -39,6 +39,12 @@ public class UserEntity implements UserDetails{
     @Enumerated(EnumType.ORDINAL)
     private UserType type;
 
+    @Column(name = "buyer_profile", nullable = false)
+    private Boolean buyerProfile = true;
+
+    @Column(name = "seller_profile", nullable = false)
+    private Boolean sellerProfile = true;
+
     public Long getId() {
         return id;
     }
@@ -77,6 +83,22 @@ public class UserEntity implements UserDetails{
 
     public void setType(UserType type) {
         this.type = type;
+    }
+
+    public Boolean getBuyerProfile() {
+        return buyerProfile;
+    }
+
+    public void setBuyerProfile(Boolean buyerProfile) {
+        this.buyerProfile = buyerProfile;
+    }
+
+    public Boolean getSellerProfile() {
+        return sellerProfile;
+    }
+
+    public void setSellerProfile(Boolean sellerProfile) {
+        this.sellerProfile = sellerProfile;
     }
 
     @Override

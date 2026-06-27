@@ -15,6 +15,10 @@ export const USE_REAL_PRODUCT_LIST = parseBooleanEnv(
   process.env.EXPO_PUBLIC_USE_REAL_PRODUCT_LIST,
   false,
 );
+export const USE_REAL_PRODUCT_MUTATIONS = parseBooleanEnv(
+  process.env.EXPO_PUBLIC_USE_REAL_PRODUCT_MUTATIONS,
+  false,
+);
 
 export const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8765';

@@ -5,6 +5,8 @@ export interface User {
   name: string;
   email: string;
   username: string;
+  buyerProfile: boolean;
+  sellerProfile: boolean;
   role: UserRole;
 }
 
@@ -40,6 +42,14 @@ export function isBuyer(user: User | null | undefined): boolean {
 
 export function isAdmin(user: User | null | undefined): boolean {
   return user?.role === 'ADMIN';
+}
+
+export function hasBuyerProfile(user: User | null | undefined): boolean {
+  return user?.buyerProfile !== false;
+}
+
+export function hasSellerProfile(user: User | null | undefined): boolean {
+  return user?.sellerProfile !== false;
 }
 
 export function getRoleLabel(role: UserRole | undefined): string {

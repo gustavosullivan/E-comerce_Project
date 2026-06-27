@@ -43,6 +43,8 @@ public class AuthController {
     public ResponseEntity<UserEntity> signup(@RequestBody SignupDTO dto) throws Exception {
         var user = convertDTO2Entity(dto);
         user.setType(UserType.Common);
+        user.setBuyerProfile(true);
+        user.setSellerProfile(true);
         service.save(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }

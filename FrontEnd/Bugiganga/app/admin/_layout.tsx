@@ -1,13 +1,13 @@
 import { Redirect, Stack } from 'expo-router';
 
 import { useAuthStore } from '@/src/store/authStore';
-import { isAdmin } from '@/src/types/auth';
+import { hasSellerProfile } from '@/src/types/auth';
 
 export default function AdminLayout() {
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
 
-  if (!token || !isAdmin(user)) {
+  if (!token || !hasSellerProfile(user)) {
     return <Redirect href="/settings" />;
   }
 
