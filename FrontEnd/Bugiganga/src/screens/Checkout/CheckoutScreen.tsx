@@ -78,14 +78,14 @@ export default function CheckoutScreen() {
       return;
     }
 
-    if (!walletService.canAfford(user.id, total, buyer)) {
+    if (!walletService.canAfford(user.id, total)) {
       snackbar.insufficientBalance();
       return;
     }
 
     setIsConfirming(true);
     try {
-      await walletService.debit(user.id, total, buyer);
+      await walletService.debit(user.id, total);
 
       try {
         const order = await orderService.createOrder(orderService.fromCartItems(items), {
@@ -101,7 +101,7 @@ export default function CheckoutScreen() {
         snackbar.purchaseSuccess();
         router.replace(routes.orderReceipt(order.id, true));
       } catch (error) {
-        walletService.credit(user.id, total);
+        await walletService.credit(user.id, total);
         const message =
           error instanceof Error ? error.message : 'Não foi possível confirmar a compra';
         snackbar.error(message);

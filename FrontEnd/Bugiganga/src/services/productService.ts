@@ -1,16 +1,8 @@
-import {
-  API_ENDPOINTS,
-  USE_MOCK,
-  USE_REAL_PRODUCT_DETAILS,
-  USE_REAL_PRODUCT_LIST,
-  USE_REAL_PRODUCT_MUTATIONS,
-} from '@/src/config/api';
+import { API_ENDPOINTS } from '@/src/config/api';
 import { MOCK_CATEGORIES } from '@/src/mocks/categories';
 import type { ProductFormData } from '@/src/schemas/productSchema';
 import { apiClient, throwServiceError } from '@/src/services/api/client';
 import { uploadProductImage } from '@/src/services/cloudinaryService';
-import { productMock } from '@/src/services/mocks/productMock';
-import { getCatalogProducts, useProductCatalogStore } from '@/src/store/productCatalogStore';
 import type { User } from '@/src/types/auth';
 import type { Product, ProductInput } from '@/src/types/product';
 import type { ImagePickerAsset } from 'expo-image-picker';
@@ -155,7 +147,6 @@ async function resolveProductImageUrl(
 export const productService = {
   async list(): Promise<Product[]> {
     try {
-      if (!USE_REAL_PRODUCT_LIST && USE_MOCK) return await productMock.list();
       const response = await apiClient.get<ApiProduct[]>(API_ENDPOINTS.products.list, {
         params: { targetCurrency: 'BRL' },
       });
@@ -167,7 +158,6 @@ export const productService = {
 
   async getById(id: number): Promise<Product> {
     try {
-      if (!USE_REAL_PRODUCT_DETAILS && USE_MOCK) return await productMock.getById(id);
       const response = await apiClient.get<ApiProduct>(API_ENDPOINTS.products.byId(id), {
         params: { targetCurrency: 'BRL' },
       });
@@ -179,7 +169,6 @@ export const productService = {
 
   async search(query: string): Promise<Product[]> {
     try {
-      if (!USE_REAL_PRODUCT_LIST && USE_MOCK) return await productMock.search(query);
       const response = await apiClient.get<ApiProduct[]>(API_ENDPOINTS.products.list, {
         params: { targetCurrency: 'BRL' },
       });
@@ -199,7 +188,6 @@ export const productService = {
 
   async create(data: ProductInput): Promise<Product> {
     try {
-      if (!USE_REAL_PRODUCT_MUTATIONS && USE_MOCK) return await productMock.create(data);
       const response = await apiClient.post<ApiProduct>(
         API_ENDPOINTS.products.list,
         productInputToApiRequest(data),
@@ -212,7 +200,6 @@ export const productService = {
 
   async update(id: number, data: Partial<ProductInput>): Promise<Product> {
     try {
-      if (!USE_REAL_PRODUCT_MUTATIONS && USE_MOCK) return await productMock.update(id, data);
       const response = await apiClient.put<ApiProduct>(
         API_ENDPOINTS.products.byId(id),
         productInputToApiRequest(data),
@@ -225,7 +212,6 @@ export const productService = {
 
   async remove(id: number): Promise<void> {
     try {
-      if (!USE_REAL_PRODUCT_MUTATIONS && USE_MOCK) return await productMock.remove(id);
       await apiClient.delete(API_ENDPOINTS.products.byId(id));
     } catch (error) {
       throwServiceError(error);
@@ -235,9 +221,6 @@ export const productService = {
   async createProduct(userId: User['id'], productData: ProductFormData): Promise<Product> {
     try {
       const input = formDataToProductInput(productData, userId);
-      if (!USE_REAL_PRODUCT_MUTATIONS && USE_MOCK) {
-        return useProductCatalogStore.getState().addProduct(formDataToProductInput(productData, userId));
-      }
       const response = await apiClient.post<ApiProduct>(
         API_ENDPOINTS.products.list,
         productInputToApiRequest(input),
@@ -250,14 +233,10 @@ export const productService = {
 
   async getAdminProducts(adminId: User['id']): Promise<Product[]> {
     try {
-      if (!USE_REAL_PRODUCT_LIST && USE_MOCK) {
-        await productMock.list();
-        return getCatalogProducts().filter((product) => product.userId === adminId);
-      }
       const response = await apiClient.get<ApiProduct[]>(API_ENDPOINTS.products.list, {
         params: { targetCurrency: 'BRL' },
       });
-      return response.data.map(mapApiProduct);
+      return response.data.map(mapApiProduct).filter((product) => product.userId === adminId);
     } catch (error) {
       throwServiceError(error);
     }
@@ -266,9 +245,6 @@ export const productService = {
   async updateProduct(productId: Product['id'], updatedData: Partial<ProductFormData>): Promise<Product> {
     try {
       const input = formDataToPartialInput(updatedData);
-      if (!USE_REAL_PRODUCT_MUTATIONS && USE_MOCK) {
-        return useProductCatalogStore.getState().updateProduct(productId, formDataToPartialInput(updatedData));
-      }
       const response = await apiClient.put<ApiProduct>(
         API_ENDPOINTS.products.byId(productId),
         productInputToApiRequest(input),
@@ -281,10 +257,6 @@ export const productService = {
 
   async deleteProduct(productId: Product['id']): Promise<void> {
     try {
-      if (!USE_REAL_PRODUCT_MUTATIONS && USE_MOCK) {
-        useProductCatalogStore.getState().removeProduct(productId);
-        return;
-      }
       await apiClient.delete(API_ENDPOINTS.products.byId(productId));
     } catch (error) {
       throwServiceError(error);
@@ -299,11 +271,6 @@ export const productService = {
       }
 
       const input = adminFormToProductInput(submit.data, userId, imageUrl);
-
-      if (!USE_REAL_PRODUCT_MUTATIONS && USE_MOCK) {
-        return useProductCatalogStore.getState().addProduct(input);
-      }
-
       const response = await apiClient.post<ApiProduct>(
         API_ENDPOINTS.products.list,
         productInputToApiRequest(input),
@@ -325,11 +292,6 @@ export const productService = {
       }
 
       const input = adminFormToPartialInput(submit.data, imageUrl);
-
-      if (!USE_REAL_PRODUCT_MUTATIONS && USE_MOCK) {
-        return useProductCatalogStore.getState().updateProduct(productId, input);
-      }
-
       const response = await apiClient.put<ApiProduct>(
         API_ENDPOINTS.products.byId(productId),
         productInputToApiRequest(input),

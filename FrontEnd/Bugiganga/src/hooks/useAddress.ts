@@ -11,7 +11,19 @@ export function useAddress(userId?: number) {
 
   useEffect(() => {
     if (!userId) return;
-    void addressService.getAddress(userId);
+
+    let active = true;
+    setIsLoading(true);
+    void addressService
+      .getAddress(userId)
+      .catch(() => null)
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, [userId]);
 
   const saveAddress = useCallback(

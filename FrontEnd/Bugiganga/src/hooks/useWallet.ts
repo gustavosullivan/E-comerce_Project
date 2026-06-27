@@ -8,7 +8,7 @@ export function useWallet(userId?: number, isBuyer = true) {
 
   useEffect(() => {
     if (userId && isBuyer) {
-      walletService.ensureWallet(userId, isBuyer);
+      void walletService.loadBalance(userId).catch(() => undefined);
     }
   }, [userId, isBuyer]);
 

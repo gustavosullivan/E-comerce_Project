@@ -1,24 +1,26 @@
-import { API_ENDPOINTS, USE_MOCK } from '@/src/config/api';
+import { isAxiosError } from 'axios';
+
+import { API_ENDPOINTS } from '@/src/config/api';
 import { apiClient, mapAxiosError } from '@/src/services/api/client';
 import { useAddressStore } from '@/src/store/addressStore';
 import type { UserAddress } from '@/src/types/address';
 
 export const addressService = {
-  getAddress(userId: number): UserAddress | null {
-    if (USE_MOCK) {
-      return useAddressStore.getState().getAddress(userId);
+  async getAddress(userId: number): Promise<UserAddress | null> {
+    try {
+      const response = await apiClient.get<UserAddress>(API_ENDPOINTS.users.address);
+      useAddressStore.getState().setAddress(userId, response.data);
+      return response.data;
+    } catch (error) {
+      if (isAxiosError(error) && error.response?.status === 404) {
+        return null;
+      }
+      throw mapAxiosError(error);
     }
-    return useAddressStore.getState().getAddress(userId);
   },
 
   async saveAddress(userId: number, address: UserAddress): Promise<UserAddress> {
     try {
-      if (USE_MOCK) {
-        await new Promise((r) => setTimeout(r, 400));
-        useAddressStore.getState().setAddress(userId, address);
-        return useAddressStore.getState().getAddress(userId)!;
-      }
-
       const response = await apiClient.put<UserAddress>(API_ENDPOINTS.users.address, address);
       useAddressStore.getState().setAddress(userId, response.data);
       return response.data;
