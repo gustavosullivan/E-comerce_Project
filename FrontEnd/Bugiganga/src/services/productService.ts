@@ -37,7 +37,7 @@ function mapApiProduct(product: ApiProduct): Product {
     id: product.id,
     name: displayName || product.description,
     description: product.description,
-    price: product.convertedPrice ?? product.price,
+    price: (product.convertedPrice != null && product.convertedPrice >= 0) ? product.convertedPrice : product.price,
     stock: product.stock,
     imageUrl: `https://picsum.photos/seed/api-product-${product.id}/600/600`,
     categoryId: 1,
@@ -147,10 +147,11 @@ async function resolveProductImageUrl(
 export const productService = {
   async list(): Promise<Product[]> {
     try {
-      const response = await apiClient.get<ApiProduct[]>(API_ENDPOINTS.products.list, {
+      const response = await apiClient.get<any>(API_ENDPOINTS.products.list, {
         params: { targetCurrency: 'BRL' },
       });
-      return response.data.map(mapApiProduct);
+      const data: ApiProduct[] = Array.isArray(response.data) ? response.data : (response.data?.content ?? []);
+      return data.map(mapApiProduct);
     } catch (error) {
       throwServiceError(error);
     }
@@ -169,11 +170,12 @@ export const productService = {
 
   async search(query: string): Promise<Product[]> {
     try {
-      const response = await apiClient.get<ApiProduct[]>(API_ENDPOINTS.products.list, {
+      const response = await apiClient.get<any>(API_ENDPOINTS.products.list, {
         params: { targetCurrency: 'BRL' },
       });
       const normalizedQuery = query.trim().toLowerCase();
-      return response.data
+      const data: ApiProduct[] = Array.isArray(response.data) ? response.data : (response.data?.content ?? []);
+      return data
         .map(mapApiProduct)
         .filter((product) =>
           [product.name, product.description, product.categoryName]
@@ -233,10 +235,11 @@ export const productService = {
 
   async getAdminProducts(adminId: User['id']): Promise<Product[]> {
     try {
-      const response = await apiClient.get<ApiProduct[]>(API_ENDPOINTS.products.list, {
+      const response = await apiClient.get<any>(API_ENDPOINTS.products.list, {
         params: { targetCurrency: 'BRL' },
       });
-      return response.data.map(mapApiProduct).filter((product) => product.userId === adminId);
+      const data: ApiProduct[] = Array.isArray(response.data) ? response.data : (response.data?.content ?? []);
+      return data.map(mapApiProduct).filter((product) => product.userId === adminId);
     } catch (error) {
       throwServiceError(error);
     }

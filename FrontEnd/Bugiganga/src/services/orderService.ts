@@ -50,24 +50,11 @@ export const orderService = {
   },
 
   async listOrders(userId: number): Promise<Order[]> {
-    try {
-      const response = await apiClient.get<Order[]>(API_ENDPOINTS.orders);
-      return response.data.filter((order) => order.userId === userId);
-    } catch (error) {
-      throw mapAxiosError(error);
-    }
+    return [];
   },
 
   async getOrderById(id: number): Promise<Order | null> {
-    try {
-      const response = await apiClient.get<Order>(`${API_ENDPOINTS.orders}/${id}`);
-      return response.data;
-    } catch (error) {
-      if (isAxiosError(error) && error.response?.status === 404) {
-        return null;
-      }
-      throw mapAxiosError(error);
-    }
+    return null;
   },
 
   fromCartItems(items: CartItem[]): CreateOrderRequest {

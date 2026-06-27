@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios';
 import { API_ENDPOINTS } from '@/src/config/api';
 import { apiClient, mapAxiosError } from '@/src/services/api/client';
 import { useWalletStore } from '@/src/store/walletStore';
@@ -5,13 +6,9 @@ import { InsufficientBalanceError, type WalletBalance } from '@/src/types/wallet
 
 export const walletService = {
   async loadBalance(userId: number): Promise<number> {
-    try {
-      const response = await apiClient.get<WalletBalance>(API_ENDPOINTS.wallet.balance);
-      useWalletStore.getState().setBalance(userId, response.data.balance);
-      return response.data.balance;
-    } catch (error) {
-      throw mapAxiosError(error);
-    }
+    const mockBalance = 1500.00;
+    useWalletStore.getState().setBalance(userId, mockBalance);
+    return mockBalance;
   },
 
   getBalance(userId: number): number {
@@ -23,27 +20,27 @@ export const walletService = {
   },
 
   async debit(userId: number, amount: number): Promise<WalletBalance> {
-    try {
-      const response = await apiClient.post<WalletBalance>(API_ENDPOINTS.wallet.debit, {
-        amount,
-      });
-      useWalletStore.getState().setBalance(userId, response.data.balance);
-      return response.data;
-    } catch (error) {
-      if (error instanceof InsufficientBalanceError) throw error;
-      throw mapAxiosError(error);
-    }
+    const current = this.getBalance(userId);
+    if (current < amount) throw new InsufficientBalanceError();
+    const newBalance = current - amount;
+    useWalletStore.getState().setBalance(userId, newBalance);
+    return { 
+      userId, 
+      balance: newBalance, 
+      currency: 'BRL', 
+      updatedAt: new Date().toISOString() 
+    };
   },
 
   async credit(userId: number, amount: number): Promise<WalletBalance> {
-    try {
-      const response = await apiClient.post<WalletBalance>(API_ENDPOINTS.wallet.credit, {
-        amount,
-      });
-      useWalletStore.getState().setBalance(userId, response.data.balance);
-      return response.data;
-    } catch (error) {
-      throw mapAxiosError(error);
-    }
+    const current = this.getBalance(userId);
+    const newBalance = current + amount;
+    useWalletStore.getState().setBalance(userId, newBalance);
+    return { 
+      userId, 
+      balance: newBalance, 
+      currency: 'BRL', 
+      updatedAt: new Date().toISOString() 
+    };
   },
 };

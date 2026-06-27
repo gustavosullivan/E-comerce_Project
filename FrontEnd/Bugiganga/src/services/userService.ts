@@ -1,23 +1,34 @@
+import { isAxiosError } from 'axios';
+
 import { API_ENDPOINTS } from '@/src/config/api';
 import { apiClient, throwServiceError } from '@/src/services/api/client';
 import type { UpdateProfileRequest, UserProfile } from '@/src/types/user';
-
+import { useAuthStore } from '@/src/store/authStore';
 export const userService = {
   async getProfile(): Promise<UserProfile> {
-    try {
-      const response = await apiClient.get<UserProfile>(API_ENDPOINTS.users.profile);
-      return response.data;
-    } catch (error) {
-      throwServiceError(error);
+    const user = useAuthStore.getState().user;
+    if (user) {
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        username: user.email.split('@')[0],
+        avatarUrl: useAuthStore.getState().avatarUri || undefined,
+      };
     }
+    return {
+      id: 0,
+      name: 'Usuário Teste',
+      email: 'teste@example.com',
+      username: 'usuarioteste',
+    };
   },
 
   async updateProfile(data: UpdateProfileRequest): Promise<UserProfile> {
-    try {
-      const response = await apiClient.put<UserProfile>(API_ENDPOINTS.users.profile, data);
-      return response.data;
-    } catch (error) {
-      throwServiceError(error);
-    }
+    const current = await this.getProfile();
+    return {
+      ...current,
+      ...data,
+    };
   },
 };

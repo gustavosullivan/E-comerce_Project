@@ -7,25 +7,21 @@ import type { UserAddress } from '@/src/types/address';
 
 export const addressService = {
   async getAddress(userId: number): Promise<UserAddress | null> {
-    try {
-      const response = await apiClient.get<UserAddress>(API_ENDPOINTS.users.address);
-      useAddressStore.getState().setAddress(userId, response.data);
-      return response.data;
-    } catch (error) {
-      if (isAxiosError(error) && error.response?.status === 404) {
-        return null;
-      }
-      throw mapAxiosError(error);
-    }
+    const mockAddress: UserAddress = {
+      street: 'Rua Fictícia',
+      number: '123',
+      complement: 'Apto 45',
+      neighborhood: 'Centro',
+      city: 'São Paulo',
+      state: 'SP',
+      zipCode: '01000-000',
+    };
+    useAddressStore.getState().setAddress(userId, mockAddress);
+    return mockAddress;
   },
 
   async saveAddress(userId: number, address: UserAddress): Promise<UserAddress> {
-    try {
-      const response = await apiClient.put<UserAddress>(API_ENDPOINTS.users.address, address);
-      useAddressStore.getState().setAddress(userId, response.data);
-      return response.data;
-    } catch (error) {
-      throw mapAxiosError(error);
-    }
+    useAddressStore.getState().setAddress(userId, address);
+    return address;
   },
 };
