@@ -1,5 +1,5 @@
-import type { CartItem } from '@/src/types/cart';
 import type { UserAddress } from '@/src/types/address';
+import type { CartItem } from '@/src/types/cart';
 import type { Order } from '@/src/types/order';
 import type { Product } from '@/src/types/product';
 
@@ -71,13 +71,10 @@ interface ApiOrderPage {
 function mapSnapshotToProduct(item: ApiOrderItem): Product {
   const snapshot = item.product;
   const unitPrice = item.convertedPriceAtPruchase ?? item.priceAtPurchase;
-  const displayName = snapshot
-    ? [snapshot.brand, snapshot.model].filter(Boolean).join(' ').trim()
-    : '';
 
   return {
     id: snapshot?.id ?? item.productId,
-    name: displayName || snapshot?.description || `Produto #${item.productId}`,
+    name: snapshot?.description || `Produto #${item.productId}`,
     description: snapshot?.description ?? '',
     brand: snapshot?.brand ?? '',
     model: snapshot?.model ?? '',

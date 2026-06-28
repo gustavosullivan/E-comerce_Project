@@ -1,11 +1,11 @@
-import { MOCK_CATEGORIES } from '@/src/mocks/categories';
 import { API_ENDPOINTS } from '@/src/config/api';
+import { MOCK_CATEGORIES } from '@/src/mocks/categories';
 import { apiClient, throwServiceError } from '@/src/services/api/client';
 import { uploadProductImage } from '@/src/services/cloudinaryService';
 import type { User } from '@/src/types/auth';
 import type { Product, ProductInput } from '@/src/types/product';
-import type { ImagePickerAsset } from 'expo-image-picker';
 import { parseProductForm, type ProductFormData } from '@/src/validation/productSchema';
+import type { ImagePickerAsset } from 'expo-image-picker';
 
 const PRODUCT_CURRENCY = 'BRL' as const;
 
@@ -39,12 +39,11 @@ function resolveCategoryName(categoryId: number): string {
 }
 
 function mapApiProduct(product: ApiProduct): Product {
-  const displayName = [product.brand, product.model].filter(Boolean).join(' ').trim();
   const categoryId = product.categoryId ?? 1;
 
   return {
     id: product.id,
-    name: displayName || product.description,
+    name: product.description,
     description: product.description,
     brand: product.brand,
     model: product.model,
