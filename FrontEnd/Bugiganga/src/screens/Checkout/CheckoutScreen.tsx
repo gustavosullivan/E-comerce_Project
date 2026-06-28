@@ -20,7 +20,7 @@ import { orderService } from '@/src/services/orderService';
 import { walletService } from '@/src/services/walletService';
 import { useCheckoutStore } from '@/src/store/checkoutStore';
 import { snackbar } from '@/src/store/snackbarStore';
-import { useCartStore } from '@/src/store/cartStore';
+import { useCart } from '@/src/hooks/useCart';
 import { isBuyer } from '@/src/types/auth';
 import type { UserAddress } from '@/src/types/address';
 import { InsufficientBalanceError } from '@/src/types/wallet';
@@ -35,7 +35,7 @@ export default function CheckoutScreen() {
   const mode = useCheckoutStore((s) => s.mode);
   const total = useCheckoutStore((s) => s.getTotal());
   const clearCheckout = useCheckoutStore((s) => s.clear);
-  const clearCart = useCartStore((s) => s.clearCart);
+  const { clearCart } = useCart();
   const [isConfirming, setIsConfirming] = useState(false);
   const [addressModalOpen, setAddressModalOpen] = useState(false);
   const [isSavingAddress, setIsSavingAddress] = useState(false);

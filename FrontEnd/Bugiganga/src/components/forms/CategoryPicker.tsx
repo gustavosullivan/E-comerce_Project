@@ -1,11 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { MOCK_CATEGORIES } from '@/src/mocks/categories';
+import { getCategoriesByProductType } from '@/src/mocks/categories';
 import { colors, fontSizes, fonts, loginGlass, radius } from '@/src/theme';
+import type { CategoryProductType } from '@/src/types/product';
 
 type CategoryPickerProps = {
   value: number;
   onChange: (categoryId: number) => void;
+  productType: CategoryProductType;
   error?: string;
   variant?: 'default' | 'warm';
 };
@@ -13,16 +15,18 @@ type CategoryPickerProps = {
 export function CategoryPicker({
   value,
   onChange,
+  productType,
   error,
   variant = 'default',
 }: CategoryPickerProps) {
   const warm = variant === 'warm';
+  const categories = getCategoriesByProductType(productType);
 
   return (
     <View style={styles.fieldGroup}>
       <Text style={[styles.label, warm && styles.labelWarm]}>Categoria</Text>
       <View style={styles.categoryRow}>
-        {MOCK_CATEGORIES.map((category) => {
+        {categories.map((category) => {
           const active = value === category.id;
           return (
             <Pressable

@@ -9,14 +9,13 @@ import { PageContainer } from '@/src/components/layout/PageContainer';
 import { ScreenHeader } from '@/src/components/layout/ScreenHeader';
 import { WarmAppShell } from '@/src/components/layout/WarmAppShell';
 import { useTabBarInset } from '@/src/hooks/useTabBarInset';
-import { useFavoritesStore } from '@/src/store/favoritesStore';
+import { useFavorites } from '@/src/hooks/useFavorites';
 import { layout } from '@/src/theme';
 import type { Product } from '@/src/types/product';
 
 export default function FavoritesScreen() {
   const { contentBottomInset } = useTabBarInset();
-  const items = useFavoritesStore((s) => s.items);
-  const toggle = useFavoritesStore((s) => s.toggle);
+  const { items, toggle } = useFavorites();
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
 
   return (

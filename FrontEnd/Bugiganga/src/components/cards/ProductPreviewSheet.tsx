@@ -7,7 +7,7 @@ import { router } from 'expo-router';
 import { WarmGlassSurface } from '@/src/components/layout/WarmGlassSurface';
 import { ProductStockBadge } from '@/src/components/ui/ProductStockBadge';
 import { snackbar } from '@/src/store/snackbarStore';
-import { useCartStore } from '@/src/store/cartStore';
+import { useCart } from '@/src/hooks/useCart';
 import { useCheckoutStore } from '@/src/store/checkoutStore';
 import { fontSizes, fonts, loginGlass, radius, shadows } from '@/src/theme';
 import { glassBlur } from '@/src/theme/loginGlass';
@@ -21,7 +21,7 @@ type ProductPreviewSheetProps = {
 };
 
 export function ProductPreviewSheet({ product, visible, onClose }: ProductPreviewSheetProps) {
-  const addItem = useCartStore((s) => s.addItem);
+  const { addItem } = useCart();
   const setBuyNow = useCheckoutStore((s) => s.setBuyNow);
   const outOfStock = product.stock <= 0;
   const formatCurrency = useFormatCurrency();

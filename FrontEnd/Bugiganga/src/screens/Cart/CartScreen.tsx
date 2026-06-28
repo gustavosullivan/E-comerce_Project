@@ -12,7 +12,7 @@ import { useAuth } from '@/src/hooks/useAuth';
 import { useTabBarInset } from '@/src/hooks/useTabBarInset';
 import { useWallet } from '@/src/hooks/useWallet';
 import { snackbar } from '@/src/store/snackbarStore';
-import { useCartStore } from '@/src/store/cartStore';
+import { useCart } from '@/src/hooks/useCart';
 import { useCheckoutStore } from '@/src/store/checkoutStore';
 import { isBuyer } from '@/src/types/auth';
 import { layout } from '@/src/theme';
@@ -22,11 +22,7 @@ export default function CartScreen() {
   const buyer = isBuyer(user);
   const { balance } = useWallet(user?.id, buyer);
   const { contentBottomInset } = useTabBarInset();
-  const items = useCartStore((s) => s.items);
-  const updateQuantity = useCartStore((s) => s.updateQuantity);
-  const removeItem = useCartStore((s) => s.removeItem);
-  const subtotal = useCartStore((s) => s.getSubtotal());
-  const total = useCartStore((s) => s.getTotal());
+  const { items, updateQuantity, removeItem, subtotal, total } = useCart();
   const setFromCart = useCheckoutStore((s) => s.setFromCart);
 
   const handleCheckout = () => {

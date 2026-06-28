@@ -1,6 +1,6 @@
 import { API_ENDPOINTS } from '@/src/config/api';
 import { apiClient, mapAxiosError } from '@/src/services/api/client';
-import { useAuthStore } from '@/src/store/authStore';
+import { syncUserProfileStores, type ApiUserProfile } from '@/src/services/userProfileSync';
 import type {
   AuthResponse,
   ChangePasswordRequest,
@@ -12,8 +12,7 @@ import type {
 
 type ApiUserType = 'Admin' | 'Common' | number;
 
-interface ApiUser {
-  id: number;
+interface ApiUser extends ApiUserProfile {
   name: string;
   email: string;
   username?: string;
@@ -43,6 +42,8 @@ function mapApiUser(user: ApiUser): User {
 }
 
 function mapApiAuthResponse(response: ApiAuthResponse): AuthResponse {
+  syncUserProfileStores(response.user);
+
   return {
     token: response.token,
     user: mapApiUser(response.user),
@@ -76,6 +77,7 @@ export const authService = {
   async getMe(): Promise<User> {
     try {
       const response = await apiClient.get<ApiUser>(API_ENDPOINTS.auth.me);
+      syncUserProfileStores(response.data);
       return mapApiUser(response.data);
     } catch (error) {
       throw mapAxiosError(error);

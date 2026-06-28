@@ -1,3 +1,4 @@
+import { isCategoryValidForProductType, getProductTypeByCategoryId } from '@/src/mocks/categories';
 import { z } from 'zod';
 
 export const PRODUCT_TYPES = ['BOOK', 'VINYL'] as const;
@@ -23,23 +24,33 @@ export const PRODUCT_TYPE_LABELS: Record<ProductType, {
   },
 };
 
-export const productFormSchema = z.object({
-  productType: z.enum(PRODUCT_TYPES, { required_error: 'Selecione o tipo do produto' }),
-  description: z.string().min(2, 'Informe o título/nome do álbum'),
-  brand: z.string().min(1, 'Informe a editora/gravadora'),
-  model: z.string().min(1, 'Informe o autor/artista'),
-  price: z
-    .string()
-    .min(1, 'Informe o preço')
-    .refine((value) => !Number.isNaN(Number(value.replace(',', '.'))), 'Preço inválido')
-    .refine((value) => Number(value.replace(',', '.')) > 0, 'O preço deve ser maior que zero'),
-  categoryId: z.number({ required_error: 'Selecione uma categoria' }),
-  stock: z
-    .string()
-    .min(1, 'Informe o estoque')
-    .refine((value) => /^\d+$/.test(value), 'Estoque inválido'),
-  imageUrl: z.string().optional(),
-});
+export const productFormSchema = z
+  .object({
+    productType: z.enum(PRODUCT_TYPES, { required_error: 'Selecione o tipo do produto' }),
+    description: z.string().min(2, 'Informe o título/nome do álbum'),
+    brand: z.string().min(1, 'Informe a editora/gravadora'),
+    model: z.string().min(1, 'Informe o autor/artista'),
+    price: z
+      .string()
+      .min(1, 'Informe o preço')
+      .refine((value) => !Number.isNaN(Number(value.replace(',', '.'))), 'Preço inválido')
+      .refine((value) => Number(value.replace(',', '.')) > 0, 'O preço deve ser maior que zero'),
+    categoryId: z.number({ required_error: 'Selecione uma categoria' }),
+    stock: z
+      .string()
+      .min(1, 'Informe o estoque')
+      .refine((value) => /^\d+$/.test(value), 'Estoque inválido'),
+    imageUrl: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!isCategoryValidForProductType(data.categoryId, data.productType)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Selecione uma categoria compatível com o tipo do item',
+        path: ['categoryId'],
+      });
+    }
+  });
 
 export type ProductFormData = z.infer<typeof productFormSchema>;
 
@@ -67,7 +78,7 @@ export function productToFormValues(product: {
   imageUrl: string;
 }): ProductFormData {
   return {
-    productType: 'BOOK',
+    productType: getProductTypeByCategoryId(product.categoryId),
     description: product.description,
     brand: product.brand ?? '',
     model: product.model ?? '',

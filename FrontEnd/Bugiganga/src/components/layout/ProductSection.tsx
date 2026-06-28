@@ -5,7 +5,7 @@ import { ProductCard } from '@/src/components/cards/ProductCard';
 import { ProductPreviewSheet } from '@/src/components/cards/ProductPreviewSheet';
 import { colors, fonts } from '@/src/theme';
 import type { Product } from '@/src/types/product';
-import { useFavoritesStore } from '@/src/store/favoritesStore';
+import { useFavorites } from '@/src/hooks/useFavorites';
 
 type ProductSectionProps = {
   title: string;
@@ -13,7 +13,7 @@ type ProductSectionProps = {
 };
 
 export function ProductSection({ title, products }: ProductSectionProps) {
-  const toggle = useFavoritesStore((s) => s.toggle);
+  const { toggle } = useFavorites();
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
 
   if (products.length === 0) return null;

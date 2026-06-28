@@ -1,9 +1,12 @@
 export type ProductInput = Omit<Product, 'id' | 'categoryName'>;
 
+export type CategoryProductType = 'BOOK' | 'VINYL';
+
 export interface Category {
   id: number;
   name: string;
   slug: string;
+  productType: CategoryProductType;
 }
 
 export interface Product {

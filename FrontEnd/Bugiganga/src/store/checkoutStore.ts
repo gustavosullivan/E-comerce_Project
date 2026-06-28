@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+import { useAuthStore } from '@/src/store/authStore';
 import { useCartStore } from '@/src/store/cartStore';
 import type { CartItem } from '@/src/types/cart';
 import type { Product } from '@/src/types/product';
@@ -19,7 +20,8 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
   items: [],
   mode: 'buyNow',
   setFromCart: () => {
-    const cartItems = useCartStore.getState().items;
+    const userId = useAuthStore.getState().user?.id;
+    const cartItems = userId ? useCartStore.getState().cartsByUser[userId] ?? [] : [];
     set({ items: [...cartItems], mode: 'cart' });
   },
   setBuyNow: (product, quantity) => {

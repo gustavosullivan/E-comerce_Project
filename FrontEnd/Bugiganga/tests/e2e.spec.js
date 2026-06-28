@@ -92,9 +92,9 @@ test('CT06 - Busca de produto', async ({ page }) => {
   await expect(page.locator('text=R$').first()).toBeVisible({ timeout: 5000 });
 });
 
-test('CT07 - Filtro por categoria Eletrônicos vintage', async ({ page }) => {
+test('CT07 - Filtro por categoria Livros brasileiros', async ({ page }) => {
   await fazerLogin(page);
-  await page.locator('text=Eletrônicos vintage').first().click();
+  await page.locator('text=Livros brasileiros').first().click();
   await page.waitForTimeout(2000);
   await expect(page.locator('text=R$').first()).toBeVisible({ timeout: 5000 });
 });

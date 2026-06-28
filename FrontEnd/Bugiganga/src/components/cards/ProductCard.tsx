@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { useCartStore } from '@/src/store/cartStore';
-import { useFavoritesStore } from '@/src/store/favoritesStore';
+import { useCart } from '@/src/hooks/useCart';
+import { useFavorites } from '@/src/hooks/useFavorites';
 import { ProductStockBadge } from '@/src/components/ui/ProductStockBadge';
 import { colors, fontSizes, fonts, loginGlass, radius, shadows } from '@/src/theme';
 import { glassBlur } from '@/src/theme/loginGlass';
@@ -34,10 +34,11 @@ export function ProductCard({
   const warmBlurIntensity =
     Platform.OS === 'android' ? glassBlur.android.card : glassBlur.ios.card;
   const warmWebBlur = glassBlur.web.card;
-  const isFavorite = useFavoritesStore((s) => s.items.some((p) => p.id === product.id));
-  const addItem = useCartStore((s) => s.addItem);
+  const { isFavorite } = useFavorites();
+  const { addItem } = useCart();
   const [justAdded, setJustAdded] = useState(false);
   const formatCurrency = useFormatCurrency();
+  const favorite = isFavorite(product.id);
 
   const handleAddToCart = () => {
     if (product.stock <= 0) return;
@@ -85,11 +86,11 @@ export function ProductCard({
               }}
               hitSlop={8}
               accessibilityRole="button"
-              accessibilityLabel={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}>
+              accessibilityLabel={favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}>
               <MaterialIcons
-                name={isFavorite ? 'favorite' : 'favorite-border'}
+                name={favorite ? 'favorite' : 'favorite-border'}
                 size={18}
-                color={isFavorite ? colors.danger : warm ? loginGlass.goldMuted : colors.textMuted}
+                color={favorite ? colors.danger : warm ? loginGlass.goldMuted : colors.textMuted}
               />
             </Pressable>
           </View>

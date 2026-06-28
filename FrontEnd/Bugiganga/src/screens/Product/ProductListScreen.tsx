@@ -18,7 +18,7 @@ import { Loading } from '@/src/components/layout/Loading';
 import { ProductGrid } from '@/src/components/layout/ProductGrid';
 import { useProducts } from '@/src/hooks/useProducts';
 import { MOCK_CATEGORIES } from '@/src/mocks/categories';
-import { useFavoritesStore } from '@/src/store/favoritesStore';
+import { useFavorites } from '@/src/hooks/useFavorites';
 import { colors, fontSizes, fonts } from '@/src/theme';
 import type { Product } from '@/src/types/product';
 import { EMPTY_PRODUCT_FILTERS, type ProductFilters } from '@/src/types/productFilters';
@@ -30,7 +30,7 @@ export default function ProductListScreen() {
   const [productFilters, setProductFilters] = useState<ProductFilters>(EMPTY_PRODUCT_FILTERS);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
-  const toggle = useFavoritesStore((s) => s.toggle);
+  const { toggle } = useFavorites();
 
   const filtered = useMemo(
     () => applyProductFilters(products, query, productFilters),

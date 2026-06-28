@@ -25,9 +25,8 @@ import { useWallet } from '@/src/hooks/useWallet';
 import { routes } from '@/src/navigation/routes';
 import { orderService } from '@/src/services/orderService';
 import { productService } from '@/src/services/productService';
-import { useCartStore } from '@/src/store/cartStore';
-import { useFavoritesStore } from '@/src/store/favoritesStore';
-import { useOrderHistoryStore } from '@/src/store/orderHistoryStore';
+import { useCart } from '@/src/hooks/useCart';
+import { useFavorites } from '@/src/hooks/useFavorites';
 import { snackbar } from '@/src/store/snackbarStore';
 import { useAuthStore } from '@/src/store/authStore';
 import { fontSizes, fonts, layout, loginGlass, radius } from '@/src/theme';
@@ -87,11 +86,9 @@ export default function SettingsScreen() {
   const buyer = user?.role === 'BUYER';
   const canBuy = hasBuyerProfile(user);
   const canSell = hasSellerProfile(user);
-  const cartCount = useCartStore((s) => s.getItemCount());
-  const favoriteCount = useFavoritesStore((s) => s.items.length);
-  const orderCount = useOrderHistoryStore((s) =>
-    user?.id ? s.orders.filter((o) => o.userId === user.id).length : 0,
-  );
+  const { itemCount: cartCount } = useCart();
+  const { count: favoriteCount } = useFavorites();
+  const [orderCount, setOrderCount] = useState(0);
   const { balance } = useWallet(user?.id, canBuy);
   const { contentBottomInset } = useTabBarInset();
   const [productCount, setProductCount] = useState(0);
@@ -130,6 +127,31 @@ export default function SettingsScreen() {
       active = false;
     };
   }, [canSell, user?.id]);
+
+  useEffect(() => {
+    if (!canBuy || !user?.id) {
+      setOrderCount(0);
+      return;
+    }
+
+    let active = true;
+
+    (async () => {
+      try {
+        const orders = await orderService.listOrders(user.id, {
+          buyerName: user.name,
+          buyerEmail: user.email,
+        });
+        if (active) setOrderCount(orders.length);
+      } catch {
+        if (active) setOrderCount(0);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [canBuy, user?.email, user?.id, user?.name]);
 
   if (!token) {
     return <Redirect href="/login" />;
@@ -240,60 +262,6 @@ export default function SettingsScreen() {
                       />
                     </>
                   ) : null}
-                </View>
-              </ProfilePaper>
-
-              <ProfilePaper
-                title="Perfis da conta"
-                subtitle="Use a mesma conta para comprar e vender"
-                delay={20}
-                showStamp={false}
-                variant="warm">
-                <Text style={styles.helper}>
-                  Toda conta Bugiganga possui os perfis de comprador e vendedor. Escolha abaixo qual
-                  área você quer usar agora.
-                </Text>
-                <View style={styles.profileSwitchRow}>
-                  <Pressable
-                    style={[
-                      styles.profileSwitchButton,
-                      buyer && styles.profileSwitchButtonActive,
-                    ]}
-                    onPress={() => setActiveRole('BUYER')}
-                    disabled={!canBuy}>
-                    <MaterialIcons
-                      name="shopping-bag"
-                      size={18}
-                      color={buyer ? loginGlass.text : loginGlass.goldMuted}
-                    />
-                    <Text
-                      style={[
-                        styles.profileSwitchText,
-                        buyer && styles.profileSwitchTextActive,
-                      ]}>
-                      Comprador
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    style={[
-                      styles.profileSwitchButton,
-                      admin && styles.profileSwitchButtonActive,
-                    ]}
-                    onPress={() => setActiveRole('ADMIN')}
-                    disabled={!canSell}>
-                    <MaterialIcons
-                      name="storefront"
-                      size={18}
-                      color={admin ? loginGlass.text : loginGlass.goldMuted}
-                    />
-                    <Text
-                      style={[
-                        styles.profileSwitchText,
-                        admin && styles.profileSwitchTextActive,
-                      ]}>
-                      Vendedor
-                    </Text>
-                  </Pressable>
                 </View>
               </ProfilePaper>
 
@@ -512,37 +480,6 @@ const styles = StyleSheet.create({
     color: loginGlass.textMuted,
     lineHeight: 20,
     marginBottom: 16,
-  },
-  profileSwitchRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  profileSwitchButton: {
-    flex: 1,
-    minHeight: 48,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingHorizontal: 10,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: loginGlass.cardBorder,
-    backgroundColor: loginGlass.formTrackBg,
-  },
-  profileSwitchButtonActive: {
-    borderColor: loginGlass.chipActiveBorder,
-    backgroundColor: loginGlass.chipActiveBg,
-  },
-  profileSwitchText: {
-    fontFamily: fonts.sans,
-    fontSize: fontSizes.sm,
-    fontWeight: '700',
-    color: loginGlass.textMuted,
-  },
-  profileSwitchTextActive: {
-    color: loginGlass.text,
-    fontWeight: '800',
   },
   adminActions: {
     gap: 10,

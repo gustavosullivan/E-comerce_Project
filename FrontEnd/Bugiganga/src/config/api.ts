@@ -16,14 +16,16 @@ export const API_ENDPOINTS = {
     create: '/ws/products',
   },
   cart: '/api/cart',
-  orders: '/api/orders',
+  orders: '/ws/orders',
+  ordersById: (id: number) => `/ws/orders/${id}`,
+  ordersAdmin: '/ws/orders/admin',
   wallet: {
-    balance: '/api/wallet/balance',
-    debit: '/api/wallet/debit',
-    credit: '/api/wallet/credit',
+    balance: '/auth/wallet/balance',
+    debit: '/auth/wallet/debit',
+    credit: '/auth/wallet/credit',
   },
   users: {
-    profile: '/api/users/me',
-    address: '/api/users/me/address',
+    profile: '/auth/me',
+    address: '/auth/me',
   },
 } as const;

@@ -3,8 +3,8 @@ import { persist } from 'zustand/middleware';
 
 import { authPersistStorage } from '@/src/storage/authPersistStorage';
 
-/** Crédito inicial em reais para contas comprador (mock). */
-export const DEFAULT_BUYER_BALANCE = 250;
+/** Crédito inicial em reais para contas comprador (padrão do backend). */
+export const DEFAULT_BUYER_BALANCE = 1800;
 
 interface WalletState {
   balances: Record<number, number>;

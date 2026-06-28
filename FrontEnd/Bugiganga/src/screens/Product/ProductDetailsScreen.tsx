@@ -13,7 +13,7 @@ import { QuantitySelector } from '@/src/components/layout/QuantitySelector';
 import { AnimatedPrice } from '@/src/components/ui/AnimatedPrice';
 import { ProductStockBadge } from '@/src/components/ui/ProductStockBadge';
 import { useProduct } from '@/src/hooks/useProducts';
-import { useCartStore } from '@/src/store/cartStore';
+import { useCart } from '@/src/hooks/useCart';
 import { useCheckoutStore } from '@/src/store/checkoutStore';
 import { colors, fonts } from '@/src/theme';
 import { useFormatCurrency } from '@/src/utils/formatCurrency';
@@ -25,7 +25,7 @@ export default function ProductDetailsScreen() {
   const productId = Number(id);
   const { product, isLoading, error } = useProduct(productId);
   const [quantity, setQuantity] = useState(1);
-  const addItem = useCartStore((s) => s.addItem);
+  const { addItem } = useCart();
   const setBuyNow = useCheckoutStore((s) => s.setBuyNow);
   const formatCurrency = useFormatCurrency();
 

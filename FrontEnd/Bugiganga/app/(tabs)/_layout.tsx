@@ -4,14 +4,15 @@ import { StyleSheet } from 'react-native';
 
 import { GlassTabBar } from '@/src/components/layout/GlassTabBar';
 import { TAB_BAR_HEIGHT } from '@/src/hooks/useTabBarInset';
-import { useCartStore } from '@/src/store/cartStore';
+import { selectCartItemCount, useCartStore } from '@/src/store/cartStore';
 import { useAuthStore } from '@/src/store/authStore';
 import { fontSizes, fonts, loginGlass } from '@/src/theme';
 import { isAdmin } from '@/src/types/auth';
 
 export default function TabLayout() {
   const { user, token } = useAuthStore();
-  const cartCount = useCartStore((s) => s.getItemCount());
+  const userId = useAuthStore((state) => state.user?.id);
+  const cartCount = useCartStore((state) => selectCartItemCount(state, userId));
   const isCurrentUserAdmin = isAdmin(user);
 
   if (!token) return <Redirect href="/login" />;

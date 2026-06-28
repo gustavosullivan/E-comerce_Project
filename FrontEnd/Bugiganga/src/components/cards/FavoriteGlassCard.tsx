@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { useCartStore } from '@/src/store/cartStore';
+import { useCart } from '@/src/hooks/useCart';
 import { colors, fontSizes, fonts, loginGlass, radius, shadows } from '@/src/theme';
 import { glassBlur } from '@/src/theme/loginGlass';
 import type { Product } from '@/src/types/product';
 import { formatCurrency } from '@/src/utils/formatCurrency';
+import { webBackdropBlur } from '@/src/utils/webBlurStyle';
 
 type FavoriteGlassCardProps = {
   product: Product;
@@ -26,7 +27,7 @@ export function FavoriteGlassCard({
   const warm = variant === 'warm';
   const blurIntensity =
     Platform.OS === 'android' ? glassBlur.android.card : glassBlur.ios.card;
-  const addItem = useCartStore((s) => s.addItem);
+  const { addItem } = useCart();
   const [justAdded, setJustAdded] = useState(false);
 
   const handleAddToCart = () => {
@@ -44,11 +45,7 @@ export function FavoriteGlassCard({
         style={[
           styles.glass,
           warm && styles.glassWarm,
-          warm &&
-            Platform.OS === 'web' && {
-              backdropFilter: `blur(${glassBlur.web.card})`,
-              WebkitBackdropFilter: `blur(${glassBlur.web.card})`,
-            },
+          warm && webBackdropBlur(glassBlur.web.card),
         ]}>
         {Platform.OS === 'web' ? (
           <View style={[styles.webFill, warm && styles.webFillWarm]} />

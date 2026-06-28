@@ -1,3 +1,4 @@
+import { MOCK_CATEGORIES } from '@/src/mocks/categories';
 import { API_ENDPOINTS } from '@/src/config/api';
 import { apiClient, throwServiceError } from '@/src/services/api/client';
 import { uploadProductImage } from '@/src/services/cloudinaryService';
@@ -5,7 +6,8 @@ import type { User } from '@/src/types/auth';
 import type { Product, ProductInput } from '@/src/types/product';
 import type { ImagePickerAsset } from 'expo-image-picker';
 import { parseProductForm, type ProductFormData } from '@/src/validation/productSchema';
-import { useCurrencyStore } from '@/src/store/currencyStore';
+
+const PRODUCT_CURRENCY = 'BRL' as const;
 
 interface ApiProduct {
   id: number;
@@ -18,6 +20,8 @@ interface ApiProduct {
   convertedPrice?: number;
   requestCurrency?: string;
   imageURL?: string;
+  categoryId?: number;
+  sellerId?: number;
 }
 
 interface ApiProductRequest {
@@ -27,10 +31,16 @@ interface ApiProductRequest {
   currency?: string;
   price?: number;
   imageURL?: string;
+  categoryId?: number;
+}
+
+function resolveCategoryName(categoryId: number): string {
+  return MOCK_CATEGORIES.find((category) => category.id === categoryId)?.name ?? 'Outros';
 }
 
 function mapApiProduct(product: ApiProduct): Product {
   const displayName = [product.brand, product.model].filter(Boolean).join(' ').trim();
+  const categoryId = product.categoryId ?? 1;
 
   return {
     id: product.id,
@@ -41,9 +51,9 @@ function mapApiProduct(product: ApiProduct): Product {
     price: (product.convertedPrice != null && product.convertedPrice >= 0) ? product.convertedPrice : product.price,
     stock: product.stock,
     imageUrl: product.imageURL || `https://picsum.photos/seed/api-product-${product.id}/600/600`,
-    categoryId: 1,
-    categoryName: 'Sebo',
-    userId: 1,
+    categoryId,
+    categoryName: resolveCategoryName(categoryId),
+    userId: product.sellerId ?? 1,
     isFeatured: product.id <= 4,
     isNew: product.id > 8,
     isBestseller: product.stock >= 15,
@@ -55,9 +65,10 @@ function productInputToApiRequest(data: Partial<ProductInput>): ApiProductReques
     description: data.description,
     brand: data.brand,
     model: data.model,
-    currency: useCurrencyStore.getState().currency,
+    currency: PRODUCT_CURRENCY,
     price: data.price,
     imageURL: data.imageUrl,
+    categoryId: data.categoryId,
   };
 }
 
@@ -143,13 +154,40 @@ async function resolveProductImageUrl(
   return existingUrl?.trim() ?? '';
 }
 
+async function fetchAllProductPages(targetCurrency: string): Promise<ApiProduct[]> {
+  const products: ApiProduct[] = [];
+  let page = 0;
+  const size = 50;
+
+  while (true) {
+    const response = await apiClient.get<{ content: ApiProduct[]; last: boolean } | ApiProduct[]>(
+      API_ENDPOINTS.products.list,
+      {
+        params: { targetCurrency, page, size },
+      },
+    );
+
+    if (Array.isArray(response.data)) {
+      return response.data.map((product) => product);
+    }
+
+    const pageData = response.data.content ?? [];
+    products.push(...pageData);
+
+    if (response.data.last || pageData.length === 0) {
+      break;
+    }
+
+    page += 1;
+  }
+
+  return products;
+}
+
 export const productService = {
   async list(targetCurrency = 'BRL'): Promise<Product[]> {
     try {
-      const response = await apiClient.get<any>(API_ENDPOINTS.products.list, {
-        params: { targetCurrency },
-      });
-      const data: ApiProduct[] = Array.isArray(response.data) ? response.data : (response.data?.content ?? []);
+      const data = await fetchAllProductPages(targetCurrency);
       return data.map(mapApiProduct);
     } catch (error) {
       throwServiceError(error);
@@ -169,11 +207,8 @@ export const productService = {
 
   async search(query: string, targetCurrency = 'BRL'): Promise<Product[]> {
     try {
-      const response = await apiClient.get<any>(API_ENDPOINTS.products.list, {
-        params: { targetCurrency },
-      });
       const normalizedQuery = query.trim().toLowerCase();
-      const data: ApiProduct[] = Array.isArray(response.data) ? response.data : (response.data?.content ?? []);
+      const data = await fetchAllProductPages(targetCurrency);
       return data
         .map(mapApiProduct)
         .filter((product) =>
@@ -234,10 +269,7 @@ export const productService = {
 
   async getAdminProducts(adminId: User['id'], targetCurrency = 'BRL'): Promise<Product[]> {
     try {
-      const response = await apiClient.get<any>(API_ENDPOINTS.products.list, {
-        params: { targetCurrency },
-      });
-      const data: ApiProduct[] = Array.isArray(response.data) ? response.data : (response.data?.content ?? []);
+      const data = await fetchAllProductPages(targetCurrency);
       return data.map(mapApiProduct);
     } catch (error) {
       throwServiceError(error);

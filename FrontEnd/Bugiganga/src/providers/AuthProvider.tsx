@@ -1,6 +1,7 @@
 import { type PropsWithChildren, useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
+import { userService } from '@/src/services/userService';
 import { useProductCatalogStore } from '@/src/store/productCatalogStore';
 import { colors } from '@/src/theme';
 import { useAuthStore } from '@/src/store/authStore';
@@ -31,6 +32,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
       clearTimeout(fallback);
     };
   }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+
+    const token = useAuthStore.getState().token;
+    if (!token) return;
+
+    void userService.getProfile().catch(() => {
+      // Mantém avatar local se a API estiver indisponível.
+    });
+  }, [ready]);
 
   if (!ready) {
     return (

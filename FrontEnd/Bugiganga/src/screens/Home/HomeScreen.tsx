@@ -28,7 +28,7 @@ import { isAdmin } from '@/src/types/auth';
 import { useProducts } from '@/src/hooks/useProducts'; // This hook is for buyer products
 import { MOCK_CATEGORIES } from '@/src/mocks/categories';
 import { snackbar } from '@/src/store/snackbarStore';
-import { useFavoritesStore } from '@/src/store/favoritesStore';
+import { useFavorites } from '@/src/hooks/useFavorites';
 import { fontSizes, fonts, layout, loginGlass } from '@/src/theme';
 import type { Product } from '@/src/types/product';
 import { EMPTY_PRODUCT_FILTERS, type ProductFilters } from '@/src/types/productFilters';
@@ -94,8 +94,7 @@ export default function HomeScreen() {
     }
   }, [products, previewProduct]);
 
-  const toggle = useFavoritesStore((s) => s.toggle);
-  const favoriteCount = useFavoritesStore((s) => s.items.length);
+  const { toggle, count: favoriteCount } = useFavorites();
 
   // Admin specific states and functions
   const [adminProducts, setAdminProducts] = useState<Product[]>([]);

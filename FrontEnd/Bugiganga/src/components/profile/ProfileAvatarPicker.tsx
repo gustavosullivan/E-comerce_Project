@@ -43,14 +43,14 @@ export function ProfileAvatarPicker({
   const ringScale = useSharedValue(1);
 
   useEffect(() => {
-    if (!isHydrated || avatarUri) return;
+    if (!isHydrated || !useAuthStore.getState().token) return;
 
     void userService.getProfile().then((profile) => {
-      if (profile.avatarUrl) {
-        setAvatarUri(profile.avatarUrl);
-      }
+      setAvatarUri(profile.avatarUrl ?? null);
+    }).catch(() => {
+      // Mantém avatar local se a API estiver indisponível.
     });
-  }, [avatarUri, isHydrated, setAvatarUri]);
+  }, [isHydrated, setAvatarUri]);
 
   const ringStyle = useAnimatedStyle(() => ({
     transform: [{ scale: ringScale.value }],

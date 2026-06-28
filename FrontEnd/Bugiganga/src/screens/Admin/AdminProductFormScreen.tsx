@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import type { ImagePickerAsset } from 'expo-image-picker';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   KeyboardAvoidingView,
@@ -31,7 +31,7 @@ import { useTabBarInset } from '@/src/hooks/useTabBarInset';
 import { useAdminProducts } from '@/src/hooks/useProducts';
 import { useProduct } from '@/src/hooks/useProducts';
 import { routes } from '@/src/navigation/routes';
-import { MOCK_CATEGORIES } from '@/src/mocks/categories';
+import { getDefaultCategoryId } from '@/src/mocks/categories';
 import { snackbar } from '@/src/store/snackbarStore';
 import { getErrorMessage } from '@/src/services/api/client';
 import { confirmAction } from '@/src/utils/confirm';
@@ -58,7 +58,7 @@ export default function AdminProductFormScreen() {
   const [imageAsset, setImageAsset] = useState<ImagePickerAsset | null>(null);
   const [imageUrl, setImageUrl] = useState('');
 
-  const { control, handleSubmit, reset, watch } = useForm<ProductFormData>({
+  const { control, handleSubmit, reset, watch, setValue } = useForm<ProductFormData>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
       productType: 'BOOK',
@@ -66,7 +66,7 @@ export default function AdminProductFormScreen() {
       brand: '',
       model: '',
       price: '',
-      categoryId: MOCK_CATEGORIES[0]?.id ?? 1,
+      categoryId: getDefaultCategoryId('BOOK'),
       stock: '1',
       imageUrl: '',
     },
@@ -74,6 +74,14 @@ export default function AdminProductFormScreen() {
 
   const productType = watch('productType') as ProductType;
   const labels = PRODUCT_TYPE_LABELS[productType] ?? PRODUCT_TYPE_LABELS.BOOK;
+  const previousProductType = useRef(productType);
+
+  useEffect(() => {
+    if (previousProductType.current === productType) return;
+
+    previousProductType.current = productType;
+    setValue('categoryId', getDefaultCategoryId(productType));
+  }, [productType, setValue]);
 
   useFocusEffect(
     useCallback(() => {
@@ -88,7 +96,7 @@ export default function AdminProductFormScreen() {
           brand: '',
           model: '',
           price: '',
-          categoryId: MOCK_CATEGORIES[0]?.id ?? 1,
+          categoryId: getDefaultCategoryId('BOOK'),
           stock: '1',
           imageUrl: '',
         });
@@ -298,6 +306,7 @@ export default function AdminProductFormScreen() {
                     <CategoryPicker
                       value={value}
                       onChange={onChange}
+                      productType={productType}
                       error={error?.message}
                       variant="warm"
                     />
