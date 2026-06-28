@@ -5,6 +5,7 @@ import type { User } from '@/src/types/auth';
 import type { Product, ProductInput } from '@/src/types/product';
 import type { ImagePickerAsset } from 'expo-image-picker';
 import { parseProductForm, type ProductFormData } from '@/src/validation/productSchema';
+import { useCurrencyStore } from '@/src/store/currencyStore';
 
 interface ApiProduct {
   id: number;
@@ -54,7 +55,7 @@ function productInputToApiRequest(data: Partial<ProductInput>): ApiProductReques
     description: data.description,
     brand: data.brand,
     model: data.model,
-    currency: 'USD',
+    currency: useCurrencyStore.getState().currency,
     price: data.price,
     imageURL: data.imageUrl,
   };

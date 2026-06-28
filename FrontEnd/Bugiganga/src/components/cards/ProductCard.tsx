@@ -10,7 +10,7 @@ import { ProductStockBadge } from '@/src/components/ui/ProductStockBadge';
 import { colors, fontSizes, fonts, loginGlass, radius, shadows } from '@/src/theme';
 import { glassBlur } from '@/src/theme/loginGlass';
 import type { Product } from '@/src/types/product';
-import { formatCurrency } from '@/src/utils/formatCurrency';
+import { useFormatCurrency } from '@/src/utils/formatCurrency';
 
 export const PRODUCT_CARD_HEIGHT = 268;
 const IMAGE_HEIGHT = 130;
@@ -37,6 +37,7 @@ export function ProductCard({
   const isFavorite = useFavoritesStore((s) => s.items.some((p) => p.id === product.id));
   const addItem = useCartStore((s) => s.addItem);
   const [justAdded, setJustAdded] = useState(false);
+  const formatCurrency = useFormatCurrency();
 
   const handleAddToCart = () => {
     if (product.stock <= 0) return;
@@ -53,10 +54,11 @@ export function ProductCard({
           styles.card,
           warm && styles.cardWarm,
           warm &&
-            Platform.OS === 'web' && {
+            Platform.OS === 'web' &&
+            ({
               backdropFilter: `blur(${warmWebBlur})`,
               WebkitBackdropFilter: `blur(${warmWebBlur})`,
-            },
+            } as any),
           pressed && styles.cardPressed,
         ]}
         accessibilityRole="button">

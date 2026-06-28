@@ -1,7 +1,7 @@
 import { BlurView } from 'expo-blur';
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { glassBlur, loginGlass } from '@/src/theme/loginGlass';
+import { glassBlur } from '@/src/theme/loginGlass';
 
 export function GlassTabBarBackground() {
   const intensity =
@@ -13,10 +13,10 @@ export function GlassTabBarBackground() {
       style={[
         styles.wrap,
         Platform.OS === 'web'
-          ? {
+          ? ({
               backdropFilter: `blur(${webBlur})`,
               WebkitBackdropFilter: `blur(${webBlur})`,
-            }
+            } as any)
           : null,
       ]}>
       {Platform.OS === 'web' ? (

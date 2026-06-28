@@ -194,7 +194,7 @@ export function GlassTabBar({ state, descriptors, navigation }: BottomTabBarProp
                       style={[
                         styles.badge,
                         { minWidth: getBadgeWidth(badgeLabel) },
-                        options.tabBarBadgeStyle,
+                        options.tabBarBadgeStyle as any,
                       ]}>
                       <Text style={styles.badgeText} numberOfLines={1}>
                         {badgeLabel}

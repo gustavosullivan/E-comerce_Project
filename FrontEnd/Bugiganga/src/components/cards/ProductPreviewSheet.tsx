@@ -12,7 +12,7 @@ import { useCheckoutStore } from '@/src/store/checkoutStore';
 import { fontSizes, fonts, loginGlass, radius, shadows } from '@/src/theme';
 import { glassBlur } from '@/src/theme/loginGlass';
 import type { Product } from '@/src/types/product';
-import { formatCurrency } from '@/src/utils/formatCurrency';
+import { useFormatCurrency } from '@/src/utils/formatCurrency';
 
 type ProductPreviewSheetProps = {
   product: Product;
@@ -24,6 +24,7 @@ export function ProductPreviewSheet({ product, visible, onClose }: ProductPrevie
   const addItem = useCartStore((s) => s.addItem);
   const setBuyNow = useCheckoutStore((s) => s.setBuyNow);
   const outOfStock = product.stock <= 0;
+  const formatCurrency = useFormatCurrency();
 
   const handleAddToCart = () => {
     if (outOfStock) {
@@ -127,10 +128,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     ...(Platform.OS === 'web'
-      ? {
+      ? ({
           backdropFilter: `blur(${glassBlur.web.modal})`,
           WebkitBackdropFilter: `blur(${glassBlur.web.modal})`,
-        }
+        } as any)
       : {}),
   },
   dim: {

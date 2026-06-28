@@ -7,6 +7,7 @@ type SecondaryButtonProps = {
   onPress: () => void;
   compact?: boolean;
   variant?: 'default' | 'warm';
+  disabled?: boolean;
 };
 
 export function SecondaryButton({
@@ -14,17 +15,20 @@ export function SecondaryButton({
   onPress,
   compact,
   variant = 'default',
+  disabled,
 }: SecondaryButtonProps) {
   const warm = variant === 'warm';
 
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       style={({ pressed }) => [
         styles.button,
         warm && styles.buttonWarm,
         compact && styles.compact,
         pressed && styles.pressed,
+        disabled && styles.disabled,
       ]}>
       <Text style={[styles.label, warm && styles.labelWarm, compact && styles.labelCompact]}>
         {label}
@@ -47,6 +51,7 @@ const styles = StyleSheet.create({
     borderColor: loginGlass.formButtonSecondaryBorder,
   },
   pressed: { opacity: 0.88 },
+  disabled: { opacity: 0.5 },
   compact: { paddingVertical: 10 },
   label: {
     fontFamily: fonts.sans,

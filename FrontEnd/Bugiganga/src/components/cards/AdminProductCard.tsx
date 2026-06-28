@@ -6,7 +6,7 @@ import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, fontSizes, fonts, loginGlass, radius, shadows } from '@/src/theme';
 import { glassBlur } from '@/src/theme/loginGlass';
 import type { Product } from '@/src/types/product';
-import { formatCurrency } from '@/src/utils/formatCurrency';
+import { useFormatCurrency } from '@/src/utils/formatCurrency';
 
 export const ADMIN_PRODUCT_CARD_HEIGHT = 268;
 const IMAGE_HEIGHT = 130;
@@ -26,6 +26,7 @@ export function AdminProductCard({
   compact,
   variant = 'default',
 }: AdminProductCardProps) {
+  const formatCurrency = useFormatCurrency();
   const warm = variant === 'warm';
   const blurIntensity =
     Platform.OS === 'android' ? glassBlur.android.card : glassBlur.ios.card;
@@ -37,10 +38,11 @@ export function AdminProductCard({
           styles.card,
           warm && styles.cardWarm,
           warm &&
-            Platform.OS === 'web' && {
+            Platform.OS === 'web' &&
+            ({
               backdropFilter: `blur(${glassBlur.web.card})`,
               WebkitBackdropFilter: `blur(${glassBlur.web.card})`,
-            },
+            } as any),
         ]}>
         {Platform.OS === 'web' ? (
           <View style={[styles.webGlass, warm && styles.webGlassWarm]} pointerEvents="none" />

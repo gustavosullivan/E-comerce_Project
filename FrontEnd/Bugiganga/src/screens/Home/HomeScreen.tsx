@@ -83,6 +83,17 @@ export default function HomeScreen() {
   const [query, setQuery] = useState('');
   const [productFilters, setProductFilters] = useState<ProductFilters>(EMPTY_PRODUCT_FILTERS);
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
+
+  // Sync preview product when products list updates (e.g., currency change)
+  useEffect(() => {
+    if (previewProduct) {
+      const updated = products.find((p) => p.id === previewProduct.id);
+      if (updated && updated.price !== previewProduct.price) {
+        setPreviewProduct(updated);
+      }
+    }
+  }, [products, previewProduct]);
+
   const toggle = useFavoritesStore((s) => s.toggle);
   const favoriteCount = useFavoritesStore((s) => s.items.length);
 

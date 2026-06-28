@@ -16,7 +16,7 @@ import { useProduct } from '@/src/hooks/useProducts';
 import { useCartStore } from '@/src/store/cartStore';
 import { useCheckoutStore } from '@/src/store/checkoutStore';
 import { colors, fonts } from '@/src/theme';
-import { formatCurrency } from '@/src/utils/formatCurrency';
+import { useFormatCurrency } from '@/src/utils/formatCurrency';
 import { snackbar } from '@/src/store/snackbarStore';
 import { successFeedback } from '@/src/utils/haptics';
 
@@ -27,6 +27,7 @@ export default function ProductDetailsScreen() {
   const [quantity, setQuantity] = useState(1);
   const addItem = useCartStore((s) => s.addItem);
   const setBuyNow = useCheckoutStore((s) => s.setBuyNow);
+  const formatCurrency = useFormatCurrency();
 
   const handleClose = () => router.back();
 
