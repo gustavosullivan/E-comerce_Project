@@ -41,7 +41,7 @@ export default function RegisterScreen() {
   const [showConfirm, setShowConfirm] = useState(false);
   const { control, handleSubmit } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { name: '', email: '', password: '', confirmPassword: '' },
+    defaultValues: { name: '', email: '', password: '', confirmPassword: '', type: 'Common' },
   });
 
   const onSubmit = handleSubmit((data) => {
@@ -113,6 +113,36 @@ export default function RegisterScreen() {
                 show={showConfirm}
                 onToggle={() => setShowConfirm((p) => !p)}
                 onSubmit={onSubmit}
+              />
+
+              <Controller
+                control={control}
+                name="type"
+                render={({ field: { value, onChange } }) => (
+                  <View style={[styles.fieldGroup, { marginTop: 10 }]}>
+                    <Text style={styles.label}>Tipo de conta</Text>
+                    <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
+                      <Pressable
+                        style={[
+                          { flex: 1, padding: 12, borderRadius: radius.md, borderWidth: 1, borderColor: loginGlass.goldMuted, alignItems: 'center' },
+                          value === 'Common' && { backgroundColor: loginGlass.goldMuted }
+                        ]}
+                        onPress={() => onChange('Common')}
+                      >
+                        <Text style={{ color: value === 'Common' ? '#000' : loginGlass.text, fontWeight: value === 'Common' ? 'bold' : 'normal' }}>Cliente</Text>
+                      </Pressable>
+                      <Pressable
+                        style={[
+                          { flex: 1, padding: 12, borderRadius: radius.md, borderWidth: 1, borderColor: loginGlass.goldMuted, alignItems: 'center' },
+                          value === 'Admin' && { backgroundColor: loginGlass.goldMuted }
+                        ]}
+                        onPress={() => onChange('Admin')}
+                      >
+                        <Text style={{ color: value === 'Admin' ? '#000' : loginGlass.text, fontWeight: value === 'Admin' ? 'bold' : 'normal' }}>Vendedor</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                )}
               />
 
               <Pressable

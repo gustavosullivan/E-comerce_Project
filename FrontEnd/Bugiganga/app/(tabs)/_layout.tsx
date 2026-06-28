@@ -21,8 +21,8 @@ export default function TabLayout() {
       tabBar={(props) => <GlassTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: loginGlass.text,
-        tabBarInactiveTintColor: loginGlass.textMuted,
+        tabBarActiveTintColor: '#3D2B1F',
+        tabBarInactiveTintColor: 'rgba(61, 43, 31, 0.65)',
         tabBarStyle: styles.tabBarMetrics,
         tabBarLabelStyle: styles.tabLabel,
       }}>
@@ -60,7 +60,7 @@ export default function TabLayout() {
           title: 'Carrinho',
           tabBarBadge: !isCurrentUserAdmin && cartCount > 0 ? cartCount : undefined,
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="shopping-bag" size={size} color={color} />
+            <MaterialIcons name="shopping-cart" size={size} color={color} />
           ),
         }}
       />
@@ -95,6 +95,19 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size, focused }) => (
             <MaterialIcons
               name={focused ? 'person' : 'person-outline'}
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Config',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons
+              name="settings"
               size={size}
               color={color}
             />

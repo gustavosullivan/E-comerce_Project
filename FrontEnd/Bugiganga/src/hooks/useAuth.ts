@@ -5,7 +5,6 @@ import { authService } from '@/src/services/authService';
 import { snackbar } from '@/src/store/snackbarStore';
 import { useAuthStore } from '@/src/store/authStore';
 import type { ApiError } from '@/src/types/api';
-import { hasBuyerProfile, hasSellerProfile, type UserRole } from '@/src/types/auth';
 import type { LoginFormData } from '@/src/validation/loginSchema';
 import type { ChangePasswordFormData } from '@/src/validation/changePasswordSchema';
 import type { RegisterFormData } from '@/src/validation/registerSchema';
@@ -32,21 +31,12 @@ export function useAuth() {
   const clearError = useCallback(() => setError(null), []);
 
   const login = useCallback(
-    async (data: LoginFormData, preferredRole: UserRole = 'BUYER') => {
+    async (data: LoginFormData) => {
       setIsLoading(true);
       setError(null);
       try {
         const response = await authService.login(data);
-        const userWithActiveProfile = {
-          ...response.user,
-          role:
-            preferredRole === 'ADMIN' && hasSellerProfile(response.user)
-              ? 'ADMIN'
-              : hasBuyerProfile(response.user)
-                ? 'BUYER'
-                : response.user.role,
-        } satisfies typeof response.user;
-        setSession(response.token, userWithActiveProfile, data.password);
+        setSession(response.token, response.user, data.password);
         snackbar.success(`Bem-vindo, ${response.user.name.split(' ')[0]}!`);
         router.replace('/(tabs)');
       } catch (err) {
@@ -69,6 +59,7 @@ export function useAuth() {
           email: rest.email,
           password: rest.password,
           username: usernameFromEmail(rest.email),
+          type: rest.type,
         });
         setSession(response.token, response.user, rest.password);
         snackbar.success('Conta criada com sucesso');

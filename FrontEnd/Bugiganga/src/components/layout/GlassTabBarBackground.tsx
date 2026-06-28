@@ -38,22 +38,22 @@ const styles = StyleSheet.create({
   wrap: {
     ...StyleSheet.absoluteFillObject,
     overflow: 'hidden',
-    backgroundColor: loginGlass.tabBarGlass,
+    backgroundColor: '#C1A37E',
   },
   webFill: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: loginGlass.glassWebFill,
+    backgroundColor: '#C1A37E',
   },
   tint: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: loginGlass.tabBarTint,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   topBorder: {
     position: 'absolute',
     top: 0,
-    left: 16,
-    right: 16,
+    left: 0,
+    right: 0,
     height: 1,
-    backgroundColor: loginGlass.shellHighlight,
+    backgroundColor: '#A8845C',
   },
 });

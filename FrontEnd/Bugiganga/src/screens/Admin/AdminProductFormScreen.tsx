@@ -12,6 +12,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -36,7 +37,10 @@ import { getErrorMessage } from '@/src/services/api/client';
 import { confirmAction } from '@/src/utils/confirm';
 import { fontSizes, fonts, layout, loginGlass, radius } from '@/src/theme';
 import {
+  PRODUCT_TYPE_LABELS,
+  PRODUCT_TYPES,
   type ProductFormData,
+  type ProductType,
   parseProductForm,
   productFormSchema,
   productToFormValues,
@@ -54,17 +58,22 @@ export default function AdminProductFormScreen() {
   const [imageAsset, setImageAsset] = useState<ImagePickerAsset | null>(null);
   const [imageUrl, setImageUrl] = useState('');
 
-  const { control, handleSubmit, reset } = useForm<ProductFormData>({
+  const { control, handleSubmit, reset, watch } = useForm<ProductFormData>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
-      name: '',
+      productType: 'BOOK',
       description: '',
+      brand: '',
+      model: '',
       price: '',
       categoryId: MOCK_CATEGORIES[0]?.id ?? 1,
       stock: '1',
       imageUrl: '',
     },
   });
+
+  const productType = watch('productType') as ProductType;
+  const labels = PRODUCT_TYPE_LABELS[productType] ?? PRODUCT_TYPE_LABELS.BOOK;
 
   useEffect(() => {
     if (isEditing && product) {
@@ -157,10 +166,47 @@ export default function AdminProductFormScreen() {
 
               <ScreenHeader
                 title={isEditing ? 'Editar produto' : 'Cadastrar produto'}
-                subtitle="Nome, legenda, preço, categoria, estoque e imagem"
+                subtitle="Preencha as informações do item para o sebo"
                 icon={isEditing ? 'edit' : 'add-box'}
                 variant="warm"
               />
+
+              {/* Seletor de tipo: Livro ou Disco */}
+              {!isEditing && (
+                <Controller
+                  control={control}
+                  name="productType"
+                  render={({ field: { value, onChange }, fieldState: { error } }) => (
+                    <View style={styles.typeSection}>
+                      <Text style={styles.typeLabel}>Tipo do item</Text>
+                      <View style={styles.typeRow}>
+                        {PRODUCT_TYPES.map((type) => {
+                          const active = value === type;
+                          const icon = type === 'BOOK' ? 'menu-book' : 'album';
+                          return (
+                            <TouchableOpacity
+                              key={type}
+                              style={[styles.typeCard, active && styles.typeCardActive]}
+                              onPress={() => onChange(type)}
+                              activeOpacity={0.8}>
+                              <MaterialIcons
+                                name={icon as any}
+                                size={28}
+                                color={active ? loginGlass.goldLight : loginGlass.textMuted}
+                              />
+                              <Text
+                                style={[styles.typeCardText, active && styles.typeCardTextActive]}>
+                                {PRODUCT_TYPE_LABELS[type].label}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                      {error ? <Text style={styles.fieldError}>{error.message}</Text> : null}
+                    </View>
+                  )}
+                />
+              )}
 
               <ProfilePaper
                 title="Imagem"
@@ -180,35 +226,39 @@ export default function AdminProductFormScreen() {
                 />
               </ProfilePaper>
 
-              <ProfilePaper title="Informações" subtitle="Dados do anúncio" delay={40} variant="warm">
+              <ProfilePaper
+                title="Informações"
+                subtitle={`Dados do ${labels.label.toLowerCase()}`}
+                delay={40}
+                variant="warm">
+
+                {/* Título / Nome do álbum */}
                 <CustomInput
                   control={control}
-                  name="name"
-                  label="Nome"
-                  placeholder="Nome do produto"
+                  name="description"
+                  label={labels.description}
+                  placeholder={labels.description}
                   variant="warm"
                 />
-                <Controller
+
+                {/* Editora / Gravadora */}
+                <CustomInput
                   control={control}
-                  name="description"
-                  render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-                    <View style={styles.fieldGroup}>
-                      <Text style={styles.label}>Legenda / descrição</Text>
-                      <TextInput
-                        style={[styles.textArea, error && styles.inputError]}
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        placeholder="Descreva a peça, história e estado de conservação"
-                        placeholderTextColor={loginGlass.textMuted}
-                        multiline
-                        numberOfLines={4}
-                        textAlignVertical="top"
-                      />
-                      {error ? <Text style={styles.fieldError}>{error.message}</Text> : null}
-                    </View>
-                  )}
+                  name="brand"
+                  label={labels.brand}
+                  placeholder={labels.brand}
+                  variant="warm"
                 />
+
+                {/* Autor / Artista */}
+                <CustomInput
+                  control={control}
+                  name="model"
+                  label={labels.model}
+                  placeholder={labels.model}
+                  variant="warm"
+                />
+
                 <CustomInput
                   control={control}
                   name="price"
@@ -280,6 +330,44 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.md,
     color: loginGlass.goldLight,
     fontWeight: '600',
+  },
+  typeSection: {
+    marginBottom: layout.md,
+  },
+  typeLabel: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    fontWeight: '600',
+    color: loginGlass.text,
+    marginBottom: 10,
+  },
+  typeRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  typeCard: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 18,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: loginGlass.cardBorder,
+    backgroundColor: loginGlass.formFieldBg,
+  },
+  typeCardActive: {
+    borderColor: loginGlass.goldLight,
+    backgroundColor: 'rgba(212,175,55,0.08)',
+  },
+  typeCardText: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    fontWeight: '600',
+    color: loginGlass.textMuted,
+  },
+  typeCardTextActive: {
+    color: loginGlass.goldLight,
   },
   fieldGroup: {
     marginBottom: 8,

@@ -28,15 +28,16 @@ interface ApiAuthResponse {
 }
 
 function mapApiUser(user: ApiUser): User {
-  const role = user.type === 'Admin' || user.type === 0 ? 'ADMIN' : 'BUYER';
+  const isAdminType = user.type === 'Admin' || user.type === 0;
+  const role = isAdminType ? 'ADMIN' : 'BUYER';
 
   return {
     id: user.id,
     name: user.name,
     email: user.email,
     username: user.username ?? user.email,
-    buyerProfile: user.buyerProfile ?? true,
-    sellerProfile: user.sellerProfile ?? true,
+    buyerProfile: !isAdminType,
+    sellerProfile: isAdminType,
     role,
   };
 }
@@ -64,6 +65,7 @@ export const authService = {
         name: data.name,
         email: data.email,
         password: data.password,
+        type: data.type,
       });
       return await authService.login({ email: data.email, password: data.password });
     } catch (error) {

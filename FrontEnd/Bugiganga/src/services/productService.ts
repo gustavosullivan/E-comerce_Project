@@ -1,12 +1,10 @@
 import { API_ENDPOINTS } from '@/src/config/api';
-import { MOCK_CATEGORIES } from '@/src/mocks/categories';
-import type { ProductFormData } from '@/src/schemas/productSchema';
 import { apiClient, throwServiceError } from '@/src/services/api/client';
 import { uploadProductImage } from '@/src/services/cloudinaryService';
 import type { User } from '@/src/types/auth';
 import type { Product, ProductInput } from '@/src/types/product';
 import type { ImagePickerAsset } from 'expo-image-picker';
-import type { parseProductForm } from '@/src/validation/productSchema';
+import { parseProductForm, type ProductFormData } from '@/src/validation/productSchema';
 
 interface ApiProduct {
   id: number;
@@ -18,16 +16,16 @@ interface ApiProduct {
   stock: number;
   convertedPrice?: number;
   requestCurrency?: string;
+  imageURL?: string;
 }
 
 interface ApiProductRequest {
-  name?: string;
   description?: string;
   brand?: string;
   model?: string;
   currency?: string;
   price?: number;
-  stock?: number;
+  imageURL?: string;
 }
 
 function mapApiProduct(product: ApiProduct): Product {
@@ -39,7 +37,7 @@ function mapApiProduct(product: ApiProduct): Product {
     description: product.description,
     price: (product.convertedPrice != null && product.convertedPrice >= 0) ? product.convertedPrice : product.price,
     stock: product.stock,
-    imageUrl: `https://picsum.photos/seed/api-product-${product.id}/600/600`,
+    imageUrl: product.imageURL || `https://picsum.photos/seed/api-product-${product.id}/600/600`,
     categoryId: 1,
     categoryName: 'Celulares',
     userId: 1,
@@ -51,30 +49,26 @@ function mapApiProduct(product: ApiProduct): Product {
 
 function productInputToApiRequest(data: Partial<ProductInput>): ApiProductRequest {
   return {
-    name: data.name,
-    description: data.description ?? data.name,
-    brand: data.name,
-    model: data.name,
+    description: data.description,
+    brand: data.brand,
+    model: data.model,
     currency: 'BRL',
     price: data.price,
-    stock: data.stock,
+    imageURL: data.imageUrl,
   };
 }
 
-function resolveCategoryId(categoryName: string): number {
-  const normalized = categoryName.trim().toLowerCase();
-  const found = MOCK_CATEGORIES.find((c) => c.name.toLowerCase() === normalized);
-  return found?.id ?? MOCK_CATEGORIES[0].id;
-}
 
 function formDataToProductInput(data: ProductFormData, userId: User['id']): ProductInput {
   return {
-    name: data.name,
-    description: data.description ?? '',
-    price: data.price,
-    stock: data.stock,
+    name: data.description,
+    description: data.description,
+    brand: data.brand,
+    model: data.model,
+    price: Number(String(data.price).replace(',', '.')),
+    stock: Number(data.stock),
     imageUrl: data.imageUrl ?? `https://picsum.photos/seed/${Date.now()}/400/400`,
-    categoryId: resolveCategoryId(data.category),
+    categoryId: data.categoryId,
     userId,
   };
 }
@@ -82,12 +76,13 @@ function formDataToProductInput(data: ProductFormData, userId: User['id']): Prod
 function formDataToPartialInput(data: Partial<ProductFormData>): Partial<ProductInput> {
   const partial: Partial<ProductInput> = {};
 
-  if (data.name != null) partial.name = data.name;
-  if (data.description != null) partial.description = data.description;
-  if (data.price != null) partial.price = data.price;
-  if (data.stock != null) partial.stock = data.stock;
+  if (data.description != null) { partial.name = data.description; partial.description = data.description; }
+  if (data.brand != null) partial.brand = data.brand;
+  if (data.model != null) partial.model = data.model;
+  if (data.price != null) partial.price = Number(String(data.price).replace(',', '.'));
+  if (data.stock != null) partial.stock = Number(data.stock);
   if (data.imageUrl != null) partial.imageUrl = data.imageUrl;
-  if (data.category != null) partial.categoryId = resolveCategoryId(data.category);
+  if (data.categoryId != null) partial.categoryId = data.categoryId;
 
   return partial;
 }
@@ -105,8 +100,10 @@ function adminFormToProductInput(
   imageUrl: string,
 ): ProductInput {
   return {
-    name: data.name,
+    name: data.description,
     description: data.description,
+    brand: data.brand,
+    model: data.model,
     price: data.price,
     stock: data.stock,
     imageUrl,
@@ -121,14 +118,13 @@ function adminFormToPartialInput(
 ): Partial<ProductInput> {
   const partial: Partial<ProductInput> = {};
 
-  if (data.name != null) partial.name = data.name;
-  if (data.description != null) partial.description = data.description;
+  if (data.description != null) { partial.name = data.description; partial.description = data.description; }
+  if (data.brand != null) partial.brand = data.brand;
+  if (data.model != null) partial.model = data.model;
   if (data.price != null) partial.price = data.price;
   if (data.stock != null) partial.stock = data.stock;
   if (imageUrl != null) partial.imageUrl = imageUrl;
-  if (data.categoryId != null) {
-    partial.categoryId = data.categoryId;
-  }
+  if (data.categoryId != null) partial.categoryId = data.categoryId;
 
   return partial;
 }
@@ -191,7 +187,7 @@ export const productService = {
   async create(data: ProductInput): Promise<Product> {
     try {
       const response = await apiClient.post<ApiProduct>(
-        API_ENDPOINTS.products.list,
+        API_ENDPOINTS.products.create,
         productInputToApiRequest(data),
       );
       return mapApiProduct(response.data);
@@ -203,7 +199,7 @@ export const productService = {
   async update(id: number, data: Partial<ProductInput>): Promise<Product> {
     try {
       const response = await apiClient.put<ApiProduct>(
-        API_ENDPOINTS.products.byId(id),
+        API_ENDPOINTS.products.wsById(id),
         productInputToApiRequest(data),
       );
       return mapApiProduct(response.data);
@@ -214,7 +210,7 @@ export const productService = {
 
   async remove(id: number): Promise<void> {
     try {
-      await apiClient.delete(API_ENDPOINTS.products.byId(id));
+      await apiClient.delete(API_ENDPOINTS.products.wsById(id));
     } catch (error) {
       throwServiceError(error);
     }
@@ -224,7 +220,7 @@ export const productService = {
     try {
       const input = formDataToProductInput(productData, userId);
       const response = await apiClient.post<ApiProduct>(
-        API_ENDPOINTS.products.list,
+        API_ENDPOINTS.products.create,
         productInputToApiRequest(input),
       );
       return mapApiProduct(response.data);
@@ -249,7 +245,7 @@ export const productService = {
     try {
       const input = formDataToPartialInput(updatedData);
       const response = await apiClient.put<ApiProduct>(
-        API_ENDPOINTS.products.byId(productId),
+        API_ENDPOINTS.products.wsById(productId),
         productInputToApiRequest(input),
       );
       return mapApiProduct(response.data);
@@ -260,7 +256,7 @@ export const productService = {
 
   async deleteProduct(productId: Product['id']): Promise<void> {
     try {
-      await apiClient.delete(API_ENDPOINTS.products.byId(productId));
+      await apiClient.delete(API_ENDPOINTS.products.wsById(productId));
     } catch (error) {
       throwServiceError(error);
     }
@@ -275,7 +271,7 @@ export const productService = {
 
       const input = adminFormToProductInput(submit.data, userId, imageUrl);
       const response = await apiClient.post<ApiProduct>(
-        API_ENDPOINTS.products.list,
+        API_ENDPOINTS.products.create,
         productInputToApiRequest(input),
       );
       return mapApiProduct(response.data);
@@ -296,7 +292,7 @@ export const productService = {
 
       const input = adminFormToPartialInput(submit.data, imageUrl);
       const response = await apiClient.put<ApiProduct>(
-        API_ENDPOINTS.products.byId(productId),
+        API_ENDPOINTS.products.wsById(productId),
         productInputToApiRequest(input),
       );
       return mapApiProduct(response.data);

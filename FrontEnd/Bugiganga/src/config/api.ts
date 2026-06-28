@@ -12,6 +12,8 @@ export const API_ENDPOINTS = {
   products: {
     list: '/products',
     byId: (id: number) => `/products/${id}`,
+    wsById: (id: number) => `/ws/products/${id}`,
+    create: '/ws/products',
   },
   cart: '/api/cart',
   orders: '/api/orders',

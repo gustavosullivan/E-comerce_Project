@@ -1,4 +1,4 @@
-import { MaterialIcons } from '@expo/vector-icons';
+
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -23,7 +23,6 @@ import { LoginLogo } from '@/src/components/layout/LoginLogo';
 import { WarmGlassSurface } from '@/src/components/layout/WarmGlassSurface';
 import {
   DEV_BUYER_LOGIN_FORM,
-  DEV_SELLER_LOGIN_FORM,
 } from '@/src/config/devCredentials';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useDevLoginDefaults } from '@/src/hooks/useDevLoginDefaults';
@@ -31,13 +30,11 @@ import { fontSizes, fonts, radius, shadows } from '@/src/theme';
 import { loginGlass } from '@/src/theme/loginGlass';
 import { type LoginFormData, loginSchema } from '@/src/validation/loginSchema';
 
-type UserRole = 'buyer' | 'seller';
 
 export default function LoginScreen() {
   const { login, isLoading, error, clearError } = useAuth();
   const { defaults, ready, save } = useDevLoginDefaults();
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState<UserRole>('buyer');
   const { control, handleSubmit, reset } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: DEV_BUYER_LOGIN_FORM,
@@ -46,22 +43,14 @@ export default function LoginScreen() {
   useEffect(() => {
     if (ready) {
       reset(defaults);
-      setRole(
-        defaults.email === DEV_SELLER_LOGIN_FORM.email ? 'seller' : 'buyer',
-      );
     }
   }, [ready, defaults, reset]);
 
   const onSubmit = handleSubmit((data) => {
     clearError();
-    save(data);
-    login(data, role === 'seller' ? 'ADMIN' : 'BUYER');
+    save();
+    login(data);
   });
-
-  const selectRole = (nextRole: UserRole) => {
-    clearError();
-    setRole(nextRole);
-  };
 
   return (
     <View style={styles.root}>
@@ -93,101 +82,48 @@ export default function LoginScreen() {
               ) : null}
 
               <LoginField
-                    control={control}
-                    name="email"
-                    label="Email"
-                    placeholder={
-                      role === 'seller'
-                        ? DEV_SELLER_LOGIN_FORM.email
-                        : DEV_BUYER_LOGIN_FORM.email
-                    }
-                    keyboardType="email-address"
-                  />
-                  <PasswordField
-                    control={control}
-                    show={showPassword}
-                    onToggle={() => setShowPassword((p) => !p)}
-                    onSubmit={onSubmit}
-                  />
+                control={control}
+                name="email"
+                label="Email"
+                placeholder={DEV_BUYER_LOGIN_FORM.email}
+                keyboardType="email-address"
+              />
+              <PasswordField
+                control={control}
+                show={showPassword}
+                onToggle={() => setShowPassword((p) => !p)}
+                onSubmit={onSubmit}
+              />
 
-                  <Pressable
-                    style={styles.forgotLink}
-                    onPress={() => router.push('/forgot-password')}>
-                    <Text style={styles.forgotText}>Esqueci a senha</Text>
-                  </Pressable>
+              <Pressable
+                style={styles.forgotLink}
+                onPress={() => router.push('/forgot-password')}>
+                <Text style={styles.forgotText}>Esqueci a senha</Text>
+              </Pressable>
 
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.loginButton,
-                      pressed && styles.loginButtonPressed,
-                      isLoading && styles.loginButtonDisabled,
-                    ]}
-                    onPress={onSubmit}
-                    disabled={isLoading}>
-                    {isLoading ? (
-                      <ActivityIndicator size="small" color={loginGlass.text} />
-                    ) : (
-                      <Text style={styles.loginButtonText}>Entrar</Text>
-                    )}
-                  </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.loginButton,
+                  pressed && styles.loginButtonPressed,
+                  isLoading && styles.loginButtonDisabled,
+                ]}
+                onPress={onSubmit}
+                disabled={isLoading}>
+                {isLoading ? (
+                  <ActivityIndicator size="small" color={loginGlass.text} />
+                ) : (
+                  <Text style={styles.loginButtonText}>Entrar</Text>
+                )}
+              </Pressable>
 
-                  <View style={styles.roleToggle}>
-                    <Pressable
-                      style={[
-                        styles.roleSegment,
-                        role === 'buyer' && styles.roleSegmentActive,
-                      ]}
-                      onPress={() => selectRole('buyer')}
-                      disabled={isLoading}>
-                      <MaterialIcons
-                        name="shopping-bag"
-                        size={16}
-                        color={role === 'buyer' ? loginGlass.text : loginGlass.goldMuted}
-                      />
-                      <Text
-                        style={[
-                          styles.roleText,
-                          role === 'buyer' && styles.roleTextActive,
-                        ]}
-                        numberOfLines={1}
-                        adjustsFontSizeToFit
-                        minimumFontScale={0.82}>
-                        Entrar como comprador
-                      </Text>
-                    </Pressable>
-                    <Pressable
-                      style={[
-                        styles.roleSegment,
-                        role === 'seller' && styles.roleSegmentActive,
-                      ]}
-                      onPress={() => selectRole('seller')}
-                      disabled={isLoading}>
-                      <MaterialIcons
-                        name="storefront"
-                        size={16}
-                        color={role === 'seller' ? loginGlass.text : loginGlass.goldMuted}
-                      />
-                      <Text
-                        style={[
-                          styles.roleText,
-                          role === 'seller' && styles.roleTextActive,
-                        ]}
-                        numberOfLines={1}
-                        adjustsFontSizeToFit
-                        minimumFontScale={0.82}>
-                        Entrar como vendedor
-                      </Text>
-                    </Pressable>
-                  </View>
-
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.registerLink,
-                      pressed && styles.registerLinkPressed,
-                    ]}
-                    onPress={() => router.push('/register')}>
-                    <Text style={styles.registerText}>Cadastre-se</Text>
-                  </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.registerLink,
+                  pressed && styles.registerLinkPressed,
+                ]}
+                onPress={() => router.push('/register')}>
+                <Text style={styles.registerText}>Cadastre-se</Text>
+              </Pressable>
             </WarmGlassSurface>
           </ScrollView>
         </KeyboardAvoidingView>

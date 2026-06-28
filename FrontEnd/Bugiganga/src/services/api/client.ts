@@ -22,10 +22,18 @@ apiClient.interceptors.request.use((config) => {
 
 export function mapAxiosError(error: unknown): ApiError {
   if (isAxiosError(error)) {
-    const axiosError = error as AxiosError<{ message?: string }>;
+    const responseData = error.response?.data as any;
+    let message = error.message ?? 'Erro na requisição';
+    
+    if (typeof responseData === 'string') {
+      message = responseData;
+    } else if (responseData?.message) {
+      message = responseData.message;
+    }
+
     return {
-      message: axiosError.response?.data?.message ?? axiosError.message ?? 'Erro na requisição',
-      statusCode: axiosError.response?.status,
+      message,
+      statusCode: error.response?.status,
     };
   }
   if (error instanceof Error) {
