@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { productService, type AdminProductSubmit } from '@/src/services/productService';
+import { useAdminProductsStore } from '@/src/store/adminProductsStore';
 import { useAuthStore } from '@/src/store/authStore';
+import { useCurrencyStore } from '@/src/store/currencyStore';
 import type { Product } from '@/src/types/product';
 
 export function useProducts() {
@@ -9,18 +11,20 @@ export function useProducts() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const currency = useCurrencyStore((s) => s.currency);
+
   const load = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await productService.list();
+      const data = await productService.list(currency);
       setProducts(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar produtos');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currency]);
 
   useEffect(() => {
     void load();
@@ -37,6 +41,7 @@ export function useProduct(id: number) {
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const currency = useCurrencyStore((s) => s.currency);
 
   useEffect(() => {
     if (id <= 0) {
@@ -51,7 +56,7 @@ export function useProduct(id: number) {
       setIsLoading(true);
       setError(null);
       try {
-        const data = await productService.getById(id);
+        const data = await productService.getById(id, currency);
         if (active) setProduct(data);
       } catch (err) {
         if (active) setError(err instanceof Error ? err.message : 'Produto não encontrado');
@@ -62,13 +67,21 @@ export function useProduct(id: number) {
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, currency]);
 
   return { product, isLoading, error };
 }
 
 export function useAdminProducts() {
   const user = useAuthStore((state) => state.user);
+  const myProductIdsRecord = useAdminProductsStore((state) => state.myProductIds);
+  const addProductId = useAdminProductsStore((state) => state.addProductId);
+  const removeProductId = useAdminProductsStore((state) => state.removeProductId);
+
+  const currency = useCurrencyStore((s) => s.currency);
+
+  const myProductIds = user ? (myProductIdsRecord[user.id] || []) : [];
+
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,15 +91,16 @@ export function useAdminProducts() {
     setError(null);
     try {
       const data = user
-        ? await productService.getAdminProducts(user.id)
-        : await productService.list();
-      setProducts(data);
+        ? await productService.getAdminProducts(user.id, currency)
+        : await productService.list(currency);
+      
+      setProducts(data.filter(p => myProductIds.includes(p.id)));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar produtos');
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, myProductIds, currency]);
 
   useEffect(() => {
     void load();
@@ -98,10 +112,11 @@ export function useAdminProducts() {
         throw new Error('Usuário não autenticado');
       }
       const created = await productService.createFromAdminForm(user.id, submit);
+      addProductId(user.id, created.id);
       await load();
       return created;
     },
-    [load, user],
+    [load, user, addProductId],
   );
 
   const updateProduct = useCallback(
@@ -115,10 +130,12 @@ export function useAdminProducts() {
 
   const deleteProduct = useCallback(
     async (id: number) => {
+      if (!user) return;
       await productService.deleteProduct(id);
+      removeProductId(user.id, id);
       await load();
     },
-    [load],
+    [load, user, removeProductId],
   );
 
   return {

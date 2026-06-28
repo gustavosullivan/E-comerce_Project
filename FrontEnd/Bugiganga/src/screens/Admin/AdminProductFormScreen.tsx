@@ -1,8 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { MaterialIcons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import type { ImagePickerAsset } from 'expo-image-picker';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   KeyboardAvoidingView,
@@ -75,13 +75,28 @@ export default function AdminProductFormScreen() {
   const productType = watch('productType') as ProductType;
   const labels = PRODUCT_TYPE_LABELS[productType] ?? PRODUCT_TYPE_LABELS.BOOK;
 
-  useEffect(() => {
-    if (isEditing && product) {
-      reset(productToFormValues(product));
-      setImageUrl(product.imageUrl);
-      setImageAsset(null);
-    }
-  }, [isEditing, product, reset]);
+  useFocusEffect(
+    useCallback(() => {
+      if (isEditing && product) {
+        reset(productToFormValues(product));
+        setImageUrl(product.imageUrl);
+        setImageAsset(null);
+      } else if (!isEditing) {
+        reset({
+          productType: 'BOOK',
+          description: '',
+          brand: '',
+          model: '',
+          price: '',
+          categoryId: MOCK_CATEGORIES[0]?.id ?? 1,
+          stock: '1',
+          imageUrl: '',
+        });
+        setImageUrl('');
+        setImageAsset(null);
+      }
+    }, [isEditing, product, reset])
+  );
 
   const handleBack = () => {
     if (router.canGoBack()) {

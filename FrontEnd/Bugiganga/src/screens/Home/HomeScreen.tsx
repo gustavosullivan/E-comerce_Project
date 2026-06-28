@@ -2,7 +2,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { type ReactNode, useCallback, useMemo, useState } from 'react';
+import { type ReactNode, useCallback, useMemo, useState, useEffect } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { ProductCard } from '@/src/components/cards/ProductCard';
 import { AdminProductCard } from '@/src/components/cards/AdminProductCard';
@@ -22,6 +22,8 @@ import { ProductGridSkeleton } from '@/src/components/ui/SkeletonBlock';
 import { PriceFilterChips } from '@/src/components/forms/ProductFiltersSheet';
 import { useTabBarInset, useTopChromeInset } from '@/src/hooks/useTabBarInset';
 import { useAuthStore } from '@/src/store/authStore';
+import { useAdminProductsStore } from '@/src/store/adminProductsStore';
+import { useCurrencyStore } from '@/src/store/currencyStore';
 import { isAdmin } from '@/src/types/auth';
 import { useProducts } from '@/src/hooks/useProducts'; // This hook is for buyer products
 import { MOCK_CATEGORIES } from '@/src/mocks/categories';
@@ -91,6 +93,8 @@ export default function HomeScreen() {
   const [adminSearchQuery, setAdminSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false); // Unified refreshing state
 
+  const currency = useCurrencyStore((s) => s.currency);
+
   const fetchAdminProducts = useCallback(async () => {
     if (!user?.id) {
       setAdminError('Usuário ADMIN não autenticado.');
@@ -100,15 +104,17 @@ export default function HomeScreen() {
     setAdminLoading(true);
     setAdminError(null);
     try {
-      const fetchedProducts = await productService.getAdminProducts(user.id);
-      setAdminProducts(fetchedProducts);
+      const fetchedProducts = await productService.getAdminProducts(user.id, currency);
+      const myProductIdsRecord = useAdminProductsStore.getState().myProductIds;
+      const myProductIds = myProductIdsRecord[user.id] || [];
+      setAdminProducts(fetchedProducts.filter(p => myProductIds.includes(p.id)));
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Não foi possível carregar seus produtos.';
       setAdminError(message);
     } finally {
       setAdminLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, currency]);
 
   useFocusEffect(
     useCallback(() => {
@@ -119,6 +125,14 @@ export default function HomeScreen() {
       }
     }, [fetchAdminProducts, isCurrentUserAdmin, reload]),
   );
+
+  // Recarrega os produtos de admin automaticamente quando a moeda muda
+  // (useFocusEffect não reage a dependências se a tela já estiver em foco)
+  useEffect(() => {
+    if (isCurrentUserAdmin) {
+      void fetchAdminProducts();
+    }
+  }, [fetchAdminProducts, isCurrentUserAdmin]);
 
   const filteredAdminProducts = useMemo(() => {
     const q = adminSearchQuery.trim().toLowerCase();
@@ -266,7 +280,7 @@ export default function HomeScreen() {
         <HomeScreenLayout
           toolbar={<HomeToolbar userName={displayName} isAdmin={isCurrentUserAdmin} />}>
           <PageContainer>
-            <SearchBar value="" onChangeText={() => {}} editable={false} variant="warm" />
+            <SearchBar value="" onChangeText={() => { }} editable={false} variant="warm" />
             <ProductGridSkeleton columns={2} />
           </PageContainer>
         </HomeScreenLayout>
@@ -295,7 +309,7 @@ export default function HomeScreen() {
       ) : null}
 
       <HomeScreenLayout
-        toolbar={<HomeToolbar userName={displayName} isAdmin={isCurrentUserAdmin} />}>
+        toolbar={<HomeToolbar userName={displayName} />}>
         <ProductGrid
           products={filtered}
           contentBottomInset={contentBottomInset}

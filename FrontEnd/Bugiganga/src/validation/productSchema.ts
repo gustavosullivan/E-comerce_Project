@@ -59,6 +59,8 @@ export function parseProductForm(data: ProductFormData) {
 export function productToFormValues(product: {
   name: string;
   description: string;
+  brand?: string;
+  model?: string;
   price: number;
   categoryId: number;
   stock: number;
@@ -67,8 +69,8 @@ export function productToFormValues(product: {
   return {
     productType: 'BOOK',
     description: product.description,
-    brand: '',
-    model: '',
+    brand: product.brand ?? '',
+    model: product.model ?? '',
     price: String(product.price),
     categoryId: product.categoryId,
     stock: String(product.stock),

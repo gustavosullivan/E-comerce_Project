@@ -35,11 +35,13 @@ function mapApiProduct(product: ApiProduct): Product {
     id: product.id,
     name: displayName || product.description,
     description: product.description,
+    brand: product.brand,
+    model: product.model,
     price: (product.convertedPrice != null && product.convertedPrice >= 0) ? product.convertedPrice : product.price,
     stock: product.stock,
     imageUrl: product.imageURL || `https://picsum.photos/seed/api-product-${product.id}/600/600`,
     categoryId: 1,
-    categoryName: 'Celulares',
+    categoryName: 'Sebo',
     userId: 1,
     isFeatured: product.id <= 4,
     isNew: product.id > 8,
@@ -52,7 +54,7 @@ function productInputToApiRequest(data: Partial<ProductInput>): ApiProductReques
     description: data.description,
     brand: data.brand,
     model: data.model,
-    currency: 'BRL',
+    currency: 'USD',
     price: data.price,
     imageURL: data.imageUrl,
   };
@@ -141,10 +143,10 @@ async function resolveProductImageUrl(
 }
 
 export const productService = {
-  async list(): Promise<Product[]> {
+  async list(targetCurrency = 'BRL'): Promise<Product[]> {
     try {
       const response = await apiClient.get<any>(API_ENDPOINTS.products.list, {
-        params: { targetCurrency: 'BRL' },
+        params: { targetCurrency },
       });
       const data: ApiProduct[] = Array.isArray(response.data) ? response.data : (response.data?.content ?? []);
       return data.map(mapApiProduct);
@@ -153,10 +155,10 @@ export const productService = {
     }
   },
 
-  async getById(id: number): Promise<Product> {
+  async getById(id: number, targetCurrency = 'BRL'): Promise<Product> {
     try {
       const response = await apiClient.get<ApiProduct>(API_ENDPOINTS.products.byId(id), {
-        params: { targetCurrency: 'BRL' },
+        params: { targetCurrency },
       });
       return mapApiProduct(response.data);
     } catch (error) {
@@ -164,10 +166,10 @@ export const productService = {
     }
   },
 
-  async search(query: string): Promise<Product[]> {
+  async search(query: string, targetCurrency = 'BRL'): Promise<Product[]> {
     try {
       const response = await apiClient.get<any>(API_ENDPOINTS.products.list, {
-        params: { targetCurrency: 'BRL' },
+        params: { targetCurrency },
       });
       const normalizedQuery = query.trim().toLowerCase();
       const data: ApiProduct[] = Array.isArray(response.data) ? response.data : (response.data?.content ?? []);
@@ -229,13 +231,13 @@ export const productService = {
     }
   },
 
-  async getAdminProducts(adminId: User['id']): Promise<Product[]> {
+  async getAdminProducts(adminId: User['id'], targetCurrency = 'BRL'): Promise<Product[]> {
     try {
       const response = await apiClient.get<any>(API_ENDPOINTS.products.list, {
-        params: { targetCurrency: 'BRL' },
+        params: { targetCurrency },
       });
       const data: ApiProduct[] = Array.isArray(response.data) ? response.data : (response.data?.content ?? []);
-      return data.map(mapApiProduct).filter((product) => product.userId === adminId);
+      return data.map(mapApiProduct);
     } catch (error) {
       throwServiceError(error);
     }

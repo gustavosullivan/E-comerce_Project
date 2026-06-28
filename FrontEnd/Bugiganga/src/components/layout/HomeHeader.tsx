@@ -4,11 +4,10 @@ import { type PropsWithChildren } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { HeaderCartButton, HeaderProfileChip, HeaderSettingsButton } from '@/src/components/layout/HeaderCartButton';
+import { HeaderProfileChip } from '@/src/components/layout/HeaderCartButton';
 import { WarmGlassSurface } from '@/src/components/layout/WarmGlassSurface';
-import { routes } from '@/src/navigation/routes';
-import { useCartStore } from '@/src/store/cartStore';
 import { useAuthStore } from '@/src/store/authStore';
+import { useCurrencyStore, type SupportedCurrency } from '@/src/store/currencyStore';
 import { fontSizes, fonts, loginGlass, motion, radius } from '@/src/theme';
 import { layout } from '@/src/theme/layout';
 
@@ -60,10 +59,12 @@ export function HeaderAddProductButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-export function HomeToolbar({ userName, isAdmin }: HomeHeaderProps) {
+export function HomeToolbar({ userName }: HomeHeaderProps) {
   const initials = getInitials(userName);
   const avatarUri = useAuthStore((s) => s.avatarUri);
-  const cartCount = useCartStore((s) => s.getItemCount());
+  const { currency, setCurrency } = useCurrencyStore();
+
+  const currencies: SupportedCurrency[] = ['BRL', 'USD', 'EUR'];
 
   return (
     <GlassPanel>
@@ -75,17 +76,24 @@ export function HomeToolbar({ userName, isAdmin }: HomeHeaderProps) {
           onPress={() => router.push('/(tabs)/profile')}
           tone="warm"
         />
-        <View style={styles.toolbarActions}>
-          <HeaderSettingsButton onPress={() => router.push(routes.settings)} tone="warm" />
-          {isAdmin ? (
-            <HeaderAddProductButton onPress={() => router.push('/(tabs)/novo')} />
-          ) : (
-            <HeaderCartButton
-              count={cartCount}
-              onPress={() => router.push('/(tabs)/cart')}
-              tone="warm"
-            />
-          )}
+        <View style={styles.currencySelector}>
+          {currencies.map((c) => (
+            <Pressable
+              key={c}
+              onPress={() => setCurrency(c)}
+              style={[
+                styles.currencyBtn,
+                currency === c && styles.currencyBtnActive,
+              ]}>
+              <Text
+                style={[
+                  styles.currencyText,
+                  currency === c && styles.currencyTextActive,
+                ]}>
+                {c}
+              </Text>
+            </Pressable>
+          ))}
         </View>
       </View>
     </GlassPanel>
@@ -161,10 +169,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     gap: 8,
   },
-  toolbarActions: {
+  currencySelector: {
     flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: 'rgba(20, 10, 5, 0.4)',
+    borderRadius: radius.md,
+    padding: 2,
     gap: 2,
+  },
+  currencyBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radius.sm,
+  },
+  currencyBtnActive: {
+    backgroundColor: loginGlass.goldLight,
+  },
+  currencyText: {
+    fontFamily: fonts.sans,
+    fontSize: 12,
+    fontWeight: '700',
+    color: 'rgba(255, 255, 255, 0.6)',
+  },
+  currencyTextActive: {
+    color: '#000',
   },
   iconButton: {
     width: 44,
