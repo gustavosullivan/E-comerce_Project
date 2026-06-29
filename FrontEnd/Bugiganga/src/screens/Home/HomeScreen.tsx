@@ -1,41 +1,40 @@
-import { useFocusEffect } from '@react-navigation/native';
-import { MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { type ReactNode, useCallback, useMemo, useState, useEffect } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import { ProductCard } from '@/src/components/cards/ProductCard';
 import { AdminProductCard } from '@/src/components/cards/AdminProductCard';
+import { ProductCard } from '@/src/components/cards/ProductCard';
 import { ProductPreviewSheet } from '@/src/components/cards/ProductPreviewSheet';
+import { PriceFilterChips } from '@/src/components/forms/ProductFiltersSheet';
 import { SearchBar } from '@/src/components/forms/SearchBar';
-import { BannerCarousel } from '@/src/components/layout/BannerCarousel';
 import { CategoryChips } from '@/src/components/layout/CategoryChips';
 import { ErrorState } from '@/src/components/layout/ErrorState';
 import {
-  HomeHero,
-  HomeToolbar,
+    HomeHero,
+    HomeToolbar,
 } from '@/src/components/layout/HomeHeader';
 import { LoginGlassBackground } from '@/src/components/layout/LoginGlassBackground';
 import { PageContainer } from '@/src/components/layout/PageContainer';
 import { ProductGrid } from '@/src/components/layout/ProductGrid';
 import { ProductGridSkeleton } from '@/src/components/ui/SkeletonBlock';
-import { PriceFilterChips } from '@/src/components/forms/ProductFiltersSheet';
-import { useTabBarInset, useTopChromeInset } from '@/src/hooks/useTabBarInset';
-import { useAuthStore } from '@/src/store/authStore';
-import { useAdminProductsStore } from '@/src/store/adminProductsStore';
-import { useCurrencyStore } from '@/src/store/currencyStore';
-import { isAdmin } from '@/src/types/auth';
-import { useProducts } from '@/src/hooks/useProducts'; // This hook is for buyer products
-import { MOCK_CATEGORIES } from '@/src/mocks/categories';
-import { snackbar } from '@/src/store/snackbarStore';
 import { useFavorites } from '@/src/hooks/useFavorites';
+import { useProducts } from '@/src/hooks/useProducts'; // This hook is for buyer products
+import { useTabBarInset, useTopChromeInset } from '@/src/hooks/useTabBarInset';
+import { MOCK_CATEGORIES } from '@/src/mocks/categories';
+import { routes } from '@/src/navigation/routes';
+import { productService } from '@/src/services/productService';
+import { useAdminProductsStore } from '@/src/store/adminProductsStore';
+import { useAuthStore } from '@/src/store/authStore';
+import { useCurrencyStore } from '@/src/store/currencyStore';
+import { snackbar } from '@/src/store/snackbarStore';
 import { fontSizes, fonts, layout, loginGlass } from '@/src/theme';
+import { isAdmin } from '@/src/types/auth';
 import type { Product } from '@/src/types/product';
 import { EMPTY_PRODUCT_FILTERS, type ProductFilters } from '@/src/types/productFilters';
-import { applyProductFilters, countActiveProductFilters } from '@/src/utils/productFilters';
-import { productService } from '@/src/services/productService';
-import { routes } from '@/src/navigation/routes';
 import { confirmAction } from '@/src/utils/confirm';
+import { applyProductFilters, countActiveProductFilters } from '@/src/utils/productFilters';
+import { MaterialIcons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+import { router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 interface AdminProductItemProps {
   product: Product;
@@ -339,7 +338,6 @@ export default function HomeScreen() {
                 favoriteCount={favoriteCount}
               />
               <SearchBar value={query} onChangeText={setQuery} variant="warm" />
-              <BannerCarousel variant="warm" />
               <CategoryChips
                 categories={MOCK_CATEGORIES}
                 selectedId={productFilters.categoryId}
