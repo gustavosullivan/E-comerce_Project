@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { orderService } from '@/src/services/orderService';
+import { useAddressStore } from '@/src/store/addressStore';
 import { useAuthStore } from '@/src/store/authStore';
 import { useCurrencyStore } from '@/src/store/currencyStore';
 import type { Order } from '@/src/types/order';
@@ -8,6 +9,7 @@ import type { Order } from '@/src/types/order';
 export function useOrders(userId: number | undefined) {
   const user = useAuthStore((s) => s.user);
   const currency = useCurrencyStore((s) => s.currency);
+  const addresses = useAddressStore((s) => s.addresses);
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,6 +27,7 @@ export function useOrders(userId: number | undefined) {
       const data = await orderService.listOrders(userId, {
         buyerName: user?.name,
         buyerEmail: user?.email,
+        deliveryAddress: addresses[userId],
       });
       setOrders(data);
     } catch (err) {
@@ -32,7 +35,7 @@ export function useOrders(userId: number | undefined) {
     } finally {
       setIsLoading(false);
     }
-  }, [currency, user?.email, user?.name, userId]);
+  }, [addresses, currency, user?.email, user?.name, userId]);
 
   useEffect(() => {
     void load();
@@ -44,6 +47,7 @@ export function useOrders(userId: number | undefined) {
 export function useOrder(id: number) {
   const user = useAuthStore((s) => s.user);
   const currency = useCurrencyStore((s) => s.currency);
+  const addresses = useAddressStore((s) => s.addresses);
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +68,7 @@ export function useOrder(id: number) {
           userId: user?.id ?? 0,
           buyerName: user?.name,
           buyerEmail: user?.email,
+          deliveryAddress: user?.id ? addresses[user.id] : undefined,
         });
         if (active) setOrder(data);
       } catch (err) {
@@ -76,7 +81,7 @@ export function useOrder(id: number) {
     return () => {
       active = false;
     };
-  }, [currency, id, user?.email, user?.id, user?.name]);
+  }, [addresses, currency, id, user?.email, user?.id, user?.name]);
 
   return { order, isLoading, error };
 }

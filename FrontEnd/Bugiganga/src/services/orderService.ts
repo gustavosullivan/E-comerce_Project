@@ -176,7 +176,7 @@ export const orderService = {
 
   async listOrders(
     userId: number,
-    context?: Partial<Pick<CreateOrderContext, 'buyerName' | 'buyerEmail'>>,
+    context?: Partial<Pick<CreateOrderContext, 'buyerName' | 'buyerEmail' | 'deliveryAddress'>>,
   ): Promise<Order[]> {
     try {
       const apiOrders = await fetchAllOrderPages(API_ENDPOINTS.orders, {});
@@ -185,6 +185,7 @@ export const orderService = {
           userId,
           buyerName: context?.buyerName,
           buyerEmail: context?.buyerEmail,
+          deliveryAddress: context?.deliveryAddress,
         }),
       );
     } catch (error) {
