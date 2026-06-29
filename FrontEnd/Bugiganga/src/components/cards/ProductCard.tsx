@@ -12,7 +12,7 @@ import { glassBlur } from '@/src/theme/loginGlass';
 import type { Product } from '@/src/types/product';
 import { useFormatCurrency } from '@/src/utils/formatCurrency';
 
-export const PRODUCT_CARD_HEIGHT = 268;
+export const PRODUCT_CARD_HEIGHT = 300;
 const IMAGE_HEIGHT = 130;
 
 type ProductCardProps = {
@@ -100,6 +100,11 @@ export function ProductCard({
               <Text style={[styles.name, warm && styles.nameWarm]} numberOfLines={2}>
                 {product.name}
               </Text>
+              {product.model ? (
+                <Text style={[styles.model, warm && styles.modelWarm]} numberOfLines={1}>
+                  {product.model}
+                </Text>
+              ) : null}
               <Text style={[styles.category, warm && styles.categoryWarm]} numberOfLines={1}>
                 {product.categoryName}
               </Text>
@@ -237,7 +242,7 @@ const styles = StyleSheet.create({
   },
   textBlock: {
     flexShrink: 1,
-    minHeight: 68,
+    minHeight: 94,
   },
   name: {
     fontFamily: fonts.sans,
@@ -249,6 +254,16 @@ const styles = StyleSheet.create({
   },
   nameWarm: {
     color: loginGlass.text,
+  },
+  model: {
+    fontSize: fontSizes.xs,
+    color: colors.textMuted,
+    marginTop: 2,
+    height: 16,
+    lineHeight: 16,
+  },
+  modelWarm: {
+    color: loginGlass.textMuted,
   },
   category: {
     fontSize: fontSizes.xs,

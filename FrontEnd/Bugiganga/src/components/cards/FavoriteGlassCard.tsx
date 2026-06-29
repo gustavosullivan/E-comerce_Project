@@ -71,6 +71,11 @@ export function FavoriteGlassCard({
             <Text style={[styles.name, warm && styles.nameWarm]} numberOfLines={2}>
               {product.name}
             </Text>
+            {product.model ? (
+              <Text style={[styles.model, warm && styles.modelWarm]} numberOfLines={1}>
+                {product.model}
+              </Text>
+            ) : null}
             <Text style={[styles.category, warm && styles.categoryWarm]} numberOfLines={1}>
               {product.categoryName}
             </Text>
@@ -196,6 +201,15 @@ const styles = StyleSheet.create({
   },
   nameWarm: {
     color: loginGlass.text,
+  },
+  model: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    color: colors.textMuted,
+    marginTop: 1,
+  },
+  modelWarm: {
+    color: loginGlass.textMuted,
   },
   category: {
     fontFamily: fonts.sans,
