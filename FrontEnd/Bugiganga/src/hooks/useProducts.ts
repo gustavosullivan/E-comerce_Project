@@ -72,6 +72,8 @@ export function useProduct(id: number) {
   return { product, isLoading, error };
 }
 
+const EMPTY_PRODUCT_IDS: number[] = [];
+
 export function useAdminProducts() {
   const user = useAuthStore((state) => state.user);
   const myProductIdsRecord = useAdminProductsStore((state) => state.myProductIds);
@@ -80,7 +82,7 @@ export function useAdminProducts() {
 
   const currency = useCurrencyStore((s) => s.currency);
 
-  const myProductIds = user ? (myProductIdsRecord[user.id] || []) : [];
+  const myProductIds = user ? (myProductIdsRecord[user.id] || EMPTY_PRODUCT_IDS) : EMPTY_PRODUCT_IDS;
 
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);

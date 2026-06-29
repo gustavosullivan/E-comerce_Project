@@ -30,6 +30,7 @@ interface ApiProductRequest {
   model?: string;
   currency?: string;
   price?: number;
+  stock?: number;
   imageURL?: string;
   categoryId?: number;
 }
@@ -66,6 +67,7 @@ function productInputToApiRequest(data: Partial<ProductInput>): ApiProductReques
     model: data.model,
     currency: PRODUCT_CURRENCY,
     price: data.price,
+    stock: data.stock,
     imageURL: data.imageUrl,
     categoryId: data.categoryId,
   };
